@@ -248,6 +248,7 @@ export class OpenAIAgentRunner implements AgentRunner {
   }
 
   async runPlanner(input: { governance: GovernanceDocs }): Promise<PlannerOutput> {
+    await this.logger.event("agent.planner.start", {});
     const runResult = await run(
       this.plannerAgent,
       [
@@ -271,6 +272,9 @@ export class OpenAIAgentRunner implements AgentRunner {
     governance: GovernanceDocs;
     previousViolations?: string[];
   }): Promise<ArchitectOutput> {
+    await this.logger.event("agent.architect.start", {
+      taskId: input.task.id,
+    });
     const lines = [
       "Selected task:",
       JSON.stringify(input.task, null, 2),
@@ -306,6 +310,10 @@ export class OpenAIAgentRunner implements AgentRunner {
     verificationLogSnippet?: string;
     governanceViolations?: string[];
   }): Promise<ImplementerOutput> {
+    await this.logger.event("agent.implementer.start", {
+      taskId: input.task.id,
+      repairAttempt: input.repairAttempt,
+    });
     const lines = [
       "Selected task:",
       JSON.stringify(input.task, null, 2),
@@ -360,6 +368,9 @@ export class OpenAIAgentRunner implements AgentRunner {
     verificationLogSnippet: string;
     implementer: ImplementerOutput;
   }): Promise<VerifierOutput> {
+    await this.logger.event("agent.verifier.start", {
+      taskId: input.task.id,
+    });
     const runResult = await run(
       this.verifierAgent,
       [

@@ -143,6 +143,9 @@ export class TaskOrchestrator {
       loggerReady = true;
       await logger.writeJson("request.json", request);
       await logger.writeJson("preflight.json", preflight);
+      await logger.event("phase.start", {
+        mode: request.mode,
+      });
 
       const agentRunner = createAgentRunner({ repoRoot: this.repoRoot, logger });
 
@@ -221,6 +224,9 @@ export class TaskOrchestrator {
     logger: RunLogger,
   ): Promise<OrchestratorResult> {
     const governance = await loadGovernanceDocs(this.repoRoot);
+    await logger.event("phase.planner.start", {
+      mode: "sync-plan",
+    });
     const planner = await agentRunner.runPlanner({ governance });
     state.outputs.planner = planner;
     await logger.writeJson("planner-output.json", planner);
@@ -236,6 +242,9 @@ export class TaskOrchestrator {
 
     await saveTasks(this.repoRoot, nextTasks);
     state.docDiffSummary.push("TASKS.yml updated by planner.");
+    await logger.event("phase.planner.synced", {
+      taskCount: planner.tasks.length,
+    });
 
     return {
       exitCode: 0,
@@ -255,6 +264,9 @@ export class TaskOrchestrator {
   ): Promise<OrchestratorResult> {
     let governance = await loadGovernanceDocs(this.repoRoot);
 
+    await logger.event("phase.planner.start", {
+      mode: "execute-next",
+    });
     const planner = await agentRunner.runPlanner({ governance });
     state.outputs.planner = planner;
     await logger.writeJson("planner-output.json", planner);
@@ -272,6 +284,9 @@ export class TaskOrchestrator {
 
     const selectedTask = selectNextTask(governance.tasks, state.request.taskId);
     if (!selectedTask) {
+      await logger.event("phase.task.none", {
+        message: "No runnable task found",
+      });
       return {
         exitCode: 0,
         runId: state.runId,
@@ -283,6 +298,11 @@ export class TaskOrchestrator {
     }
 
     state.selectedTaskId = selectedTask.id;
+    await logger.event("phase.task.selected", {
+      taskId: selectedTask.id,
+      title: selectedTask.title,
+      priority: selectedTask.priority,
+    });
     ensureSingleInProgress(governance.tasks, selectedTask.id);
 
     await ensureBaseBranch({ cwd: this.repoRoot }, state.request.baseBranch);
@@ -296,6 +316,9 @@ export class TaskOrchestrator {
     await this.commitIfChanged(`chore(task): mark ${selectedTask.id} in_progress`);
     this.recordTransition(state, selectedTask.id, "ready", "in_progress", "Execution started");
 
+    await logger.event("phase.architect.start", {
+      taskId: selectedTask.id,
+    });
     let architect = await agentRunner.runArchitect({
       task: selectedTask,
       governance,
@@ -306,6 +329,10 @@ export class TaskOrchestrator {
     await this.applyArchitectDocs(selectedTask, architect, governance, state);
     governance = await loadGovernanceDocs(this.repoRoot);
 
+    await logger.event("phase.implementer.start", {
+      taskId: selectedTask.id,
+      attempt: 0,
+    });
     let implementer = await agentRunner.runImplementer({
       task: selectedTask,
       governance,
@@ -321,10 +348,18 @@ export class TaskOrchestrator {
 
     for (let attempt = 0; attempt <= state.request.repairAttempts; attempt += 1) {
       state.repairLoopCount = attempt;
+      await logger.event("phase.iteration.start", {
+        taskId: selectedTask.id,
+        attempt,
+      });
 
       await syncImplementationMetadata(state, this.repoRoot, state.request.baseBranch);
       await logger.writeJson(`implementer-output-attempt-${attempt}.json`, state.outputs.implementer);
 
+      await logger.event("phase.verification.start", {
+        taskId: selectedTask.id,
+        attempt,
+      });
       const verification = await verificationRunner(this.repoRoot, "full", (fileName: string, body: string) =>
         logger.writeText(fileName, body),
       );
@@ -333,7 +368,17 @@ export class TaskOrchestrator {
 
       const verificationLog = await readFileSafe(verification.logsPath);
       const verificationSnippet = tailSnippet(verificationLog);
+      await logger.event("phase.verification.result", {
+        taskId: selectedTask.id,
+        attempt,
+        passed: verification.passed,
+        failedStep: verification.failedStep,
+      });
 
+      await logger.event("phase.verifier.start", {
+        taskId: selectedTask.id,
+        attempt,
+      });
       const verifier = await agentRunner.runVerifier({
         task: selectedTask,
         checks: verification.checks,
@@ -356,6 +401,11 @@ export class TaskOrchestrator {
 
       await logger.writeJson(`verifier-output-attempt-${attempt}.json`, verifier);
       await logger.writeJson(`governance-audit-attempt-${attempt}.json`, governanceAudit);
+      await logger.event("phase.governance.result", {
+        taskId: selectedTask.id,
+        attempt,
+        passed: governanceAudit.passed,
+      });
 
       verifierPassed = verification.passed;
       if (verification.passed && governanceAudit.passed) {
@@ -367,6 +417,10 @@ export class TaskOrchestrator {
       }
 
       if (!governanceAudit.passed) {
+        await logger.event("phase.architect.retry", {
+          taskId: selectedTask.id,
+          attempt: attempt + 1,
+        });
         architect = await agentRunner.runArchitect({
           task: selectedTask,
           governance,
@@ -387,6 +441,10 @@ export class TaskOrchestrator {
         governanceViolations,
       });
       state.outputs.implementer = implementer;
+      await logger.event("phase.implementer.start", {
+        taskId: selectedTask.id,
+        attempt: attempt + 1,
+      });
     }
 
     if (!governanceAuditPassed) {
@@ -405,6 +463,9 @@ export class TaskOrchestrator {
     let prUrl: string | undefined;
 
     if (!state.request.noPr) {
+      await logger.event("phase.pr.create.start", {
+        taskId: selectedTask.id,
+      });
       const prTitle = createPrTitle(selectedTask.id, taskTitle);
       const prBody = createPrBody(state);
       const prBodyPath = await logger.writeText("pr-body.md", prBody);
@@ -421,6 +482,10 @@ export class TaskOrchestrator {
         },
       );
       state.prUrl = prUrl;
+      await logger.event("phase.pr.opened", {
+        taskId: selectedTask.id,
+        prUrl,
+      });
     }
 
     governance.tasks = updateTaskStatus(governance.tasks, selectedTask.id, "review", {
@@ -429,6 +494,11 @@ export class TaskOrchestrator {
     await saveTasks(this.repoRoot, governance.tasks);
     await this.commitIfChanged(`chore(task): mark ${selectedTask.id} review`);
     this.recordTransition(state, selectedTask.id, "in_progress", "review", "Execution completed and sent for review");
+    await logger.event("phase.task.review", {
+      taskId: selectedTask.id,
+      checksPassed,
+      governanceAuditPassed,
+    });
 
     const summary = createSummary({
       mode: "execute-next",
