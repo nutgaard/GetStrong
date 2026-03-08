@@ -207,7 +207,7 @@ milestones:
         title: Implement workout summary screen
         description: Display per-set results, total volume, and total time when a workout completes.
         priority: P0
-        status: todo
+        status: done
         acceptance_criteria:
           - At workout completion, user sees reps achieved per set, total lifted volume, and total workout time.
           - Summary clearly distinguishes warmup vs work sets.

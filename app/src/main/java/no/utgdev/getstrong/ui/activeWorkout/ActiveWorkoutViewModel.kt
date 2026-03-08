@@ -14,10 +14,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import no.utgdev.getstrong.domain.model.SessionPlannedSet
+import no.utgdev.getstrong.domain.repository.SessionRepository
 import no.utgdev.getstrong.domain.repository.SettingsRepository
 import no.utgdev.getstrong.domain.time.TimeProvider
-import no.utgdev.getstrong.domain.repository.SessionRepository
-import no.utgdev.getstrong.domain.usecase.CompleteSessionWithProgressionUseCase
+import no.utgdev.getstrong.domain.usecase.CompleteSessionAndSaveSummaryUseCase
 import no.utgdev.getstrong.domain.usecase.RestTimerCalculator
 import no.utgdev.getstrong.domain.usecase.RestTimerPolicy
 import no.utgdev.getstrong.ui.navigation.AppDestination
@@ -27,7 +27,7 @@ class ActiveWorkoutViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val sessionRepository: SessionRepository,
     private val settingsRepository: SettingsRepository,
-    private val completeSessionWithProgression: CompleteSessionWithProgressionUseCase,
+    private val completeSessionAndSaveSummary: CompleteSessionAndSaveSummaryUseCase,
     private val restTimerPolicy: RestTimerPolicy,
     private val restTimerCalculator: RestTimerCalculator,
     private val restSignalPlayer: RestSignalPlayer,
@@ -76,11 +76,10 @@ class ActiveWorkoutViewModel @Inject constructor(
         }
     }
 
-    fun finishSession() {
-        viewModelScope.launch {
-            completeSessionWithProgression(sessionId)
-            loadSession()
-        }
+    suspend fun finishSession(): Long {
+        completeSessionAndSaveSummary(sessionId)
+        loadSession()
+        return sessionId
     }
 
     fun focusSet(plannedSetId: Long) {

@@ -20,6 +20,7 @@ import no.utgdev.getstrong.ui.planning.PlanningViewModel
 import no.utgdev.getstrong.ui.planning.WorkoutEditorScreen
 import no.utgdev.getstrong.ui.planning.WorkoutEditorViewModel
 import no.utgdev.getstrong.ui.summary.SummaryScreen
+import no.utgdev.getstrong.ui.summary.SummaryViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -100,6 +101,7 @@ fun AppNavGraph(navController: NavHostController) {
         ) {
             val activeWorkoutViewModel: ActiveWorkoutViewModel = hiltViewModel()
             val activeUiState by activeWorkoutViewModel.uiState.collectAsState()
+            val coroutineScope = rememberCoroutineScope()
             ActiveWorkoutScreen(
                 uiState = activeUiState,
                 onCompleteSet = { setId, repsAchieved ->
@@ -109,8 +111,10 @@ fun AppNavGraph(navController: NavHostController) {
                     activeWorkoutViewModel.focusSet(setId)
                 },
                 onFinishSession = {
-                    activeWorkoutViewModel.finishSession()
-                    navController.navigate(AppDestination.Summary.route(activeUiState.sessionId.toString()))
+                    coroutineScope.launch {
+                        val finishedSessionId = activeWorkoutViewModel.finishSession()
+                        navController.navigate(AppDestination.Summary.route(finishedSessionId.toString()))
+                    }
                 },
                 onExit = {
                     navController.navigate(AppDestination.Home.route) {
@@ -123,12 +127,11 @@ fun AppNavGraph(navController: NavHostController) {
         composable(
             route = AppDestination.Summary.route,
             arguments = listOf(navArgument(AppDestination.Summary.SESSION_ID_ARG) { type = NavType.StringType }),
-        ) { backStackEntry ->
-            val sessionId =
-                backStackEntry.arguments?.getString(AppDestination.Summary.SESSION_ID_ARG).orEmpty()
-
+        ) {
+            val summaryViewModel: SummaryViewModel = hiltViewModel()
+            val summaryUiState by summaryViewModel.uiState.collectAsState()
             SummaryScreen(
-                sessionId = sessionId,
+                uiState = summaryUiState,
                 onDone = {
                     navController.navigate(AppDestination.Home.route) {
                         popUpTo(AppDestination.Home.route) { inclusive = true }

@@ -1,0 +1,27 @@
+package no.utgdev.getstrong.domain.usecase
+
+import javax.inject.Inject
+import no.utgdev.getstrong.domain.model.WorkoutSummary
+import no.utgdev.getstrong.domain.repository.SessionSummaryRepository
+import no.utgdev.getstrong.domain.repository.WorkoutSummaryRepository
+
+class CompleteSessionAndSaveSummaryUseCase @Inject constructor(
+    private val completeSessionWithProgressionUseCase: CompleteSessionWithProgressionUseCase,
+    private val sessionSummaryRepository: SessionSummaryRepository,
+    private val workoutSummaryRepository: WorkoutSummaryRepository,
+) {
+    suspend operator fun invoke(sessionId: Long): Long {
+        completeSessionWithProgressionUseCase(sessionId)
+        val summary = sessionSummaryRepository.getSessionSummary(sessionId) ?: return sessionId
+        workoutSummaryRepository.saveSummary(
+            WorkoutSummary(
+                workoutId = summary.workoutId,
+                sessionId = summary.sessionId,
+                totalVolumeKg = summary.totalVolumeKg,
+                totalDurationSeconds = summary.totalDurationSeconds,
+                completedAtEpochMs = System.currentTimeMillis(),
+            ),
+        )
+        return sessionId
+    }
+}

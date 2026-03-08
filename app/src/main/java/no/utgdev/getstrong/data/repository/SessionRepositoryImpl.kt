@@ -54,6 +54,7 @@ class SessionRepositoryImpl @Inject constructor(
         sessionDao.upsertSetResult(
             SetResultEntity(
                 sessionId = sessionId,
+                plannedSetId = plannedSetId,
                 workoutSlotId = plannedSet.workoutSlotId,
                 exerciseId = plannedSet.exerciseId,
                 setType = plannedSet.setType,
@@ -141,6 +142,7 @@ private fun SetResult.toEntity(): SetResultEntity =
     SetResultEntity(
         id = id,
         sessionId = sessionId,
+        plannedSetId = plannedSetId,
         workoutSlotId = workoutSlotId,
         exerciseId = exerciseId,
         setType = setType,
@@ -152,6 +154,7 @@ private fun SetResultEntity.toDomain(): SetResult =
     SetResult(
         id = id,
         sessionId = sessionId,
+        plannedSetId = plannedSetId,
         workoutSlotId = workoutSlotId,
         exerciseId = exerciseId,
         setType = setType,

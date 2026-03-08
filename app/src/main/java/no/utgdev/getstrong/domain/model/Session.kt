@@ -10,6 +10,7 @@ data class WorkoutSession(
 data class SetResult(
     val id: Long = 0,
     val sessionId: Long,
+    val plannedSetId: Long? = null,
     val workoutSlotId: Long?,
     val exerciseId: Long,
     val setType: String,
