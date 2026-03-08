@@ -93,7 +93,7 @@ milestones:
         title: Implement workout session engine and flow
         description: Build the execution logic that runs a saved workout in the specified order, including warmups then work sets for each exercise.
         priority: P0
-        status: todo
+        status: done
         acceptance_criteria:
           - User can start any saved workout from the planning list.
           - Session iterates through exercises in the workout, presenting warmup sets first and work sets afterward for each exercise.

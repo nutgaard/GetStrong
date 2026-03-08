@@ -9,6 +9,7 @@ import no.utgdev.getstrong.data.local.dao.WorkoutDao
 import no.utgdev.getstrong.data.local.dao.WorkoutSummaryDao
 import no.utgdev.getstrong.data.local.entity.ExerciseEntity
 import no.utgdev.getstrong.data.local.entity.SetResultEntity
+import no.utgdev.getstrong.data.local.entity.SessionPlannedSetEntity
 import no.utgdev.getstrong.data.local.entity.WorkoutEntity
 import no.utgdev.getstrong.data.local.entity.WorkoutExerciseSlotEntity
 import no.utgdev.getstrong.data.local.entity.WorkoutSessionEntity
@@ -21,9 +22,10 @@ import no.utgdev.getstrong.data.local.entity.WorkoutSummaryEntity
         WorkoutExerciseSlotEntity::class,
         WorkoutSessionEntity::class,
         SetResultEntity::class,
+        SessionPlannedSetEntity::class,
         WorkoutSummaryEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 @TypeConverters(StringListConverters::class)

@@ -14,8 +14,9 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ActiveWorkoutScreen(
-    workoutId: String,
-    onComplete: (String) -> Unit,
+    uiState: ActiveWorkoutUiState,
+    onCompleteSet: () -> Unit,
+    onFinishSession: () -> Unit,
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -27,10 +28,22 @@ fun ActiveWorkoutScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(text = "Active Workout", style = MaterialTheme.typography.headlineMedium)
-        Text(text = "Workout ID: $workoutId")
+        Text(text = "Session ID: ${uiState.sessionId}")
 
-        Button(onClick = { onComplete("session-$workoutId") }) {
-            Text("Complete Session")
+        val currentSet = uiState.currentSet
+        if (currentSet != null) {
+            Text(text = "Current set: ${currentSet.setType} - exercise ${currentSet.exerciseId} - reps ${currentSet.targetReps}")
+            Button(onClick = onCompleteSet) {
+                Text("Complete Current Set")
+            }
+        } else {
+            Text(text = "No pending sets")
+        }
+
+        Text(text = "Completed sets: ${uiState.plannedSets.count { it.isCompleted }} / ${uiState.plannedSets.size}")
+
+        Button(onClick = onFinishSession, enabled = uiState.isCompleted) {
+            Text("Finish Session")
         }
 
         Button(onClick = onExit) {

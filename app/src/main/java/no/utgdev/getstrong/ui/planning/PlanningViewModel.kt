@@ -10,10 +10,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import no.utgdev.getstrong.domain.repository.WorkoutRepository
+import no.utgdev.getstrong.domain.usecase.StartWorkoutSessionUseCase
 
 @HiltViewModel
 class PlanningViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
+    private val startWorkoutSessionUseCase: StartWorkoutSessionUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PlanningUiState())
     val uiState: StateFlow<PlanningUiState> = _uiState.asStateFlow()
@@ -35,4 +37,7 @@ class PlanningViewModel @Inject constructor(
             refresh()
         }
     }
+
+    suspend fun startWorkoutSession(workoutId: Long): Long? =
+        startWorkoutSessionUseCase(workoutId)
 }

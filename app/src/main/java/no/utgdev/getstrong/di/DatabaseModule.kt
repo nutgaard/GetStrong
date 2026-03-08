@@ -17,6 +17,7 @@ import no.utgdev.getstrong.data.local.dao.WorkoutSummaryDao
 import no.utgdev.getstrong.data.local.db.GetStrongDatabase
 import no.utgdev.getstrong.data.local.db.MIGRATION_1_2
 import no.utgdev.getstrong.data.local.db.MIGRATION_2_3
+import no.utgdev.getstrong.data.local.db.MIGRATION_3_4
 import no.utgdev.getstrong.data.seed.ExerciseSeedData
 
 @Module
@@ -32,6 +33,7 @@ object DatabaseModule {
         )
             .addMigrations(MIGRATION_1_2)
             .addMigrations(MIGRATION_2_3)
+            .addMigrations(MIGRATION_3_4)
             .build()
         runBlocking {
             database.withTransaction {

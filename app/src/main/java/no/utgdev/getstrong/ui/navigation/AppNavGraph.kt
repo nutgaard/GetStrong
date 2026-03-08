@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import no.utgdev.getstrong.ui.activeWorkout.ActiveWorkoutScreen
+import no.utgdev.getstrong.ui.activeWorkout.ActiveWorkoutViewModel
 import no.utgdev.getstrong.ui.home.HomeScreen
 import no.utgdev.getstrong.ui.home.HomeViewModel
 import no.utgdev.getstrong.ui.planning.PlanningScreen
@@ -33,7 +34,7 @@ fun AppNavGraph(navController: NavHostController) {
             HomeScreen(
                 uiState = uiState,
                 onOpenPlanning = { navController.navigate(AppDestination.Planning.route) },
-                onStartWorkout = { navController.navigate(AppDestination.ActiveWorkout.route("quick-start")) },
+                onStartWorkout = { navController.navigate(AppDestination.Planning.route) },
                 onRunPersistenceDemo = { homeViewModel.runPersistenceDemo() },
                 onLoadCatalog = { homeViewModel.loadCatalog() },
             )
@@ -42,6 +43,7 @@ fun AppNavGraph(navController: NavHostController) {
         composable(route = AppDestination.Planning.route) {
             val planningViewModel: PlanningViewModel = hiltViewModel()
             val planningUiState by planningViewModel.uiState.collectAsState()
+            val coroutineScope = rememberCoroutineScope()
             LaunchedEffect(Unit) {
                 planningViewModel.refresh()
             }
@@ -58,7 +60,12 @@ fun AppNavGraph(navController: NavHostController) {
                     planningViewModel.deleteWorkout(workoutId)
                 },
                 onStartWorkout = { workoutId ->
-                    navController.navigate(AppDestination.ActiveWorkout.route(workoutId.toString()))
+                    coroutineScope.launch {
+                        val sessionId = planningViewModel.startWorkoutSession(workoutId)
+                        if (sessionId != null) {
+                            navController.navigate(AppDestination.ActiveWorkout.route(sessionId))
+                        }
+                    }
                 },
             )
         }
@@ -89,15 +96,16 @@ fun AppNavGraph(navController: NavHostController) {
 
         composable(
             route = AppDestination.ActiveWorkout.route,
-            arguments = listOf(navArgument(AppDestination.ActiveWorkout.WORKOUT_ID_ARG) { type = NavType.StringType }),
-        ) { backStackEntry ->
-            val workoutId =
-                backStackEntry.arguments?.getString(AppDestination.ActiveWorkout.WORKOUT_ID_ARG).orEmpty()
-
+            arguments = listOf(navArgument(AppDestination.ActiveWorkout.SESSION_ID_ARG) { type = NavType.StringType }),
+        ) {
+            val activeWorkoutViewModel: ActiveWorkoutViewModel = hiltViewModel()
+            val activeUiState by activeWorkoutViewModel.uiState.collectAsState()
             ActiveWorkoutScreen(
-                workoutId = workoutId,
-                onComplete = { sessionId ->
-                    navController.navigate(AppDestination.Summary.route(sessionId))
+                uiState = activeUiState,
+                onCompleteSet = { activeWorkoutViewModel.completeCurrentSet() },
+                onFinishSession = {
+                    activeWorkoutViewModel.finishSession()
+                    navController.navigate(AppDestination.Summary.route(activeUiState.sessionId.toString()))
                 },
                 onExit = {
                     navController.navigate(AppDestination.Home.route) {

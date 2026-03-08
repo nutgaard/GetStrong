@@ -36,3 +36,27 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         )
     }
 }
+
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `session_planned_sets` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `sessionId` INTEGER NOT NULL,
+                `setOrder` INTEGER NOT NULL,
+                `exerciseId` INTEGER NOT NULL,
+                `setType` TEXT NOT NULL,
+                `targetReps` INTEGER NOT NULL,
+                `isCompleted` INTEGER NOT NULL,
+                `completedReps` INTEGER,
+                FOREIGN KEY(`sessionId`) REFERENCES `sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT
+            )
+            """.trimIndent(),
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_session_planned_sets_sessionId` ON `session_planned_sets` (`sessionId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_session_planned_sets_exerciseId` ON `session_planned_sets` (`exerciseId`)")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_session_planned_sets_sessionId_setOrder` ON `session_planned_sets` (`sessionId`, `setOrder`)")
+    }
+}

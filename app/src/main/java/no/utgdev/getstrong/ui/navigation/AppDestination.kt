@@ -13,10 +13,10 @@ sealed class AppDestination(val route: String) {
         }
     }
 
-    data object ActiveWorkout : AppDestination("activeWorkout/{workoutId}") {
-        const val WORKOUT_ID_ARG = "workoutId"
+    data object ActiveWorkout : AppDestination("activeWorkout/{sessionId}") {
+        const val SESSION_ID_ARG = "sessionId"
 
-        fun route(workoutId: String): String = "activeWorkout/$workoutId"
+        fun route(sessionId: Long): String = "activeWorkout/$sessionId"
     }
 
     data object Summary : AppDestination("summary/{sessionId}") {
