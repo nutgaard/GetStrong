@@ -101,6 +101,7 @@ class HomeViewModel @Inject constructor(
                 WorkoutSummary(
                     workoutId = workoutId,
                     sessionId = sessionId,
+                    workoutName = "Demo Pull Workout",
                     totalVolumeKg = 300.0,
                     totalDurationSeconds = 120,
                     completedAtEpochMs = System.currentTimeMillis(),

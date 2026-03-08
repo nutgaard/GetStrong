@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 fun HomeScreen(
     uiState: HomeUiState,
     onOpenPlanning: () -> Unit,
+    onOpenHistory: () -> Unit,
     onStartWorkout: () -> Unit,
     onRunPersistenceDemo: () -> Unit,
     onLoadCatalog: () -> Unit,
@@ -36,6 +37,10 @@ fun HomeScreen(
 
         Button(onClick = onOpenPlanning) {
             Text("Workout Planning")
+        }
+
+        Button(onClick = onOpenHistory) {
+            Text("Workout History")
         }
 
         Button(onClick = onStartWorkout) {

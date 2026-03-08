@@ -3,6 +3,7 @@ package no.utgdev.getstrong.ui.navigation
 sealed class AppDestination(val route: String) {
     data object Home : AppDestination("home")
     data object Planning : AppDestination("planning")
+    data object History : AppDestination("history")
     data object PlanningEditor : AppDestination("planning/editor/{workoutId}") {
         const val WORKOUT_ID_ARG = "workoutId"
         const val NEW_WORKOUT_TOKEN = "new"

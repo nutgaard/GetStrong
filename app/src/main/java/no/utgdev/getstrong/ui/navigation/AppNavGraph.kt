@@ -13,6 +13,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import no.utgdev.getstrong.ui.activeWorkout.ActiveWorkoutScreen
 import no.utgdev.getstrong.ui.activeWorkout.ActiveWorkoutViewModel
+import no.utgdev.getstrong.ui.history.HistoryScreen
+import no.utgdev.getstrong.ui.history.HistoryViewModel
 import no.utgdev.getstrong.ui.home.HomeScreen
 import no.utgdev.getstrong.ui.home.HomeViewModel
 import no.utgdev.getstrong.ui.planning.PlanningScreen
@@ -35,9 +37,19 @@ fun AppNavGraph(navController: NavHostController) {
             HomeScreen(
                 uiState = uiState,
                 onOpenPlanning = { navController.navigate(AppDestination.Planning.route) },
+                onOpenHistory = { navController.navigate(AppDestination.History.route) },
                 onStartWorkout = { navController.navigate(AppDestination.Planning.route) },
                 onRunPersistenceDemo = { homeViewModel.runPersistenceDemo() },
                 onLoadCatalog = { homeViewModel.loadCatalog() },
+            )
+        }
+
+        composable(route = AppDestination.History.route) {
+            val historyViewModel: HistoryViewModel = hiltViewModel()
+            val historyUiState by historyViewModel.uiState.collectAsState()
+            HistoryScreen(
+                uiState = historyUiState,
+                onBack = { navController.popBackStack() },
             )
         }
 

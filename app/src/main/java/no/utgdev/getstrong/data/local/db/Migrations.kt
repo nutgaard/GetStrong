@@ -112,3 +112,25 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
         )
     }
 }
+
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE workout_summaries ADD COLUMN workoutName TEXT NOT NULL DEFAULT ''",
+        )
+        db.execSQL(
+            """
+            DELETE FROM workout_summaries
+            WHERE id NOT IN (
+                SELECT MIN(id)
+                FROM workout_summaries
+                GROUP BY sessionId
+            )
+            """.trimIndent(),
+        )
+        db.execSQL("DROP INDEX IF EXISTS index_workout_summaries_sessionId")
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS index_workout_summaries_sessionId ON workout_summaries(sessionId)",
+        )
+    }
+}

@@ -216,7 +216,7 @@ milestones:
         title: Persist workout summaries for history
         description: Store workout summaries locally for future analytics and charting.
         priority: P0
-        status: todo
+        status: done
         acceptance_criteria:
           - Workout summaries are saved via the persistence layer at session completion.
           - Summaries remain available across app restarts.

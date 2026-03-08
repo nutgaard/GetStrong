@@ -13,4 +13,7 @@ interface WorkoutSummaryDao {
 
     @Query("SELECT * FROM workout_summaries ORDER BY completedAtEpochMs DESC")
     suspend fun getAllSummaries(): List<WorkoutSummaryEntity>
+
+    @Query("SELECT * FROM workout_summaries WHERE sessionId = :sessionId LIMIT 1")
+    suspend fun getSummaryBySessionId(sessionId: Long): WorkoutSummaryEntity?
 }
