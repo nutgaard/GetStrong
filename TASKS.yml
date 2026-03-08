@@ -1,2 +1,797 @@
 version: 1
-tasks: []
+tasks:
+  - id: T1
+    title: Android project setup and base architecture
+    description: Create the Android project, establish base architecture (e.g., MVVM
+      with UseCases/Repositories), navigation structure, and dependency
+      injection setup suitable for the workout and progression features
+      described in the PRD.
+    priority: P0
+    status: ready
+    depends_on: []
+    acceptance_criteria:
+      - Android project builds and runs a placeholder screen on a
+        device/emulator.
+      - Navigation framework is configured (e.g., single-activity with
+        navigation component or equivalent).
+      - Basic module/package structure exists for domain, data, and UI layers.
+      - Dependency injection mechanism is in place and verifiable with a simple
+        injected dependency.
+      - Unit test framework is configured and runs at least one sample test.
+    constraints:
+      - Use an architecture that cleanly separates domain logic (progression,
+        warmups) from UI.
+      - Set up project with offline-only assumptions (no network dependencies).
+    expected_files:
+      - app/build.gradle
+      - app/src/main/AndroidManifest.xml
+      - app/src/main/java/.../MainActivity.kt
+      - app/src/main/java/.../di/AppModule.kt
+      - app/src/test/java/.../ExampleUnitTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: architect
+  - id: T2
+    title: Define domain models and progression enums
+    description: Design and implement core domain models representing exercises,
+      workouts, sets, sessions, progression settings, and warmup sets, including
+      progression modes and default prescriptions described in the PRD.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T1
+    acceptance_criteria:
+      - "Domain classes exist for at least: Exercise, Workout, WorkoutExercise,
+        SetPlan, SetResult, WorkoutSession, ProgressionConfig, and
+        EquipmentType."
+      - "Progression mode enum includes: weight_only, reps_only,
+        reps_then_weight."
+      - "Defaults are encoded: default progression mode = weight_only, default
+        increment = +2.5 kg, default working set prescription = 5x5 (general)
+        and 1x5 for deadlift."
+      - Models support storing per-exercise progression configuration (mode,
+        increment, rep range, deload percent).
+      - Unit tests cover default behavior (e.g., new exercise gets correct
+        default config).
+    constraints:
+      - Models must be serializable/persistable to a local database.
+      - Design should allow future extension (e.g., adding new progression
+        modes) without breaking existing data.
+    expected_files:
+      - app/src/main/java/.../domain/model/Exercise.kt
+      - app/src/main/java/.../domain/model/Workout.kt
+      - app/src/main/java/.../domain/model/WorkoutExercise.kt
+      - app/src/main/java/.../domain/model/SetPlan.kt
+      - app/src/main/java/.../domain/model/SetResult.kt
+      - app/src/main/java/.../domain/model/WorkoutSession.kt
+      - app/src/main/java/.../domain/model/ProgressionConfig.kt
+      - app/src/main/java/.../domain/model/EquipmentType.kt
+      - app/src/test/java/.../domain/model/DomainDefaultsTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: architect
+  - id: T3
+    title: Local persistence schema for exercises, workouts, and sessions
+    description: Define and implement a local database schema (e.g., Room) for
+      persisting exercises, workout templates, and workout sessions including
+      set-by-set results and progression-related fields.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T1
+      - T2
+    acceptance_criteria:
+      - Database is created on first app run without errors.
+      - "Entities/DAOs (or equivalent) exist for: Exercise, Workout,
+        WorkoutExercise mapping, WorkoutSession, SetResult, and per-exercise
+        progression data."
+      - "Schema supports storing: set targets (planned reps/weight), set results
+        (actual reps/weight), workout start/end timestamps, and
+        progression-related counters (e.g., consecutive failures)."
+      - Basic CRUD operations for each entity are covered by
+        unit/instrumentation tests.
+      - Database versioning/migrations are set up to allow future schema changes.
+    constraints:
+      - All persistence must be fully offline; no remote sync assumptions.
+      - Schema must support querying history per exercise for progression and
+        deload logic.
+    expected_files:
+      - app/src/main/java/.../data/db/AppDatabase.kt
+      - app/src/main/java/.../data/db/entities/ExerciseEntity.kt
+      - app/src/main/java/.../data/db/entities/WorkoutEntity.kt
+      - app/src/main/java/.../data/db/entities/WorkoutExerciseEntity.kt
+      - app/src/main/java/.../data/db/entities/WorkoutSessionEntity.kt
+      - app/src/main/java/.../data/db/entities/SetResultEntity.kt
+      - app/src/main/java/.../data/db/dao/ExerciseDao.kt
+      - app/src/main/java/.../data/db/dao/WorkoutDao.kt
+      - app/src/main/java/.../data/db/dao/WorkoutSessionDao.kt
+      - app/src/androidTest/java/.../data/db/DatabaseSmokeTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T4
+    title: Seed offline exercise catalog with 50 exercises
+    description: Implement a local, offline catalog of at least 50 common exercises,
+      each with primary/secondary muscle groups and equipment type, and ensure
+      it is seeded on first run.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T2
+      - T3
+    acceptance_criteria:
+      - At least 50 distinct exercises are defined with names, primary muscle
+        group, optional secondary muscle group, and equipment type (e.g.,
+        barbell, dumbbell, machine, bodyweight).
+      - On first launch, the exercise table is populated with this catalog if
+        empty, without duplicating entries on subsequent launches.
+      - Catalog remains available offline with no network used.
+      - Automated test verifies that the database contains at least 50 exercises
+        after initial seeding.
+    constraints:
+      - Exercise definitions must be stored locally (e.g., as seed migration,
+        JSON asset, or code list).
+      - EquipmentType values must align with warmup and load rounding logic
+        (barbell vs dumbbell vs machine).
+    expected_files:
+      - app/src/main/java/.../data/seeding/ExerciseSeedData.kt
+      - app/src/main/java/.../data/seeding/ExerciseSeeder.kt
+      - app/src/main/res/raw/exercises.json (optional)
+      - app/src/androidTest/java/.../data/seeding/ExerciseSeedingTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T5
+    title: Repository layer for exercises, workouts, and sessions
+    description: Create repository interfaces and implementations that coordinate
+      DAOs and expose use-case-friendly methods for managing exercises,
+      workouts, and workout sessions, hiding database details from UI and domain
+      logic.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T3
+      - T4
+    acceptance_criteria:
+      - "Repositories exist for at least: ExerciseRepository, WorkoutRepository,
+        WorkoutSessionRepository."
+      - "Repositories expose methods for: listing exercises,
+        creating/updating/deleting workouts, fetching workout templates with
+        ordered exercises, creating/updating workout sessions, and retrieving
+        past sessions by exercise."
+      - Unit tests verify that repositories correctly map between domain models
+        and DB entities.
+      - No UI layer accesses DAOs directly; all go through repositories.
+    constraints:
+      - Repository APIs should be asynchronous where appropriate (e.g.,
+        coroutines/Flows).
+    expected_files:
+      - app/src/main/java/.../domain/repository/ExerciseRepository.kt
+      - app/src/main/java/.../domain/repository/WorkoutRepository.kt
+      - app/src/main/java/.../domain/repository/WorkoutSessionRepository.kt
+      - app/src/main/java/.../data/repository/ExerciseRepositoryImpl.kt
+      - app/src/main/java/.../data/repository/WorkoutRepositoryImpl.kt
+      - app/src/main/java/.../data/repository/WorkoutSessionRepositoryImpl.kt
+      - app/src/test/java/.../data/repository/WorkoutRepositoryImplTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T6
+    title: Workout list screen (view, start, edit, delete)
+    description: Implement a screen that lists saved workouts by name, allows
+      creating a new workout, starting an existing workout, editing a workout,
+      and deleting a workout.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T1
+      - T5
+    acceptance_criteria:
+      - "Screen shows a scrollable list of all saved workouts (minimum: can
+        handle at least 3)."
+      - User can tap a workout to start it, navigating to the workout execution
+        flow (even if execution UI is initially stubbed).
+      - User can create a new workout via a clear action (e.g., FAB/button),
+        navigating to a workout editor screen.
+      - User can long-press or use a menu to delete a workout, with a
+        confirmation step.
+      - After deleting a workout, it no longer appears in the list and is
+        removed from persistence.
+      - Basic empty state is shown when no workouts exist.
+    constraints:
+      - UI should be optimized for one-handed use (large tap targets, minimal
+        clutter).
+    expected_files:
+      - app/src/main/java/.../ui/workouts/WorkoutListViewModel.kt
+      - app/src/main/java/.../ui/workouts/WorkoutListScreen.kt or
+        fragment/layout XML
+      - app/src/main/res/layout/item_workout.xml
+      - app/src/androidTest/java/.../ui/workouts/WorkoutListScreenTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T7
+    title: "Workout editor: create and edit workouts with ordered exercises"
+    description: Build a workout editor screen that lets users create and modify
+      workouts, assign a name, and add, reorder, or remove exercises from the
+      workout using the exercise catalog.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T4
+      - T5
+      - T6
+    acceptance_criteria:
+      - User can set or change a workout name.
+      - User can add exercises to a workout from the catalog via a picker UI.
+      - Exercises in a workout are displayed in the configured order and can be
+        reordered (e.g., drag-and-drop or simple move-up/down controls).
+      - User can remove an exercise from the workout.
+      - On save, workout and its ordered exercises are persisted and appear
+        correctly in the workout list screen.
+      - Validation prevents saving a workout without a name or with zero
+        exercises (or shows a clear warning/behavior).
+    constraints:
+      - Editor interactions should require minimal taps where possible.
+      - Editor must use the offline exercise catalog (no network).
+    expected_files:
+      - app/src/main/java/.../ui/workouteditor/WorkoutEditorViewModel.kt
+      - app/src/main/java/.../ui/workouteditor/WorkoutEditorScreen.kt or
+        fragment/layout XML
+      - app/src/main/res/layout/item_workout_exercise_editable.xml
+      - app/src/androidTest/java/.../ui/workouteditor/WorkoutEditorFlowTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T8
+    title: Exercise catalog picker UI
+    description: Implement a reusable UI component/screen for browsing and selecting
+      exercises from the built-in catalog when building or editing workouts.
+    priority: P1
+    status: backlog
+    depends_on:
+      - T4
+      - T5
+      - T7
+    acceptance_criteria:
+      - User can see a list of catalog exercises with names and optionally
+        primary muscle group or equipment type.
+      - User can search or filter exercises by name (basic text search).
+      - Picking an exercise returns it to the caller (e.g., workout editor) and
+        closes the picker.
+      - Multiple selections in one session are supported (if used that way by
+        the editor).
+      - Catalog data shown comes from the local database/repository, not
+        hardcoded UI lists.
+    constraints:
+      - Design should support reuse in future features (e.g., quick exercise
+        replacement in workouts).
+    expected_files:
+      - app/src/main/java/.../ui/exercisepicker/ExercisePickerViewModel.kt
+      - app/src/main/java/.../ui/exercisepicker/ExercisePickerScreen.kt or
+        fragment/layout XML
+      - app/src/main/res/layout/item_exercise_catalog.xml
+      - app/src/androidTest/java/.../ui/exercisepicker/ExercisePickerTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T9
+    title: Warmup generation engine with deterministic heuristics
+    description: Implement warmup set generation logic based on working weight,
+      equipment type, and the heuristic rules defined in the PRD, including
+      proper load rounding and deterministic output.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T2
+    acceptance_criteria:
+      - Function(s) exist that, given working weight and equipment type, return
+        a list of warmup sets (weights and reps) according to the specified
+        heuristic ranges (<20, 20–79.9, 80–119.9, ≥120 kg).
+      - Barbell warmup loads are rounded to the nearest 2.5 kg total;
+        dumbbell/machine loads to nearest available increment (default 1.0 kg).
+      - If working weight < 20 kg, at least one warmup set at ~55% (min 5 kg,
+        rounded) is generated.
+      - "Example cases from PRD are covered in tests: 9 kg lateral raise
+        includes 5 kg warmup; 140 kg deadlift includes ~60, 80, 100, 120, 130 kg
+        warmups."
+      - "Output is deterministic: given same inputs, the same warmup sequence is
+        always returned."
+      - Unit tests cover boundary conditions around heuristic thresholds (19.9,
+        20.0, 79.9, 80.0, 119.9, 120.0 kg).
+    constraints:
+      - No online lookup is allowed; all logic must be local and deterministic.
+      - Design should allow customizing available increments per equipment type
+        in future.
+    expected_files:
+      - app/src/main/java/.../domain/warmup/WarmupGenerator.kt
+      - app/src/main/java/.../domain/warmup/WarmupHeuristics.kt
+      - app/src/test/java/.../domain/warmup/WarmupGeneratorTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T10
+    title: Timer infrastructure for workout elapsed time and rest timer
+    description: Implement reusable timer utilities to track workout elapsed time
+      and rest intervals between work sets, including default rest duration and
+      a configurable setting.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T1
+    acceptance_criteria:
+      - A timer service or class can start, pause, resume, and stop a generic
+        countdown timer for rest periods.
+      - Default rest duration is set to 3 minutes and is used when user has not
+        customized the value.
+      - User-configurable rest duration is persisted and applied to new rest
+        timers.
+      - Workout elapsed timer starts at workout start and stops at workout
+        completion, tracking total duration.
+      - Unit tests verify timer behavior (start/stop, countdown, correct
+        remaining time calculations).
+    constraints:
+      - Timers should be resilient to app going to background (e.g., not solely
+        relying on in-memory counters).
+    expected_files:
+      - app/src/main/java/.../domain/timer/RestTimerManager.kt
+      - app/src/main/java/.../domain/timer/WorkoutElapsedTimer.kt
+      - app/src/test/java/.../domain/timer/RestTimerManagerTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T11
+    title: Rest timer completion sound notification
+    description: Add sound notification behavior for rest timer completion that
+      plays when the rest interval ends, respecting Android audio APIs.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T10
+    acceptance_criteria:
+      - When a rest timer reaches zero, a sound is played exactly once per rest
+        cycle.
+      - Rest timer sound works when the app is in foreground and when the screen
+        is off, as long as OS allows it.
+      - User can clearly distinguish that rest is over from the sound (e.g.,
+        using a simple system alert sound).
+      - Implementation uses standard Android mechanisms for playing short sounds
+        (e.g., MediaPlayer/SoundPool/Notification).
+      - Automated or manual test plan documents how to verify the sound plays on
+        timer completion.
+    constraints:
+      - No network-based media; sound must be bundled or use system notification
+        tones.
+      - Implementation must respect user’s device volume and
+        silent/do-not-disturb modes.
+    expected_files:
+      - app/src/main/java/.../ui/notifications/RestTimerNotificationManager.kt
+      - app/src/main/res/raw/rest_timer_end_sound.* (if bundled)
+      - app/src/main/java/.../domain/timer/RestTimerManager.kt (updated)
+      - docs/testing/RestTimerSoundTestPlan.md
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T12
+    title: "Progression logic: weight_only, reps_only, reps_then_weight"
+    description: Implement progression logic that, given past performance and
+      current settings, determines the next session’s prescription for each
+      exercise according to the three supported progression modes.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T2
+      - T3
+      - T5
+    acceptance_criteria:
+      - "For weight_only mode: when all work sets meet or exceed target reps,
+        next workout’s working weight increases by configured increment; reps
+        remain constant."
+      - "For reps_only mode: within a configured rep range, reps increase when
+        targets are achieved until max reps are reached, then stay or follow
+        defined behavior (no weight increase)."
+      - "For reps_then_weight mode: reps increase within rep range until max,
+        then weight increases by increment and reps reset back to min of the
+        range."
+      - Default increment is +2.5 kg when no override is set.
+      - Unit tests verify progression behavior for each mode across multiple
+        consecutive sessions, including boundaries (e.g., when reaching max
+        reps).
+    constraints:
+      - Progression must operate per exercise; different exercises can use
+        different modes and increments.
+      - Logic should not depend on UI; must be pure domain/service code.
+    expected_files:
+      - app/src/main/java/.../domain/progression/ProgressionCalculator.kt
+      - app/src/test/java/.../domain/progression/ProgressionCalculatorTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T13
+    title: Failure detection and consecutive failure tracking
+    description: Implement logic to determine whether a workout for an exercise is
+      failed based on work set performance and to track consecutive failures per
+      exercise for use in deload logic.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T2
+      - T3
+      - T5
+    acceptance_criteria:
+      - A workout for an exercise is considered failed if any work set is below
+        its target reps, following the PRD rule.
+      - Logic can evaluate a completed WorkoutSession and produce a per-exercise
+        success/fail result.
+      - Consecutive failure counts per exercise are persisted and
+        incremented/reset appropriately across sessions.
+      - Unit tests cover single failure, multiple failures in a row, and reset
+        after a successful session.
+    constraints:
+      - Only work sets (not warmups) contribute to failure logic.
+    expected_files:
+      - app/src/main/java/.../domain/progression/FailureDetector.kt
+      - app/src/main/java/.../domain/progression/FailureTracker.kt
+      - app/src/test/java/.../domain/progression/FailureDetectorTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T14
+    title: Deload logic after 3 consecutive failed workouts
+    description: Implement deload behavior that reduces working weight by a
+      configurable percent after 3 consecutive failed workouts for an exercise,
+      with default of 10%.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T12
+      - T13
+    acceptance_criteria:
+      - Deload is triggered after 3 consecutive failed workouts for a given
+        exercise.
+      - When deload triggers, working weight for next workout is reduced by the
+        configured deload percentage (default 10%) and applied to that
+        exercise’s prescription.
+      - Consecutive failure counter is reset appropriately after a deload or
+        successful workout as designed.
+      - Deload percent is stored per exercise or globally as defined by the
+        domain model, with default 10%.
+      - "Unit tests verify behavior: no deload at 1–2 failures, deload exactly
+        at 3rd consecutive failure, and correct new weight calculation
+        (including rounding behavior if applicable)."
+    constraints:
+      - Deload is applied per exercise independently.
+      - Implementation must not change historical session data; only future
+        prescriptions.
+    expected_files:
+      - app/src/main/java/.../domain/progression/DeloadCalculator.kt
+      - app/src/test/java/.../domain/progression/DeloadCalculatorTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T15
+    title: Workout execution engine and flow ordering
+    description: "Implement a domain-level workout execution engine that
+      orchestrates the guided order of sets during an active workout: warmup
+      sets then work sets for Exercise A, then warmup and work sets for Exercise
+      B, and so on."
+    priority: P0
+    status: backlog
+    depends_on:
+      - T2
+      - T5
+      - T9
+      - T10
+    acceptance_criteria:
+      - Given a workout template and current progression prescription per
+        exercise, the engine generates a full ordered list/stream of sets
+        including warmups and work sets per exercise.
+      - "Execution flow respects order: warmup sets for Exercise A → work sets
+        for Exercise A → warmup sets for Exercise B → work sets for Exercise B,
+        etc."
+      - Engine exposes operations to mark any set (warmup or work) as completed
+        and update its actual reps/weight.
+      - Engine integrates with rest timer logic such that rest timers are
+        started only between work sets, not warmup sets.
+      - Rest timer automatically starts after the last warmup set and before the
+        first work set of each exercise.
+      - Unit tests cover flow ordering, ability to mark any set complete out of
+        order, and correct rest-timer triggers.
+    constraints:
+      - Engine should be UI-agnostic; suitable for use with different UI
+        implementations.
+      - Must allow user to mark sets complete at any time with a single call
+        that UI can map to one tap.
+    expected_files:
+      - app/src/main/java/.../domain/execution/WorkoutExecutionEngine.kt
+      - app/src/main/java/.../domain/execution/ExecutionState.kt
+      - app/src/test/java/.../domain/execution/WorkoutExecutionEngineTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T16
+    title: Workout execution UI with one-tap set completion
+    description: Create the workout execution screen that presents the current
+      exercise and set, supports one-tap completion for any set (warmup or
+      work), shows progression through the workout, and keeps the flow minimal
+      and StrongLifts-like.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T6
+      - T15
+      - T10
+      - T11
+    acceptance_criteria:
+      - Execution screen shows current exercise, set number, target reps, and
+        weight clearly.
+      - User can mark the current set as completed with a single tap (e.g.,
+        large primary button).
+      - User can access and mark any warmup or work set as completed with one
+        tap (e.g., via list or simple navigation) without complex dialogs.
+      - UI indicates which sets are completed vs pending.
+      - Rest timer status (remaining time) is visible during work set rest
+        periods, and a clear indication is shown when rest is active vs not
+        active.
+      - Flow advances automatically or with minimal taps to the next set after
+        completion, aligned with the execution engine state.
+    constraints:
+      - Design must prioritize one-handed operation and minimal clutter.
+      - Screen should be resilient to rotation or process death (state restored
+        from execution engine/state store).
+    expected_files:
+      - app/src/main/java/.../ui/execution/WorkoutExecutionViewModel.kt
+      - app/src/main/java/.../ui/execution/WorkoutExecutionScreen.kt or
+        fragment/layout XML
+      - app/src/main/res/layout/item_execution_set_row.xml
+      - app/src/androidTest/java/.../ui/execution/WorkoutExecutionUITest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T17
+    title: Workout summary calculation and display
+    description: Implement logic and UI to compute and display a summary at workout
+      completion, including reps achieved per set, total lifted volume, and
+      total workout time.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T10
+      - T15
+    acceptance_criteria:
+      - "When a workout is completed, the app computes for each exercise: list
+        of sets with target vs actual reps and weight."
+      - Total lifted volume (e.g., sum of weight × reps over all work and
+        optionally warmup sets, as defined) is calculated and clearly shown.
+      - Total workout time is derived from workout elapsed timer start/stop
+        timestamps and displayed.
+      - Summary screen lists exercises in workout order, with sets grouped under
+        each exercise.
+      - Unit tests validate summary calculation given sample sessions.
+    constraints:
+      - Workout summary must be generated locally with no network usage.
+    expected_files:
+      - app/src/main/java/.../domain/summary/WorkoutSummaryCalculator.kt
+      - app/src/main/java/.../ui/summary/WorkoutSummaryViewModel.kt
+      - app/src/main/java/.../ui/summary/WorkoutSummaryScreen.kt or
+        fragment/layout XML
+      - app/src/test/java/.../domain/summary/WorkoutSummaryCalculatorTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T18
+    title: Persist workout summaries for later history
+    description: Ensure that workout summaries, including per-set results and
+      aggregate metrics, are persisted and can be retrieved later for basic
+      history views and future analytics/charts.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T3
+      - T5
+      - T17
+    acceptance_criteria:
+      - Completed workout sessions, with all set results and computed summary
+        fields (volume, total time), are saved to the local database.
+      - On app restart, users can access past workout sessions from a simple
+        history list or from exercises (even if full charts are out of scope).
+      - Persistence is verified by killing and restarting the app and confirming
+        past summaries are still available.
+      - Tests verify that summary-related fields are correctly written to and
+        read from persistence.
+    constraints:
+      - Charts and advanced analytics UI are out of scope, but the underlying
+        data must be present for future use.
+    expected_files:
+      - app/src/main/java/.../data/db/entities/WorkoutSessionEntity.kt (updated
+        with summary fields if needed)
+      - app/src/main/java/.../domain/history/WorkoutHistoryRepository.kt (or
+        extension of existing)
+      - app/src/main/java/.../ui/history/WorkoutHistoryScreen.kt or
+        fragment/layout XML
+      - app/src/androidTest/java/.../ui/history/WorkoutHistoryPersistenceTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T19
+    title: Per-exercise progression configuration UI
+    description: Create UI to configure progression settings per exercise within a
+      workout (or exercise detail), including progression mode, increment, rep
+      range, and deload percent, using sensible defaults.
+    priority: P1
+    status: backlog
+    depends_on:
+      - T2
+      - T5
+      - T7
+      - T12
+      - T14
+    acceptance_criteria:
+      - User can view current progression settings for an exercise (mode,
+        increment, rep range, deload percent).
+      - User can change progression mode between weight_only, reps_only, and
+        reps_then_weight.
+      - User can adjust increment (e.g., 1 kg, 2.5 kg, 5 kg) and rep range
+        within reasonable bounds.
+      - Deload percent is viewable and editable (defaulting to 10%).
+      - Changes are persisted and used by progression and deload logic for
+        subsequent workouts.
+      - UI uses defaults for new exercises when user does not override settings.
+    constraints:
+      - UI should not overwhelm users; consider simple dropdowns and numeric
+        inputs.
+      - Validation should prevent nonsensical values (e.g., negative increments,
+        min reps > max reps).
+    expected_files:
+      - app/src/main/java/.../ui/progression/ExerciseProgressionSettingsViewModel.kt
+      - app/src/main/java/.../ui/progression/ExerciseProgressionSettingsScreen.kt
+        or dialog/layout XML
+      - app/src/androidTest/java/.../ui/progression/ExerciseProgressionSettingsTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T20
+    title: Settings screen for global defaults (rest, increments, deload)
+    description: Implement a settings screen where users can adjust global defaults
+      such as rest timer duration, default weight increment, and default deload
+      percent.
+    priority: P2
+    status: backlog
+    depends_on:
+      - T10
+      - T12
+      - T14
+    acceptance_criteria:
+      - Settings screen is accessible from main navigation or app menu.
+      - User can change default rest duration (used when no per-exercise
+        override exists).
+      - User can change global default increment and deload percent; new
+        workouts/exercises use these values unless overridden per exercise.
+      - Settings changes are persisted across app restarts.
+      - Basic tests verify that changed defaults are read and applied in
+        relevant logic (e.g., new progression configs).
+    constraints:
+      - Settings storage may use shared preferences or a similar key–value
+        store; no cloud sync.
+    expected_files:
+      - app/src/main/java/.../ui/settings/SettingsViewModel.kt
+      - app/src/main/java/.../ui/settings/SettingsScreen.kt or fragment/layout
+        XML
+      - app/src/main/java/.../data/settings/UserSettingsStore.kt
+      - app/src/test/java/.../data/settings/UserSettingsStoreTest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T21
+    title: Keep screen awake during active workout
+    description: Ensure the device screen remains awake during an active workout
+      session and returns to normal behavior when the workout ends or user
+      leaves the execution screen.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T6
+      - T16
+    acceptance_criteria:
+      - While on the workout execution screen during an active session, the
+        screen does not dim or lock due to inactivity (within OS limits).
+      - When the workout is completed or user exits the execution screen, normal
+        screen timeout behavior is restored.
+      - Implementation uses appropriate Android flags (e.g., window flags or
+        setKeepScreenOn) without leaking the behavior to other screens.
+      - Manual test steps document how to verify screen behavior over a period
+        longer than device’s normal timeout.
+    constraints:
+      - Avoid using a foreground service unless necessary; prefer view-level
+        keep-awake mechanisms.
+    expected_files:
+      - app/src/main/java/.../ui/execution/WorkoutExecutionActivityOrFragment.kt
+        (screen-on flag)
+      - docs/testing/ScreenAwakeTestPlan.md
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T22
+    title: Basic workout history list UI
+    description: Create a simple UI to list past completed workouts so users can
+      revisit summaries, satisfying the requirement that summaries persist and
+      can be used for later analytics.
+    priority: P1
+    status: backlog
+    depends_on:
+      - T18
+    acceptance_criteria:
+      - Screen shows a list of past workout sessions with at least workout name
+        and completion date/time.
+      - Tapping a past workout opens its saved summary view.
+      - History persists across app restarts (data from DB).
+      - Empty state is shown when no history is available.
+      - Simple sorting by most recent first is implemented.
+    constraints:
+      - No graphs or advanced analytics in MVP; focus on list + detail
+        navigation.
+    expected_files:
+      - app/src/main/java/.../ui/history/WorkoutHistoryViewModel.kt
+      - app/src/main/java/.../ui/history/WorkoutHistoryScreen.kt or
+        fragment/layout XML
+      - app/src/main/res/layout/item_workout_history.xml
+      - app/src/androidTest/java/.../ui/history/WorkoutHistoryUITest.kt
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: implementer
+  - id: T23
+    title: End-to-end MVP acceptance test pass
+    description: Validate the implemented app against the PRD acceptance criteria
+      with a combination of automated tests and a documented manual test run,
+      marking MVP scope complete when all criteria are met.
+    priority: P0
+    status: backlog
+    depends_on:
+      - T6
+      - T7
+      - T9
+      - T10
+      - T11
+      - T12
+      - T13
+      - T14
+      - T15
+      - T16
+      - T17
+      - T18
+      - T21
+    acceptance_criteria:
+      - Workouts are persisted across app restarts (verified by creating
+        workouts, restarting app, and confirming they remain).
+      - Workout summaries are persisted across app restarts and accessible from
+        history or equivalent UI.
+      - User can create at least 3 different workouts and run any of them from
+        the workout list.
+      - During an active workout, app presents guided exercise flow (warmups
+        then work sets per exercise) as specified.
+      - User can mark any warmup or work set complete at any time with one tap
+        from execution UI.
+      - Rest timer defaults to 3 minutes, is configurable, and plays a sound
+        when done.
+      - Warmup sets are auto-generated deterministically from working weight and
+        match heuristic rules (verified via tests and manual spot-checks).
+      - Progression mode is configurable per exercise (or defaults correctly),
+        and defaults are applied for new exercises.
+      - Deload is triggered after 3 consecutive failed workouts per exercise
+        using configured percent (default 10%), verified with controlled test
+        data.
+      - Workout summary displays reps per set, total volume, and elapsed time at
+        completion.
+      - Screen remains awake during active workout sessions as described in the
+        PRD.
+      - A short test report is produced summarizing the results and any known
+        deviations (should be zero or explicitly justified).
+    constraints:
+      - Focus on MVP scope only; do not expand scope for this task.
+      - Where automation is not feasible, provide clear manual test steps.
+    expected_files:
+      - app/src/androidTest/java/.../acceptance/MvpAcceptanceTest.kt
+      - docs/testing/MVPAcceptanceReport.md
+    blocked_reason: ""
+    pr_url: ""
+    owner_role: verifier
