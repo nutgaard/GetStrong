@@ -20,11 +20,21 @@ milestones:
         title: Choose and wire persistence mechanism
         description: Select and integrate a local persistence solution (e.g., Room/SQL, DataStore) for workouts, exercises, and workout summaries.
         priority: P0
-        status: todo
+        status: done
         acceptance_criteria:
           - Persistence layer is implemented behind clear interfaces usable by feature modules.
           - Data for workouts, exercises, and summaries can be saved and retrieved in a simple demo flow.
           - Solution requires no network or cloud services.
+
+      - id: T21
+        title: Harden persistence with transactions and tests
+        description: Ensure multi-step persistence operations use transactions and add targeted automated tests for core Room/DataStore flows.
+        priority: P1
+        status: todo
+        acceptance_criteria:
+          - Multi-entity writes such as saveWorkout run inside a Room transaction so partial failures do not leave inconsistent state.
+          - At least one automated test verifies that saveWorkout either fully applies or fully rolls back changes on error.
+          - At least one automated test verifies basic read/write behavior for a key entity (e.g., workout or exercise) through the repository layer, not direct DAOs.
 
   - id: M2
     name: Exercise Catalog
@@ -35,7 +45,7 @@ milestones:
         title: Define exercise data model and storage
         description: Design the model for exercises including primary/secondary muscle groups and equipment type, and store it locally.
         priority: P0
-        status: todo
+        status: done
         acceptance_criteria:
           - Exercise entity includes name, primary_muscle_group, secondary_muscle_groups (optional), and equipment_type.
           - Data model is persisted via the chosen persistence layer.

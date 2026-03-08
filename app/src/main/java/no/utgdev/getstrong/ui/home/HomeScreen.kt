@@ -14,8 +14,10 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun HomeScreen(
+    uiState: HomeUiState,
     onOpenPlanning: () -> Unit,
     onStartWorkout: () -> Unit,
+    onRunPersistenceDemo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -35,5 +37,14 @@ fun HomeScreen(
         Button(onClick = onStartWorkout) {
             Text("Start Active Workout")
         }
+
+        Button(
+            onClick = onRunPersistenceDemo,
+            enabled = !uiState.isRunningDemo,
+        ) {
+            Text(if (uiState.isRunningDemo) "Running..." else "Run Persistence Demo")
+        }
+
+        Text(text = uiState.demoResultMessage)
     }
 }

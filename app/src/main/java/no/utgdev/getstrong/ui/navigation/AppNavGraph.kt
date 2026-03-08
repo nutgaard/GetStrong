@@ -1,6 +1,9 @@
 package no.utgdev.getstrong.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -8,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import no.utgdev.getstrong.ui.activeWorkout.ActiveWorkoutScreen
 import no.utgdev.getstrong.ui.home.HomeScreen
+import no.utgdev.getstrong.ui.home.HomeViewModel
 import no.utgdev.getstrong.ui.planning.PlanningScreen
 import no.utgdev.getstrong.ui.summary.SummaryScreen
 
@@ -18,9 +22,13 @@ fun AppNavGraph(navController: NavHostController) {
         startDestination = AppDestination.Home.route,
     ) {
         composable(route = AppDestination.Home.route) {
+            val homeViewModel: HomeViewModel = hiltViewModel()
+            val uiState by homeViewModel.uiState.collectAsState()
             HomeScreen(
+                uiState = uiState,
                 onOpenPlanning = { navController.navigate(AppDestination.Planning.route) },
                 onStartWorkout = { navController.navigate(AppDestination.ActiveWorkout.route("quick-start")) },
+                onRunPersistenceDemo = { homeViewModel.runPersistenceDemo() },
             )
         }
 
