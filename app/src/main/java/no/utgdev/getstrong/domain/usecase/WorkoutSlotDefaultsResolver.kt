@@ -14,7 +14,12 @@ data class WorkoutSlotDefaults(
 )
 
 class WorkoutSlotDefaultsResolver @Inject constructor() {
-    fun resolve(exerciseName: String): WorkoutSlotDefaults {
+    fun resolve(
+        exerciseName: String,
+        defaultProgressionMode: String,
+        defaultIncrementKg: Double,
+        defaultDeloadPercent: Int,
+    ): WorkoutSlotDefaults {
         val isDeadlift = exerciseName.contains("deadlift", ignoreCase = true)
         return if (isDeadlift) {
             WorkoutSlotDefaults(
@@ -22,9 +27,9 @@ class WorkoutSlotDefaultsResolver @Inject constructor() {
                 targetReps = 5,
                 repRangeMin = 5,
                 repRangeMax = 5,
-                progressionMode = ProgressionModeCode.WEIGHT_ONLY,
-                incrementKg = 2.5,
-                deloadPercent = 10,
+                progressionMode = normalizeProgressionMode(defaultProgressionMode),
+                incrementKg = defaultIncrementKg,
+                deloadPercent = defaultDeloadPercent,
             )
         } else {
             WorkoutSlotDefaults(
@@ -32,10 +37,19 @@ class WorkoutSlotDefaultsResolver @Inject constructor() {
                 targetReps = 5,
                 repRangeMin = 5,
                 repRangeMax = 5,
-                progressionMode = ProgressionModeCode.WEIGHT_ONLY,
-                incrementKg = 2.5,
-                deloadPercent = 10,
+                progressionMode = normalizeProgressionMode(defaultProgressionMode),
+                incrementKg = defaultIncrementKg,
+                deloadPercent = defaultDeloadPercent,
             )
         }
     }
+
+    private fun normalizeProgressionMode(mode: String): String =
+        when (mode) {
+            ProgressionModeCode.WEIGHT_ONLY,
+            ProgressionModeCode.REPS_ONLY,
+            ProgressionModeCode.REPS_THEN_WEIGHT,
+            -> mode
+            else -> ProgressionModeCode.WEIGHT_ONLY
+        }
 }

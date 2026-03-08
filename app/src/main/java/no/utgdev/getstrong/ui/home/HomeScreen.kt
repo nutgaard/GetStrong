@@ -23,6 +23,7 @@ fun HomeScreen(
     uiState: HomeUiState,
     onOpenPlanning: () -> Unit,
     onOpenHistory: () -> Unit,
+    onOpenSettings: () -> Unit,
     onStartWorkout: () -> Unit,
     onRunPersistenceDemo: () -> Unit,
     onLoadCatalog: () -> Unit,
@@ -60,6 +61,14 @@ fun HomeScreen(
                         .heightIn(min = 52.dp),
                 ) {
                     Text("Workout History")
+                }
+                Button(
+                    onClick = onOpenSettings,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 52.dp),
+                ) {
+                    Text("Settings")
                 }
             }
         },

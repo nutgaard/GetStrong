@@ -7,10 +7,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import no.utgdev.getstrong.domain.model.SessionPlannedSet
@@ -148,9 +148,8 @@ class ActiveWorkoutViewModel @Inject constructor(
 
     private fun observeSettings() {
         viewModelScope.launch {
-            settingsRepository.settings.collectLatest { settings ->
-                _uiState.update { it.copy(restDurationSeconds = settings.restDurationSeconds) }
-            }
+            val settings = settingsRepository.settings.first()
+            _uiState.update { it.copy(restDurationSeconds = settings.restDurationSeconds) }
         }
     }
 

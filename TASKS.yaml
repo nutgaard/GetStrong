@@ -245,3 +245,36 @@ milestones:
           - Current exercise and set information is visually dominant on the active workout screen.
           - Non-essential information (history, charts, settings) is not shown during active workouts.
           - Users in tests can identify and complete the current set without confusion.
+
+  - id: M10
+    name: Settings & Accessibility Polish
+    description: Expose key training settings and improve accessibility/usability across core flows.
+    priority: P2
+    tasks:
+      - id: T22
+        title: Expose training settings UI
+        description: Add UI to configure rest duration, default increments, default progression mode, and deload percent, wiring them through existing settings and progression models.
+        priority: P1
+        status: done
+        acceptance_criteria:
+          - User can change default rest duration and see it reflected in new sessions.
+          - User can adjust default weight increment and deload percent, and progression logic uses the updated values.
+          - User can choose a default progression mode for new exercises/workouts.
+      - id: T23
+        title: Accessibility and TalkBack pass
+        description: Improve accessibility labels, focus order, and contrast on Home, Planning, Active Workout, and Summary screens.
+        priority: P2
+        status: todo
+        acceptance_criteria:
+          - Core controls on the four key screens have meaningful content descriptions for TalkBack.
+          - Focus order allows completing a workout via keyboard/TalkBack without getting stuck.
+          - Color and typography choices meet basic contrast/readability expectations.
+      - id: T24
+        title: Error and empty state UX
+        description: Add clear empty and error states for workouts, exercise catalog, and history lists.
+        priority: P2
+        status: todo
+        acceptance_criteria:
+          - When there are no workouts, exercises, or history entries, users see contextual empty-state messaging with a clear next action.
+          - Common data/load errors show user-friendly messages instead of silent failures or crashes.
+          - QA can intentionally simulate a repository error and observe a non-crashing, understandable error state in the UI.

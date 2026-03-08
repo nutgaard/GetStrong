@@ -15,11 +15,13 @@ class SettingsRepositoryImpl @Inject constructor(
         restDurationSeconds: Int,
         loadIncrementKg: Double,
         deloadPercent: Int,
+        defaultProgressionMode: String,
     ) {
         settingsStore.updateDefaults(
             restDurationSeconds = restDurationSeconds,
             loadIncrementKg = loadIncrementKg,
             deloadPercent = deloadPercent,
+            defaultProgressionMode = defaultProgressionMode,
         )
     }
 }

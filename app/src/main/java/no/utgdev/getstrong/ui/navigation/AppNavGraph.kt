@@ -21,6 +21,8 @@ import no.utgdev.getstrong.ui.planning.PlanningScreen
 import no.utgdev.getstrong.ui.planning.PlanningViewModel
 import no.utgdev.getstrong.ui.planning.WorkoutEditorScreen
 import no.utgdev.getstrong.ui.planning.WorkoutEditorViewModel
+import no.utgdev.getstrong.ui.settings.SettingsScreen
+import no.utgdev.getstrong.ui.settings.SettingsViewModel
 import no.utgdev.getstrong.ui.summary.SummaryScreen
 import no.utgdev.getstrong.ui.summary.SummaryViewModel
 import kotlinx.coroutines.launch
@@ -38,9 +40,24 @@ fun AppNavGraph(navController: NavHostController) {
                 uiState = uiState,
                 onOpenPlanning = { navController.navigate(AppDestination.Planning.route) },
                 onOpenHistory = { navController.navigate(AppDestination.History.route) },
+                onOpenSettings = { navController.navigate(AppDestination.Settings.route) },
                 onStartWorkout = { navController.navigate(AppDestination.Planning.route) },
                 onRunPersistenceDemo = { homeViewModel.runPersistenceDemo() },
                 onLoadCatalog = { homeViewModel.loadCatalog() },
+            )
+        }
+
+        composable(route = AppDestination.Settings.route) {
+            val settingsViewModel: SettingsViewModel = hiltViewModel()
+            val settingsUiState by settingsViewModel.uiState.collectAsState()
+            SettingsScreen(
+                uiState = settingsUiState,
+                onRestDurationChanged = settingsViewModel::updateRestDurationInput,
+                onIncrementChanged = settingsViewModel::updateIncrementInput,
+                onDeloadPercentChanged = settingsViewModel::updateDeloadInput,
+                onProgressionModeChanged = settingsViewModel::updateProgressionMode,
+                onSave = settingsViewModel::save,
+                onBack = { navController.popBackStack() },
             )
         }
 

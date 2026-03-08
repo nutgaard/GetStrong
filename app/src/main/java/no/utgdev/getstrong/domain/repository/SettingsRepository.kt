@@ -9,5 +9,6 @@ interface SettingsRepository {
         restDurationSeconds: Int,
         loadIncrementKg: Double,
         deloadPercent: Int,
+        defaultProgressionMode: String,
     )
 }

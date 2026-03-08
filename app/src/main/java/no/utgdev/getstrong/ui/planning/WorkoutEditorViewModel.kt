@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 import no.utgdev.getstrong.domain.model.Workout
 import no.utgdev.getstrong.domain.model.WorkoutExerciseSlot
 import no.utgdev.getstrong.domain.repository.ExerciseRepository
+import no.utgdev.getstrong.domain.repository.SettingsRepository
 import no.utgdev.getstrong.domain.repository.WorkoutRepository
 import no.utgdev.getstrong.domain.usecase.WorkoutSlotDefaultsResolver
 import no.utgdev.getstrong.ui.navigation.AppDestination
@@ -22,6 +24,7 @@ class WorkoutEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
+    private val settingsRepository: SettingsRepository,
     private val workoutSlotDefaultsResolver: WorkoutSlotDefaultsResolver,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(WorkoutEditorUiState())
@@ -81,25 +84,33 @@ class WorkoutEditorViewModel @Inject constructor(
         val current = _uiState.value
         val exercise = current.availableExercises.firstOrNull { it.id == exerciseId } ?: return
         val nextPosition = current.slots.size
-        val defaults = workoutSlotDefaultsResolver.resolve(exercise.name)
-        val newSlot = WorkoutSlotDraft(
-            id = 0,
-            exerciseId = exercise.id,
-            exerciseName = exercise.name,
-            position = nextPosition,
-            targetSets = defaults.targetSets,
-            targetReps = defaults.targetReps,
-            repRangeMin = defaults.repRangeMin,
-            repRangeMax = defaults.repRangeMax,
-            progressionMode = defaults.progressionMode,
-            incrementKg = defaults.incrementKg,
-            deloadPercent = defaults.deloadPercent,
-            currentWorkingWeightKg = 0.0,
-            failureStreak = 0,
-            lastProgressionSessionId = null,
-            restSecondsOverride = null,
-        )
-        _uiState.update { it.copy(slots = it.slots + newSlot) }
+        viewModelScope.launch {
+            val settings = settingsRepository.settings.first()
+            val defaults = workoutSlotDefaultsResolver.resolve(
+                exerciseName = exercise.name,
+                defaultProgressionMode = settings.defaultProgressionMode,
+                defaultIncrementKg = settings.loadIncrementKg,
+                defaultDeloadPercent = settings.deloadPercent,
+            )
+            val newSlot = WorkoutSlotDraft(
+                id = 0,
+                exerciseId = exercise.id,
+                exerciseName = exercise.name,
+                position = nextPosition,
+                targetSets = defaults.targetSets,
+                targetReps = defaults.targetReps,
+                repRangeMin = defaults.repRangeMin,
+                repRangeMax = defaults.repRangeMax,
+                progressionMode = defaults.progressionMode,
+                incrementKg = defaults.incrementKg,
+                deloadPercent = defaults.deloadPercent,
+                currentWorkingWeightKg = 0.0,
+                failureStreak = 0,
+                lastProgressionSessionId = null,
+                restSecondsOverride = null,
+            )
+            _uiState.update { it.copy(slots = it.slots + newSlot) }
+        }
     }
 
     fun removeSlot(slotId: Long, position: Int) {

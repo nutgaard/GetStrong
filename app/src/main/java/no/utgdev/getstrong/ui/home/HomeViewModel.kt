@@ -13,12 +13,12 @@ import kotlinx.coroutines.launch
 import no.utgdev.getstrong.domain.model.Exercise
 import no.utgdev.getstrong.domain.model.EquipmentTypeCode
 import no.utgdev.getstrong.domain.model.MuscleGroupCode
+import no.utgdev.getstrong.domain.model.ProgressionModeCode
 import no.utgdev.getstrong.domain.model.SetResult
 import no.utgdev.getstrong.domain.model.Workout
 import no.utgdev.getstrong.domain.model.WorkoutExerciseSlot
 import no.utgdev.getstrong.domain.model.WorkoutSession
 import no.utgdev.getstrong.domain.model.WorkoutSummary
-import no.utgdev.getstrong.domain.model.ProgressionModeCode
 import no.utgdev.getstrong.domain.repository.ExerciseRepository
 import no.utgdev.getstrong.domain.repository.SessionRepository
 import no.utgdev.getstrong.domain.repository.SettingsRepository
@@ -112,6 +112,7 @@ class HomeViewModel @Inject constructor(
                 restDurationSeconds = 180,
                 loadIncrementKg = 2.5,
                 deloadPercent = 10,
+                defaultProgressionMode = ProgressionModeCode.WEIGHT_ONLY,
             )
 
             val loadedExerciseCount = exerciseRepository.getAll().size
