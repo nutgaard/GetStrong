@@ -1,9 +1,0 @@
-{
-  "name": "getstrong",
-  "private": true,
-  "scripts": {
-    "ai": "bun run --cwd ai-harness ai",
-    "ai:test": "bun run --cwd ai-harness test",
-    "ai:typecheck": "bun run --cwd ai-harness typecheck"
-  }
-}
