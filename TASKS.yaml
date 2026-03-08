@@ -30,7 +30,7 @@ milestones:
         title: Harden persistence with transactions and tests
         description: Ensure multi-step persistence operations use transactions and add targeted automated tests for core Room/DataStore flows.
         priority: P1
-        status: todo
+        status: done
         acceptance_criteria:
           - Multi-entity writes such as saveWorkout run inside a Room transaction so partial failures do not leave inconsistent state.
           - At least one automated test verifies that saveWorkout either fully applies or fully rolls back changes on error.

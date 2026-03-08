@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import no.utgdev.getstrong.data.local.entity.WorkoutSummaryEntity
 
 @Dao
@@ -16,4 +17,10 @@ interface WorkoutSummaryDao {
 
     @Query("SELECT * FROM workout_summaries WHERE sessionId = :sessionId LIMIT 1")
     suspend fun getSummaryBySessionId(sessionId: Long): WorkoutSummaryEntity?
+
+    @Transaction
+    suspend fun saveSummaryIdempotent(summary: WorkoutSummaryEntity): Long {
+        val existing = getSummaryBySessionId(summary.sessionId)
+        return upsertSummary(summary.copy(id = existing?.id ?: summary.id))
+    }
 }

@@ -10,10 +10,8 @@ import no.utgdev.getstrong.domain.repository.WorkoutSummaryRepository
 class WorkoutSummaryRepositoryImpl @Inject constructor(
     private val summaryDao: WorkoutSummaryDao,
 ) : WorkoutSummaryRepository {
-    override suspend fun saveSummary(summary: WorkoutSummary): Long {
-        val existing = summaryDao.getSummaryBySessionId(summary.sessionId)
-        return summaryDao.upsertSummary(summary.toEntity(existingId = existing?.id ?: 0L))
-    }
+    override suspend fun saveSummary(summary: WorkoutSummary): Long =
+        summaryDao.saveSummaryIdempotent(summary.toEntity())
 
     override suspend fun getAllSummaries(): List<WorkoutSummary> =
         summaryDao.getAllSummaries().map { it.toDomain() }
@@ -34,9 +32,9 @@ class WorkoutSummaryRepositoryImpl @Inject constructor(
         }
 }
 
-private fun WorkoutSummary.toEntity(existingId: Long): WorkoutSummaryEntity =
+private fun WorkoutSummary.toEntity(): WorkoutSummaryEntity =
     WorkoutSummaryEntity(
-        id = existingId,
+        id = id,
         workoutId = workoutId,
         sessionId = sessionId,
         workoutName = workoutName,
