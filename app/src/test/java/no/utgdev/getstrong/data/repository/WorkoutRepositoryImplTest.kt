@@ -29,6 +29,8 @@ class WorkoutRepositoryImplTest {
                         position = 1,
                         targetSets = 3,
                         targetReps = 8,
+                        repRangeMin = 6,
+                        repRangeMax = 10,
                         progressionMode = ProgressionModeCode.REPS_THEN_WEIGHT,
                         incrementKg = 2.5,
                         deloadPercent = 10,
@@ -40,6 +42,8 @@ class WorkoutRepositoryImplTest {
                         position = 0,
                         targetSets = 5,
                         targetReps = 5,
+                        repRangeMin = 5,
+                        repRangeMax = 5,
                         progressionMode = ProgressionModeCode.WEIGHT_ONLY,
                         incrementKg = 2.5,
                         deloadPercent = 10,
@@ -59,11 +63,15 @@ class WorkoutRepositoryImplTest {
         assertEquals(0, first.position)
         assertEquals(1006, first.exerciseId)
         assertEquals(5, first.targetSets)
+        assertEquals(5, first.repRangeMin)
+        assertEquals(5, first.repRangeMax)
         assertEquals(ProgressionModeCode.WEIGHT_ONLY, first.progressionMode)
 
         assertEquals(1, second.position)
         assertEquals(1015, second.exerciseId)
         assertEquals(3, second.targetSets)
+        assertEquals(6, second.repRangeMin)
+        assertEquals(10, second.repRangeMax)
         assertEquals(120, second.restSecondsOverride)
     }
 
@@ -82,6 +90,8 @@ class WorkoutRepositoryImplTest {
                         position = 0,
                         targetSets = 5,
                         targetReps = 5,
+                        repRangeMin = 5,
+                        repRangeMax = 5,
                         progressionMode = ProgressionModeCode.WEIGHT_ONLY,
                         incrementKg = 2.5,
                         deloadPercent = 10,
@@ -93,6 +103,8 @@ class WorkoutRepositoryImplTest {
                         position = 1,
                         targetSets = 3,
                         targetReps = 8,
+                        repRangeMin = 6,
+                        repRangeMax = 10,
                         progressionMode = ProgressionModeCode.REPS_ONLY,
                         incrementKg = 1.0,
                         deloadPercent = 8,
@@ -112,6 +124,8 @@ class WorkoutRepositoryImplTest {
                         position = 0,
                         targetSets = 4,
                         targetReps = 6,
+                        repRangeMin = 6,
+                        repRangeMax = 8,
                         progressionMode = ProgressionModeCode.WEIGHT_ONLY,
                         incrementKg = 2.5,
                         deloadPercent = 10,

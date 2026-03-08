@@ -60,3 +60,14 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_session_planned_sets_sessionId_setOrder` ON `session_planned_sets` (`sessionId`, `setOrder`)")
     }
 }
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE workout_exercise_slots ADD COLUMN repRangeMin INTEGER NOT NULL DEFAULT 5",
+        )
+        db.execSQL(
+            "ALTER TABLE workout_exercise_slots ADD COLUMN repRangeMax INTEGER NOT NULL DEFAULT 5",
+        )
+    }
+}

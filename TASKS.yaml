@@ -125,7 +125,7 @@ milestones:
         title: Model per-exercise progression settings
         description: Add configuration for each exercise’s progression mode, rep range, weight increment, and deload percent with sensible defaults.
         priority: P0
-        status: todo
+        status: done
         acceptance_criteria:
           - Each exercise in a workout has a progression_mode field supporting weight_only, reps_only, and reps_then_weight.
           - Default progression mode is weight_only with a 2.5 kg increment.

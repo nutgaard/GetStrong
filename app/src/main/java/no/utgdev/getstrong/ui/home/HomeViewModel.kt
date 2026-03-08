@@ -63,6 +63,8 @@ class HomeViewModel @Inject constructor(
                             position = 0,
                             targetSets = 5,
                             targetReps = 5,
+                            repRangeMin = 5,
+                            repRangeMax = 5,
                             progressionMode = ProgressionModeCode.WEIGHT_ONLY,
                             incrementKg = 2.5,
                             deloadPercent = 10,

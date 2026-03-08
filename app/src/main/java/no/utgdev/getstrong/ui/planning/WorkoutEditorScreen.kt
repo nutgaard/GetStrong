@@ -59,7 +59,7 @@ fun WorkoutEditorScreen(
         uiState.slots.forEach { slot ->
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(text = "#${slot.position + 1} ${slot.exerciseName}")
-                Text(text = "${slot.targetSets}x${slot.targetReps} ${slot.progressionMode}")
+                Text(text = "${slot.targetSets}x${slot.targetReps} range ${slot.repRangeMin}-${slot.repRangeMax} ${slot.progressionMode}")
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { onMoveSlotUp(slot.position) }, enabled = slot.position > 0) {
                         Text("Up")

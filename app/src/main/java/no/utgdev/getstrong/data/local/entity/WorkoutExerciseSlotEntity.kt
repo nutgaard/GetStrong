@@ -30,6 +30,8 @@ data class WorkoutExerciseSlotEntity(
     val position: Int,
     val targetSets: Int,
     val targetReps: Int,
+    val repRangeMin: Int,
+    val repRangeMax: Int,
     val progressionMode: String,
     val incrementKg: Double,
     val deloadPercent: Int,

@@ -10,11 +10,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import no.utgdev.getstrong.domain.model.ProgressionModeCode
 import no.utgdev.getstrong.domain.model.Workout
 import no.utgdev.getstrong.domain.model.WorkoutExerciseSlot
 import no.utgdev.getstrong.domain.repository.ExerciseRepository
 import no.utgdev.getstrong.domain.repository.WorkoutRepository
+import no.utgdev.getstrong.domain.usecase.WorkoutSlotDefaultsResolver
 import no.utgdev.getstrong.ui.navigation.AppDestination
 
 @HiltViewModel
@@ -22,6 +22,7 @@ class WorkoutEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
+    private val workoutSlotDefaultsResolver: WorkoutSlotDefaultsResolver,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(WorkoutEditorUiState())
     val uiState: StateFlow<WorkoutEditorUiState> = _uiState.asStateFlow()
@@ -49,6 +50,8 @@ class WorkoutEditorViewModel @Inject constructor(
                     position = slot.position,
                     targetSets = slot.targetSets,
                     targetReps = slot.targetReps,
+                    repRangeMin = slot.repRangeMin,
+                    repRangeMax = slot.repRangeMax,
                     progressionMode = slot.progressionMode,
                     incrementKg = slot.incrementKg,
                     deloadPercent = slot.deloadPercent,
@@ -75,16 +78,19 @@ class WorkoutEditorViewModel @Inject constructor(
         val current = _uiState.value
         val exercise = current.availableExercises.firstOrNull { it.id == exerciseId } ?: return
         val nextPosition = current.slots.size
+        val defaults = workoutSlotDefaultsResolver.resolve(exercise.name)
         val newSlot = WorkoutSlotDraft(
             id = 0,
             exerciseId = exercise.id,
             exerciseName = exercise.name,
             position = nextPosition,
-            targetSets = 5,
-            targetReps = 5,
-            progressionMode = ProgressionModeCode.WEIGHT_ONLY,
-            incrementKg = 2.5,
-            deloadPercent = 10,
+            targetSets = defaults.targetSets,
+            targetReps = defaults.targetReps,
+            repRangeMin = defaults.repRangeMin,
+            repRangeMax = defaults.repRangeMax,
+            progressionMode = defaults.progressionMode,
+            incrementKg = defaults.incrementKg,
+            deloadPercent = defaults.deloadPercent,
             restSecondsOverride = null,
         )
         _uiState.update { it.copy(slots = it.slots + newSlot) }
@@ -138,6 +144,8 @@ class WorkoutEditorViewModel @Inject constructor(
                     position = slot.position,
                     targetSets = slot.targetSets,
                     targetReps = slot.targetReps,
+                    repRangeMin = slot.repRangeMin,
+                    repRangeMax = slot.repRangeMax,
                     progressionMode = slot.progressionMode,
                     incrementKg = slot.incrementKg,
                     deloadPercent = slot.deloadPercent,
