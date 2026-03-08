@@ -21,11 +21,17 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.RESTRICT,
         ),
     ],
-    indices = [Index("workoutId"), Index("exerciseId")],
+    indices = [Index("workoutId"), Index("exerciseId"), Index(value = ["workoutId", "position"], unique = true)],
 )
 data class WorkoutExerciseSlotEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val workoutId: Long,
     val exerciseId: Long,
     val position: Int,
+    val targetSets: Int,
+    val targetReps: Int,
+    val progressionMode: String,
+    val incrementKg: Double,
+    val deloadPercent: Int,
+    val restSecondsOverride: Int?,
 )

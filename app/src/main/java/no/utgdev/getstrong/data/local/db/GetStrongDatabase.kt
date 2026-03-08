@@ -23,7 +23,7 @@ import no.utgdev.getstrong.data.local.entity.WorkoutSummaryEntity
         SetResultEntity::class,
         WorkoutSummaryEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 @TypeConverters(StringListConverters::class)

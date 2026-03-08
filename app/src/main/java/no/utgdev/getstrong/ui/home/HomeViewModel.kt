@@ -18,6 +18,7 @@ import no.utgdev.getstrong.domain.model.Workout
 import no.utgdev.getstrong.domain.model.WorkoutExerciseSlot
 import no.utgdev.getstrong.domain.model.WorkoutSession
 import no.utgdev.getstrong.domain.model.WorkoutSummary
+import no.utgdev.getstrong.domain.model.ProgressionModeCode
 import no.utgdev.getstrong.domain.repository.ExerciseRepository
 import no.utgdev.getstrong.domain.repository.SessionRepository
 import no.utgdev.getstrong.domain.repository.SettingsRepository
@@ -52,7 +53,7 @@ class HomeViewModel @Inject constructor(
                 ),
             )
 
-            val workoutId = workoutRepository.saveWorkout(
+            val workoutId = workoutRepository.createWorkout(
                 Workout(
                     name = "Demo Pull Workout",
                     slots = listOf(
@@ -60,6 +61,12 @@ class HomeViewModel @Inject constructor(
                             workoutId = 0,
                             exerciseId = exerciseId,
                             position = 0,
+                            targetSets = 5,
+                            targetReps = 5,
+                            progressionMode = ProgressionModeCode.WEIGHT_ONLY,
+                            incrementKg = 2.5,
+                            deloadPercent = 10,
+                            restSecondsOverride = null,
                         ),
                     ),
                 ),

@@ -11,4 +11,10 @@ data class WorkoutExerciseSlot(
     val workoutId: Long,
     val exerciseId: Long,
     val position: Int,
+    val targetSets: Int,
+    val targetReps: Int,
+    val progressionMode: String,
+    val incrementKg: Double,
+    val deloadPercent: Int,
+    val restSecondsOverride: Int? = null,
 )

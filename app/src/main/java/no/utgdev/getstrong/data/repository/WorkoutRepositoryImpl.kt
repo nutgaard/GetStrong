@@ -12,20 +12,22 @@ import no.utgdev.getstrong.domain.repository.WorkoutRepository
 class WorkoutRepositoryImpl @Inject constructor(
     private val workoutDao: WorkoutDao,
 ) : WorkoutRepository {
-    override suspend fun saveWorkout(workout: Workout): Long {
-        val workoutId = workoutDao.upsertWorkout(WorkoutEntity(id = workout.id, name = workout.name))
-        workoutDao.deleteSlotsForWorkout(workoutId)
-        workoutDao.insertSlots(
-            workout.slots.map {
-                WorkoutExerciseSlotEntity(
-                    id = 0,
-                    workoutId = workoutId,
-                    exerciseId = it.exerciseId,
-                    position = it.position,
-                )
-            },
+    override suspend fun createWorkout(workout: Workout): Long =
+        workoutDao.saveWorkoutWithSlots(
+            workout = WorkoutEntity(id = 0, name = workout.name),
+            slots = workout.slots.map { it.toEntity(workoutId = 0) },
         )
-        return workoutId
+
+    override suspend fun updateWorkout(workout: Workout) {
+        require(workout.id > 0) { "Workout id must be set when updating" }
+        workoutDao.saveWorkoutWithSlots(
+            workout = WorkoutEntity(id = workout.id, name = workout.name),
+            slots = workout.slots.map { it.toEntity(workoutId = workout.id) },
+        )
+    }
+
+    override suspend fun deleteWorkout(workoutId: Long) {
+        workoutDao.deleteWorkout(workoutId)
     }
 
     override suspend fun getWorkout(workoutId: Long): Workout? =
@@ -34,6 +36,20 @@ class WorkoutRepositoryImpl @Inject constructor(
     override suspend fun getAllWorkouts(): List<Workout> =
         workoutDao.getAllWorkoutsWithSlots().map { it.toDomain() }
 }
+
+private fun WorkoutExerciseSlot.toEntity(workoutId: Long): WorkoutExerciseSlotEntity =
+    WorkoutExerciseSlotEntity(
+        id = id,
+        workoutId = workoutId,
+        exerciseId = exerciseId,
+        position = position,
+        targetSets = targetSets,
+        targetReps = targetReps,
+        progressionMode = progressionMode,
+        incrementKg = incrementKg,
+        deloadPercent = deloadPercent,
+        restSecondsOverride = restSecondsOverride,
+    )
 
 private fun WorkoutWithSlotsEntity.toDomain(): Workout =
     Workout(
@@ -45,6 +61,12 @@ private fun WorkoutWithSlotsEntity.toDomain(): Workout =
                 workoutId = it.workoutId,
                 exerciseId = it.exerciseId,
                 position = it.position,
+                targetSets = it.targetSets,
+                targetReps = it.targetReps,
+                progressionMode = it.progressionMode,
+                incrementKg = it.incrementKg,
+                deloadPercent = it.deloadPercent,
+                restSecondsOverride = it.restSecondsOverride,
             )
         },
     )
