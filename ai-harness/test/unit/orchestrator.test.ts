@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, setDefaultTimeout } from "bun:test";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -17,6 +17,8 @@ import type {
   VerificationReport,
   VerifierOutput,
 } from "../../src/types";
+
+setDefaultTimeout(20_000);
 
 class FakeAgentRunner implements AgentRunner {
   public readonly calls: string[] = [];

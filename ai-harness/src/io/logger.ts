@@ -46,7 +46,15 @@ export class RunLogger {
   }
 }
 
-function summarizePayload(kind: string, payload: unknown): string {
+function maybeString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function maybeNumber(value: unknown): number | undefined {
+  return typeof value === "number" ? value : undefined;
+}
+
+export function summarizePayload(kind: string, payload: unknown): string {
   if (!payload || typeof payload !== "object") {
     return "";
   }
@@ -80,6 +88,81 @@ function summarizePayload(kind: string, payload: unknown): string {
     return data.prUrl;
   }
 
+  if (/^agent\.[^.]+\.start$/.test(kind)) {
+    return "started";
+  }
+
+  if (/^agent\.[^.]+\.model\.response_started$/.test(kind)) {
+    return "model response started";
+  }
+
+  if (/^agent\.[^.]+\.model\.response_done$/.test(kind)) {
+    const parts: string[] = ["model response done"];
+    const total = maybeNumber(data.totalTokens);
+    if (total !== undefined) {
+      parts.push(`tokens=${total}`);
+    }
+    return parts.join(" ");
+  }
+
+  if (/^agent\.[^.]+\.reasoning_item_created$/.test(kind)) {
+    const snippet = maybeString(data.snippet);
+    if (!snippet) {
+      return "reasoning item";
+    }
+    return `reasoning: ${snippet}`;
+  }
+
+  if (/^agent\.[^.]+\.tool_called$/.test(kind)) {
+    const toolType = maybeString(data.toolType);
+    const name = maybeString(data.name);
+    const label = name ?? toolType ?? "tool";
+    return `tool called: ${label}`;
+  }
+
+  if (/^agent\.[^.]+\.tool_output$/.test(kind)) {
+    const toolType = maybeString(data.toolType);
+    const name = maybeString(data.name);
+    const label = name ?? toolType ?? "tool";
+    return `tool output: ${label}`;
+  }
+
+  if (/^agent\.[^.]+\.handoff_requested$/.test(kind)) {
+    return "handoff requested";
+  }
+
+  if (/^agent\.[^.]+\.handoff_occurred$/.test(kind)) {
+    return "handoff occurred";
+  }
+
+  if (/^agent\.[^.]+\.done$/.test(kind)) {
+    const parts: string[] = ["completed"];
+    const elapsed = maybeNumber(data.elapsedMs);
+    if (elapsed !== undefined) {
+      parts.push(`elapsedMs=${elapsed}`);
+    }
+    const taskCount = maybeNumber(data.taskCount);
+    if (taskCount !== undefined) {
+      parts.push(`tasks=${taskCount}`);
+    }
+    const commitsCount = maybeNumber(data.commitsCount);
+    if (commitsCount !== undefined) {
+      parts.push(`commits=${commitsCount}`);
+    }
+    const touchedFilesCount = maybeNumber(data.touchedFilesCount);
+    if (touchedFilesCount !== undefined) {
+      parts.push(`files=${touchedFilesCount}`);
+    }
+    if (typeof data.passed === "boolean") {
+      parts.push(`passed=${data.passed ? "yes" : "no"}`);
+    }
+    return parts.join(" ");
+  }
+
+  if (/^agent\.[^.]+\.error$/.test(kind) && typeof data.message === "string") {
+    return data.message;
+  }
+
   if (kind === "tool.run_repo_command") {
     const command = typeof data.command === "string" ? data.command : "";
     const exitCode = typeof data.exitCode === "number" ? ` exitCode=${data.exitCode}` : "";
@@ -96,10 +179,6 @@ function summarizePayload(kind: string, payload: unknown): string {
     const message = typeof data.message === "string" ? `message="${data.message}"` : "";
     const sha = typeof data.sha === "string" && data.sha.length > 0 ? ` sha=${data.sha}` : "";
     return `${message}${sha}`.trim();
-  }
-
-  if (kind.startsWith("agent.")) {
-    return "completed";
   }
 
   if (kind === "orchestrator.error" && typeof data.message === "string") {

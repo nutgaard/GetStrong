@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve, sep } from "node:path";
 
-import { Agent, run, tool, type RunContext } from "@openai/agents";
+import { Agent, run, tool, type RunContext, type RunStreamEvent } from "@openai/agents";
 import { z } from "zod";
 
 import type { AgentRunner } from "./contracts";
@@ -24,6 +24,23 @@ import {
 interface HarnessToolContext {
   repoRoot: string;
   logger: RunLogger;
+}
+
+export type AgentRole = "planner" | "architect" | "implementer" | "verifier";
+
+export interface NormalizedAgentStreamEvent {
+  kind: string;
+  payload: Record<string, unknown>;
+}
+
+interface StreamEventCounters {
+  modelResponsesStarted: number;
+  modelResponsesDone: number;
+  reasoningItems: number;
+  toolCalls: number;
+  toolOutputs: number;
+  handoffRequested: number;
+  handoffOccurred: number;
 }
 
 const commandInputSchema = z.object({
@@ -186,6 +203,179 @@ function createImplementerTools() {
   return [runRepoCommand, readRepoFile, writeRepoFile, gitCommit, changedFiles];
 }
 
+function createEmptyCounters(): StreamEventCounters {
+  return {
+    modelResponsesStarted: 0,
+    modelResponsesDone: 0,
+    reasoningItems: 0,
+    toolCalls: 0,
+    toolOutputs: 0,
+    handoffRequested: 0,
+    handoffOccurred: 0,
+  };
+}
+
+function maybeString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function describeToolItem(item: unknown): Record<string, unknown> {
+  const rawItem = (item as { rawItem?: unknown } | undefined)?.rawItem ?? item;
+  const raw = (rawItem && typeof rawItem === "object" ? rawItem : {}) as Record<string, unknown>;
+
+  const details: Record<string, unknown> = {};
+  const toolType = maybeString(raw.type);
+  const name = maybeString(raw.name);
+  const callId = maybeString(raw.callId);
+
+  if (toolType) {
+    details.toolType = toolType;
+  }
+  if (name) {
+    details.name = name;
+  }
+  if (callId) {
+    details.callId = callId;
+  }
+
+  return details;
+}
+
+export function extractReasoningSnippet(item: unknown, maxChars = 160): string | undefined {
+  const rawItem = (item as { rawItem?: unknown } | undefined)?.rawItem ?? item;
+  if (!rawItem || typeof rawItem !== "object") {
+    return undefined;
+  }
+
+  const raw = rawItem as Record<string, unknown>;
+
+  const fromRawContent = Array.isArray(raw.rawContent)
+    ? raw.rawContent
+        .map((entry) => (entry && typeof entry === "object" ? maybeString((entry as Record<string, unknown>).text) : undefined))
+        .filter((entry): entry is string => Boolean(entry))
+        .join(" ")
+    : "";
+
+  const fromContent = Array.isArray(raw.content)
+    ? raw.content
+        .map((entry) => (entry && typeof entry === "object" ? maybeString((entry as Record<string, unknown>).text) : undefined))
+        .filter((entry): entry is string => Boolean(entry))
+        .join(" ")
+    : "";
+
+  const text = fromRawContent || fromContent;
+  if (!text) {
+    return undefined;
+  }
+
+  return text.length > maxChars ? `${text.slice(0, maxChars)}...` : text;
+}
+
+export function normalizeAgentStreamEvent(role: AgentRole, event: RunStreamEvent): NormalizedAgentStreamEvent[] {
+  if (event.type === "raw_model_stream_event") {
+    const raw = event.data as { type?: unknown; response?: { usage?: Record<string, unknown> } };
+    const dataType = maybeString(raw.type);
+
+    if (dataType === "response_started") {
+      return [
+        {
+          kind: `agent.${role}.model.response_started`,
+          payload: {},
+        },
+      ];
+    }
+
+    if (dataType === "response_done") {
+      const usage = raw.response?.usage;
+      return [
+        {
+          kind: `agent.${role}.model.response_done`,
+          payload: {
+            totalTokens: typeof usage?.totalTokens === "number" ? usage.totalTokens : undefined,
+            inputTokens: typeof usage?.inputTokens === "number" ? usage.inputTokens : undefined,
+            outputTokens: typeof usage?.outputTokens === "number" ? usage.outputTokens : undefined,
+          },
+        },
+      ];
+    }
+
+    // Suppress token-by-token deltas in default console output.
+    if (dataType === "output_text_delta") {
+      return [];
+    }
+
+    return [];
+  }
+
+  if (event.type === "run_item_stream_event") {
+    if (event.name === "reasoning_item_created") {
+      const snippet = extractReasoningSnippet(event.item);
+      return [
+        {
+          kind: `agent.${role}.reasoning_item_created`,
+          payload: snippet ? { snippet } : {},
+        },
+      ];
+    }
+
+    if (event.name === "tool_called") {
+      return [
+        {
+          kind: `agent.${role}.tool_called`,
+          payload: describeToolItem(event.item),
+        },
+      ];
+    }
+
+    if (event.name === "tool_output") {
+      return [
+        {
+          kind: `agent.${role}.tool_output`,
+          payload: describeToolItem(event.item),
+        },
+      ];
+    }
+
+    if (event.name === "handoff_requested") {
+      return [
+        {
+          kind: `agent.${role}.handoff_requested`,
+          payload: {},
+        },
+      ];
+    }
+
+    if (event.name === "handoff_occurred") {
+      return [
+        {
+          kind: `agent.${role}.handoff_occurred`,
+          payload: {},
+        },
+      ];
+    }
+  }
+
+  return [];
+}
+
+function applyCounter(counters: StreamEventCounters, kind: string): void {
+  if (kind.endsWith(".model.response_started")) {
+    counters.modelResponsesStarted += 1;
+  } else if (kind.endsWith(".model.response_done")) {
+    counters.modelResponsesDone += 1;
+  } else if (kind.endsWith(".reasoning_item_created")) {
+    counters.reasoningItems += 1;
+  } else if (kind.endsWith(".tool_called")) {
+    counters.toolCalls += 1;
+  } else if (kind.endsWith(".tool_output")) {
+    counters.toolOutputs += 1;
+  } else if (kind.endsWith(".handoff_requested")) {
+    counters.handoffRequested += 1;
+  } else if (kind.endsWith(".handoff_occurred")) {
+    counters.handoffOccurred += 1;
+  }
+}
+
 function requireStructuredOutput<T>(value: T | undefined, label: string): T {
   if (!value) {
     throw new Error(`Agent returned no structured output for ${label}`);
@@ -247,24 +437,75 @@ export class OpenAIAgentRunner implements AgentRunner {
     });
   }
 
+  private async runAgentWithStreaming<TOutput>(args: {
+    role: AgentRole;
+    agent: Agent<any, any>;
+    input: string;
+    options?: {
+      maxTurns?: number;
+      context?: HarnessToolContext;
+    };
+    parseOutput: (output: unknown) => TOutput;
+    donePayload: (parsed: TOutput) => Record<string, unknown>;
+  }): Promise<TOutput> {
+    const startedAt = Date.now();
+    const counters = createEmptyCounters();
+
+    await this.logger.event(`agent.${args.role}.start`, {});
+
+    try {
+      const streamed = await run(args.agent, args.input, {
+        ...args.options,
+        stream: true,
+      });
+
+      for await (const event of streamed) {
+        const normalized = normalizeAgentStreamEvent(args.role, event);
+        for (const entry of normalized) {
+          applyCounter(counters, entry.kind);
+          await this.logger.event(entry.kind, entry.payload);
+        }
+      }
+
+      const output = requireStructuredOutput(streamed.finalOutput, args.role);
+      const parsed = args.parseOutput(output);
+
+      await this.logger.event(`agent.${args.role}.done`, {
+        elapsedMs: Date.now() - startedAt,
+        ...counters,
+        ...args.donePayload(parsed),
+      });
+
+      return parsed;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      await this.logger.event(`agent.${args.role}.error`, {
+        message,
+      });
+      throw error;
+    }
+  }
+
   async runPlanner(input: { governance: GovernanceDocs }): Promise<PlannerOutput> {
-    await this.logger.event("agent.planner.start", {});
-    const runResult = await run(
-      this.plannerAgent,
-      [
+    return await this.runAgentWithStreaming<PlannerOutput>({
+      role: "planner",
+      agent: this.plannerAgent,
+      input: [
         "PRD.md:",
         input.governance.prd,
         "",
         "Current TASKS.yml (json):",
         JSON.stringify(input.governance.tasks, null, 2),
       ].join("\n"),
-      { maxTurns: 8 },
-    );
-
-    const output = requireStructuredOutput(runResult.finalOutput, "planner");
-    const parsed = plannerOutputSchema.parse(output);
-    await this.logger.event("agent.planner", parsed);
-    return parsed;
+      options: {
+        maxTurns: 8,
+      },
+      parseOutput: (output: unknown) => plannerOutputSchema.parse(output),
+      donePayload: (result) => ({
+        blocked: result.blocked,
+        taskCount: result.tasks.length,
+      }),
+    });
   }
 
   async runArchitect(input: {
@@ -272,9 +513,6 @@ export class OpenAIAgentRunner implements AgentRunner {
     governance: GovernanceDocs;
     previousViolations?: string[];
   }): Promise<ArchitectOutput> {
-    await this.logger.event("agent.architect.start", {
-      taskId: input.task.id,
-    });
     const lines = [
       "Selected task:",
       JSON.stringify(input.task, null, 2),
@@ -293,12 +531,20 @@ export class OpenAIAgentRunner implements AgentRunner {
       lines.push("", "Previous governance violations:", input.previousViolations.map((v) => `- ${v}`).join("\n"));
     }
 
-    const runResult = await run(this.architectAgent, lines.join("\n"), { maxTurns: 8 });
-
-    const output = requireStructuredOutput(runResult.finalOutput, "architect");
-    const parsed = architectOutputSchema.parse(output);
-    await this.logger.event("agent.architect", parsed);
-    return parsed;
+    return await this.runAgentWithStreaming<ArchitectOutput>({
+      role: "architect",
+      agent: this.architectAgent,
+      input: lines.join("\n"),
+      options: {
+        maxTurns: 8,
+      },
+      parseOutput: (output: unknown) => architectOutputSchema.parse(output),
+      donePayload: (result) => ({
+        taskId: input.task.id,
+        principlesCount: result.principles.length,
+        requiredAdrsCount: result.requiredAdrs.length,
+      }),
+    });
   }
 
   async runImplementer(input: {
@@ -310,10 +556,6 @@ export class OpenAIAgentRunner implements AgentRunner {
     verificationLogSnippet?: string;
     governanceViolations?: string[];
   }): Promise<ImplementerOutput> {
-    await this.logger.event("agent.implementer.start", {
-      taskId: input.task.id,
-      repairAttempt: input.repairAttempt,
-    });
     const lines = [
       "Selected task:",
       JSON.stringify(input.task, null, 2),
@@ -346,18 +588,25 @@ export class OpenAIAgentRunner implements AgentRunner {
       lines.push("", "Governance violations:", input.governanceViolations.map((v) => `- ${v}`).join("\n"));
     }
 
-    const runResult = await run(this.implementerAgent, lines.join("\n"), {
-      maxTurns: 20,
-      context: {
-        repoRoot: this.repoRoot,
-        logger: this.logger,
+    return await this.runAgentWithStreaming<ImplementerOutput>({
+      role: "implementer",
+      agent: this.implementerAgent,
+      input: lines.join("\n"),
+      options: {
+        maxTurns: 20,
+        context: {
+          repoRoot: this.repoRoot,
+          logger: this.logger,
+        },
       },
+      parseOutput: (output: unknown) => implementerOutputSchema.parse(output),
+      donePayload: (result) => ({
+        taskId: input.task.id,
+        repairAttempt: input.repairAttempt,
+        commitsCount: result.commits.length,
+        touchedFilesCount: result.touchedFiles.length,
+      }),
     });
-
-    const output = requireStructuredOutput(runResult.finalOutput, "implementer");
-    const parsed = implementerOutputSchema.parse(output);
-    await this.logger.event("agent.implementer", parsed);
-    return parsed;
   }
 
   async runVerifier(input: {
@@ -368,12 +617,10 @@ export class OpenAIAgentRunner implements AgentRunner {
     verificationLogSnippet: string;
     implementer: ImplementerOutput;
   }): Promise<VerifierOutput> {
-    await this.logger.event("agent.verifier.start", {
-      taskId: input.task.id,
-    });
-    const runResult = await run(
-      this.verifierAgent,
-      [
+    return await this.runAgentWithStreaming<VerifierOutput>({
+      role: "verifier",
+      agent: this.verifierAgent,
+      input: [
         "Selected task:",
         JSON.stringify(input.task, null, 2),
         "",
@@ -394,13 +641,16 @@ export class OpenAIAgentRunner implements AgentRunner {
         "Verification log snippet:",
         input.verificationLogSnippet,
       ].join("\n"),
-      { maxTurns: 5 },
-    );
-
-    const output = requireStructuredOutput(runResult.finalOutput, "verifier");
-    const parsed = verifierOutputSchema.parse(output);
-    await this.logger.event("agent.verifier", parsed);
-    return parsed;
+      options: {
+        maxTurns: 5,
+      },
+      parseOutput: (output: unknown) => verifierOutputSchema.parse(output),
+      donePayload: (result) => ({
+        taskId: input.task.id,
+        passed: result.passed,
+        failuresCount: result.failures.length,
+      }),
+    });
   }
 }
 

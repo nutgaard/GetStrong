@@ -36,6 +36,12 @@ Optional flags:
 - `--no-pr`
 - `--draft-pr`
 
+## Live Progress
+
+- Agent runs now stream live model milestones to the terminal.
+- You will see events for model response start/done, reasoning item creation, tool calls/outputs, and agent completion.
+- Token-by-token text deltas are intentionally suppressed in default output to avoid terminal spam.
+
 ## Required Environment
 
 - `OPENAI_API_KEY` must be set.
@@ -47,6 +53,7 @@ Use `.env.example` as template.
 
 Each run stores artifacts in `.ai-runs/<run-id>/`:
 
+- `events.jsonl` (full event stream, including model milestones)
 - `request.json`
 - `preflight.json`
 - `planner-output.json`

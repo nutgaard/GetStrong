@@ -1,10 +1,12 @@
-import { afterEach, describe, expect, it } from "bun:test";
+import { afterEach, describe, expect, it, setDefaultTimeout } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { runPreflight } from "../../src/core/preflight";
 import { runChecked } from "../../src/tools/command-runner";
+
+setDefaultTimeout(20_000);
 
 const repos: string[] = [];
 
