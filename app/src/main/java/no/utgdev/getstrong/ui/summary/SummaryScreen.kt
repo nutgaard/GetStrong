@@ -17,6 +17,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import no.utgdev.getstrong.domain.model.SessionSetType
 
@@ -34,7 +37,8 @@ fun SummaryScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
-                    .heightIn(min = 54.dp),
+                    .heightIn(min = 54.dp)
+                    .semantics { contentDescription = "Return home from workout summary" },
             ) {
                 Text("Return Home")
             }
@@ -49,11 +53,27 @@ fun SummaryScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.Start,
         ) {
-            Text(text = "Workout Summary", style = MaterialTheme.typography.headlineMedium)
-            Text(text = "Session ID: ${uiState.sessionId}")
-            Text(text = "Total time: ${formatElapsed(uiState.totalDurationSeconds)}")
-            Text(text = "Total volume: ${"%.1f".format(uiState.totalVolumeKg)} kg")
-            Text(text = "Volume rule: ${uiState.volumeRule}")
+            Text(
+                text = "Workout Summary",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                text = "Session ID: ${uiState.sessionId}",
+                modifier = Modifier.semantics { contentDescription = "Session ${uiState.sessionId}" },
+            )
+            Text(
+                text = "Total time: ${formatElapsed(uiState.totalDurationSeconds)}",
+                modifier = Modifier.semantics { contentDescription = "Total time ${formatElapsed(uiState.totalDurationSeconds)}" },
+            )
+            Text(
+                text = "Total volume: ${"%.1f".format(uiState.totalVolumeKg)} kg",
+                modifier = Modifier.semantics { contentDescription = "Total volume ${"%.1f".format(uiState.totalVolumeKg)} kilograms" },
+            )
+            Text(
+                text = "Volume rule: ${uiState.volumeRule}",
+                modifier = Modifier.semantics { contentDescription = "Volume rule ${uiState.volumeRule}" },
+            )
 
             Column(
                 modifier = Modifier
@@ -70,13 +90,26 @@ fun SummaryScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     uiState.sets.forEach { row ->
-                        val tint = if (row.setType == SessionSetType.WARMUP) Color(0xFFE0F2FE) else Color(0xFFE8F5E9)
+                        val tint =
+                            if (row.setType == SessionSetType.WARMUP) {
+                                MaterialTheme.colorScheme.tertiaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.secondaryContainer
+                            }
+                        val textColor =
+                            if (row.setType == SessionSetType.WARMUP) {
+                                MaterialTheme.colorScheme.onTertiaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSecondaryContainer
+                            }
                         Text(
                             text = formatSummaryRow(row),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(tint)
-                                .padding(8.dp),
+                                .padding(8.dp)
+                                .semantics { contentDescription = "Summary row ${formatSummaryRow(row)}" },
+                            color = textColor,
                         )
                     }
                 }

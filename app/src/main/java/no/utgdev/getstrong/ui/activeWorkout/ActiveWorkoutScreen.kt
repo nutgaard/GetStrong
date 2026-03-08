@@ -21,6 +21,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import no.utgdev.getstrong.domain.model.SessionPlannedSet
 import no.utgdev.getstrong.domain.model.SessionSetType
@@ -59,7 +63,15 @@ fun ActiveWorkoutScreen(
                     enabled = currentSet != null && !uiState.isRestTimerActive,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 56.dp),
+                        .heightIn(min = 56.dp)
+                        .semantics {
+                            contentDescription = "Complete current set"
+                            stateDescription = when {
+                                currentSet == null -> "No set available"
+                                uiState.isRestTimerActive -> "Disabled during rest timer"
+                                else -> "Enabled"
+                            }
+                        },
                 ) {
                     Text("Complete Current Set")
                 }
@@ -72,7 +84,11 @@ fun ActiveWorkoutScreen(
                         enabled = uiState.isCompleted,
                         modifier = Modifier
                             .weight(1f)
-                            .heightIn(min = 52.dp),
+                            .heightIn(min = 52.dp)
+                            .semantics {
+                                contentDescription = "Finish workout session"
+                                stateDescription = if (uiState.isCompleted) "Enabled" else "Disabled until all sets complete"
+                            },
                     ) {
                         Text("Finish")
                     }
@@ -80,7 +96,8 @@ fun ActiveWorkoutScreen(
                         onClick = onExit,
                         modifier = Modifier
                             .weight(1f)
-                            .heightIn(min = 52.dp),
+                            .heightIn(min = 52.dp)
+                            .semantics { contentDescription = "Exit active workout" },
                     ) {
                         Text("Exit")
                     }
@@ -96,10 +113,15 @@ fun ActiveWorkoutScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(text = "Active Workout", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                text = "Active Workout",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.semantics { heading() },
+            )
             Text(
                 text = "Elapsed ${formatElapsed(uiState.elapsedSeconds)}",
                 style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { contentDescription = "Elapsed time ${formatElapsed(uiState.elapsedSeconds)}" },
             )
             when {
                 uiState.isRestTimerActive -> {
@@ -107,13 +129,15 @@ fun ActiveWorkoutScreen(
                         text = "Rest: ${uiState.restRemainingSeconds}s",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.semantics { contentDescription = "Rest timer ${uiState.restRemainingSeconds} seconds remaining" },
                     )
                 }
                 uiState.isRestOver -> {
                     Text(
                         text = "Rest over",
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color(0xFF16A34A),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.semantics { contentDescription = "Rest over" },
                     )
                 }
             }
@@ -124,7 +148,11 @@ fun ActiveWorkoutScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp))
-                        .padding(12.dp),
+                        .padding(12.dp)
+                        .semantics {
+                            contentDescription = "Current set ${setTypeLabel(currentSet)}. ${formatCurrentSet(currentSet)}"
+                            stateDescription = if (currentSet.isCompleted) "Completed" else "Pending"
+                        },
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
@@ -144,8 +172,15 @@ fun ActiveWorkoutScreen(
             Text(
                 text = "Progress: $completedCount / ${uiState.plannedSets.size}",
                 style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.semantics {
+                    contentDescription = "Progress $completedCount of ${uiState.plannedSets.size} sets completed"
+                },
             )
-            Text(text = "Pending Sets", style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = "Pending Sets",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
+            )
             pendingSets.forEach { set ->
                 PlannedSetRow(
                     set = set,
@@ -166,7 +201,7 @@ private fun PlannedSetRow(
 ) {
     val bgColor = when {
         isCurrent -> MaterialTheme.colorScheme.secondaryContainer
-        set.setType == SessionSetType.WARMUP -> Color(0xFFE0F2FE)
+        set.setType == SessionSetType.WARMUP -> MaterialTheme.colorScheme.tertiaryContainer
         else -> MaterialTheme.colorScheme.surface
     }
 
@@ -174,7 +209,11 @@ private fun PlannedSetRow(
         modifier = Modifier
             .fillMaxWidth()
             .background(bgColor, RoundedCornerShape(10.dp))
-            .padding(10.dp),
+            .padding(10.dp)
+            .semantics {
+                contentDescription = "${setTypeLabel(set)} set ${set.setOrder + 1}. ${formatSet(set)}"
+                stateDescription = if (set.isCompleted) "Completed" else "Pending"
+            },
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(text = "${setTypeLabel(set)} • ${formatSet(set)}")
@@ -183,7 +222,8 @@ private fun PlannedSetRow(
                 onClick = { onCompleteSet(set.id, set.targetReps) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 48.dp),
+                    .heightIn(min = 48.dp)
+                    .semantics { contentDescription = "Complete ${setTypeLabel(set)} set ${set.setOrder + 1}" },
             ) {
                 Text("Complete")
             }

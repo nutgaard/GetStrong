@@ -264,7 +264,7 @@ milestones:
         title: Accessibility and TalkBack pass
         description: Improve accessibility labels, focus order, and contrast on Home, Planning, Active Workout, and Summary screens.
         priority: P2
-        status: todo
+        status: done
         acceptance_criteria:
           - Core controls on the four key screens have meaningful content descriptions for TalkBack.
           - Focus order allows completing a workout via keyboard/TalkBack without getting stuck.
