@@ -55,6 +55,8 @@ class WorkoutEditorViewModel @Inject constructor(
                     progressionMode = slot.progressionMode,
                     incrementKg = slot.incrementKg,
                     deloadPercent = slot.deloadPercent,
+                    currentWorkingWeightKg = slot.currentWorkingWeightKg,
+                    lastProgressionSessionId = slot.lastProgressionSessionId,
                     restSecondsOverride = slot.restSecondsOverride,
                 )
             }.orEmpty()
@@ -91,6 +93,8 @@ class WorkoutEditorViewModel @Inject constructor(
             progressionMode = defaults.progressionMode,
             incrementKg = defaults.incrementKg,
             deloadPercent = defaults.deloadPercent,
+            currentWorkingWeightKg = 0.0,
+            lastProgressionSessionId = null,
             restSecondsOverride = null,
         )
         _uiState.update { it.copy(slots = it.slots + newSlot) }
@@ -149,6 +153,8 @@ class WorkoutEditorViewModel @Inject constructor(
                     progressionMode = slot.progressionMode,
                     incrementKg = slot.incrementKg,
                     deloadPercent = slot.deloadPercent,
+                    currentWorkingWeightKg = slot.currentWorkingWeightKg,
+                    lastProgressionSessionId = slot.lastProgressionSessionId,
                     restSecondsOverride = slot.restSecondsOverride,
                 )
             },

@@ -26,6 +26,7 @@ class WorkoutSessionEngineTest {
                     progressionMode = ProgressionModeCode.WEIGHT_ONLY,
                     incrementKg = 2.5,
                     deloadPercent = 10,
+                    currentWorkingWeightKg = 0.0,
                     restSecondsOverride = null,
                 ),
                 WorkoutExerciseSlot(
@@ -40,6 +41,7 @@ class WorkoutSessionEngineTest {
                     progressionMode = ProgressionModeCode.WEIGHT_ONLY,
                     incrementKg = 2.5,
                     deloadPercent = 10,
+                    currentWorkingWeightKg = 0.0,
                     restSecondsOverride = null,
                 ),
             ),

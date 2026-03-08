@@ -2,12 +2,14 @@ package no.utgdev.getstrong.data.repository
 
 import javax.inject.Inject
 import no.utgdev.getstrong.data.local.dao.SessionDao
+import no.utgdev.getstrong.data.local.dao.SlotProgressionRecord
 import no.utgdev.getstrong.data.local.entity.SessionPlannedSetEntity
 import no.utgdev.getstrong.data.local.entity.SetResultEntity
 import no.utgdev.getstrong.data.local.entity.WorkoutSessionEntity
 import no.utgdev.getstrong.domain.model.ActiveSessionState
 import no.utgdev.getstrong.domain.model.SessionPlannedSet
 import no.utgdev.getstrong.domain.model.SetResult
+import no.utgdev.getstrong.domain.model.SlotProgressionUpdate
 import no.utgdev.getstrong.domain.model.WorkoutSession
 import no.utgdev.getstrong.domain.repository.SessionRepository
 
@@ -63,6 +65,23 @@ class SessionRepositoryImpl @Inject constructor(
 
     override suspend fun completeSession(sessionId: Long) {
         sessionDao.markSessionCompleted(sessionId, System.currentTimeMillis())
+    }
+
+    override suspend fun completeSessionWithProgression(
+        sessionId: Long,
+        updates: List<SlotProgressionUpdate>,
+    ) {
+        sessionDao.completeSessionWithProgression(
+            sessionId = sessionId,
+            endedAtEpochMs = System.currentTimeMillis(),
+            updates = updates.map {
+                SlotProgressionRecord(
+                    slotId = it.slotId,
+                    nextTargetReps = it.nextTargetReps,
+                    nextWorkingWeightKg = it.nextWorkingWeightKg,
+                )
+            },
+        )
     }
 
     override suspend fun saveSetResult(result: SetResult): Long =

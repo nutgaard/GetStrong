@@ -32,6 +32,23 @@ interface SessionDao {
     @Query("UPDATE sessions SET endedAtEpochMs = :endedAtEpochMs WHERE id = :sessionId")
     suspend fun markSessionCompleted(sessionId: Long, endedAtEpochMs: Long)
 
+    @Query(
+        """
+        UPDATE workout_exercise_slots
+        SET targetReps = :nextTargetReps,
+            currentWorkingWeightKg = :nextWorkingWeightKg,
+            lastProgressionSessionId = :sessionId
+        WHERE id = :slotId
+          AND (lastProgressionSessionId IS NULL OR lastProgressionSessionId != :sessionId)
+        """,
+    )
+    suspend fun applySlotProgressionForSession(
+        sessionId: Long,
+        slotId: Long,
+        nextTargetReps: Int,
+        nextWorkingWeightKg: Double,
+    )
+
     @Query("SELECT * FROM set_results WHERE sessionId = :sessionId ORDER BY id ASC")
     suspend fun getSetResults(sessionId: Long): List<SetResultEntity>
 
@@ -45,4 +62,27 @@ interface SessionDao {
         insertPlannedSets(mapped)
         return sessionId
     }
+
+    @Transaction
+    suspend fun completeSessionWithProgression(
+        sessionId: Long,
+        endedAtEpochMs: Long,
+        updates: List<SlotProgressionRecord>,
+    ) {
+        updates.forEach { update ->
+            applySlotProgressionForSession(
+                sessionId = sessionId,
+                slotId = update.slotId,
+                nextTargetReps = update.nextTargetReps,
+                nextWorkingWeightKg = update.nextWorkingWeightKg,
+            )
+        }
+        markSessionCompleted(sessionId, endedAtEpochMs)
+    }
 }
+
+data class SlotProgressionRecord(
+    val slotId: Long,
+    val nextTargetReps: Int,
+    val nextWorkingWeightKg: Double,
+)

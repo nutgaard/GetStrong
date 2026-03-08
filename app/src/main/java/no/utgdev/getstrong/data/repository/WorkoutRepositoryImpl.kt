@@ -50,6 +50,8 @@ private fun WorkoutExerciseSlot.toEntity(workoutId: Long): WorkoutExerciseSlotEn
         progressionMode = progressionMode,
         incrementKg = incrementKg,
         deloadPercent = deloadPercent,
+        currentWorkingWeightKg = currentWorkingWeightKg,
+        lastProgressionSessionId = lastProgressionSessionId,
         restSecondsOverride = restSecondsOverride,
     )
 
@@ -70,6 +72,8 @@ private fun WorkoutWithSlotsEntity.toDomain(): Workout =
                 progressionMode = it.progressionMode,
                 incrementKg = it.incrementKg,
                 deloadPercent = it.deloadPercent,
+                currentWorkingWeightKg = it.currentWorkingWeightKg,
+                lastProgressionSessionId = it.lastProgressionSessionId,
                 restSecondsOverride = it.restSecondsOverride,
             )
         },

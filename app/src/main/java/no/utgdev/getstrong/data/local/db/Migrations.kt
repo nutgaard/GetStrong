@@ -71,3 +71,14 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         )
     }
 }
+
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE workout_exercise_slots ADD COLUMN currentWorkingWeightKg REAL NOT NULL DEFAULT 0.0",
+        )
+        db.execSQL(
+            "ALTER TABLE workout_exercise_slots ADD COLUMN lastProgressionSessionId INTEGER",
+        )
+    }
+}

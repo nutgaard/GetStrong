@@ -34,6 +34,7 @@ class WorkoutRepositoryImplTest {
                         progressionMode = ProgressionModeCode.REPS_THEN_WEIGHT,
                         incrementKg = 2.5,
                         deloadPercent = 10,
+                        currentWorkingWeightKg = 70.0,
                         restSecondsOverride = 120,
                     ),
                     WorkoutExerciseSlot(
@@ -47,6 +48,7 @@ class WorkoutRepositoryImplTest {
                         progressionMode = ProgressionModeCode.WEIGHT_ONLY,
                         incrementKg = 2.5,
                         deloadPercent = 10,
+                        currentWorkingWeightKg = 100.0,
                         restSecondsOverride = null,
                     ),
                 ),
@@ -66,6 +68,7 @@ class WorkoutRepositoryImplTest {
         assertEquals(5, first.repRangeMin)
         assertEquals(5, first.repRangeMax)
         assertEquals(ProgressionModeCode.WEIGHT_ONLY, first.progressionMode)
+        assertEquals(100.0, first.currentWorkingWeightKg, 0.0)
 
         assertEquals(1, second.position)
         assertEquals(1015, second.exerciseId)
@@ -73,6 +76,7 @@ class WorkoutRepositoryImplTest {
         assertEquals(6, second.repRangeMin)
         assertEquals(10, second.repRangeMax)
         assertEquals(120, second.restSecondsOverride)
+        assertEquals(70.0, second.currentWorkingWeightKg, 0.0)
     }
 
     @Test
@@ -95,6 +99,7 @@ class WorkoutRepositoryImplTest {
                         progressionMode = ProgressionModeCode.WEIGHT_ONLY,
                         incrementKg = 2.5,
                         deloadPercent = 10,
+                        currentWorkingWeightKg = 95.0,
                         restSecondsOverride = null,
                     ),
                     WorkoutExerciseSlot(
@@ -108,6 +113,7 @@ class WorkoutRepositoryImplTest {
                         progressionMode = ProgressionModeCode.REPS_ONLY,
                         incrementKg = 1.0,
                         deloadPercent = 8,
+                        currentWorkingWeightKg = 30.0,
                         restSecondsOverride = 90,
                     ),
                 ),
@@ -129,6 +135,7 @@ class WorkoutRepositoryImplTest {
                         progressionMode = ProgressionModeCode.WEIGHT_ONLY,
                         incrementKg = 2.5,
                         deloadPercent = 10,
+                        currentWorkingWeightKg = 60.0,
                         restSecondsOverride = null,
                     ),
                 ),

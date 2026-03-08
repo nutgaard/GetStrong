@@ -134,7 +134,7 @@ milestones:
         title: Implement progression update rules
         description: Compute the next working weight and/or rep targets per exercise according to the configured progression mode after each workout.
         priority: P0
-        status: todo
+        status: done
         acceptance_criteria:
           - For weight_only, weight increases when all work sets meet target reps; otherwise weight stays the same.
           - For reps_only, reps increase within the configured range until max is reached before adjusting weight.

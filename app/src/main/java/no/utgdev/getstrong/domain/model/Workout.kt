@@ -18,5 +18,7 @@ data class WorkoutExerciseSlot(
     val progressionMode: String,
     val incrementKg: Double,
     val deloadPercent: Int,
+    val currentWorkingWeightKg: Double,
+    val lastProgressionSessionId: Long? = null,
     val restSecondsOverride: Int? = null,
 )

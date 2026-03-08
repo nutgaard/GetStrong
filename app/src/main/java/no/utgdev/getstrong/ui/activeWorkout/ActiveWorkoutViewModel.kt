@@ -11,12 +11,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import no.utgdev.getstrong.domain.repository.SessionRepository
+import no.utgdev.getstrong.domain.usecase.CompleteSessionWithProgressionUseCase
 import no.utgdev.getstrong.ui.navigation.AppDestination
 
 @HiltViewModel
 class ActiveWorkoutViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val sessionRepository: SessionRepository,
+    private val completeSessionWithProgression: CompleteSessionWithProgressionUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ActiveWorkoutUiState())
     val uiState: StateFlow<ActiveWorkoutUiState> = _uiState.asStateFlow()
@@ -53,7 +55,7 @@ class ActiveWorkoutViewModel @Inject constructor(
 
     fun finishSession() {
         viewModelScope.launch {
-            sessionRepository.completeSession(sessionId)
+            completeSessionWithProgression(sessionId)
             loadSession()
         }
     }

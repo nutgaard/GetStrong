@@ -3,6 +3,7 @@ package no.utgdev.getstrong.domain.repository
 import no.utgdev.getstrong.domain.model.SetResult
 import no.utgdev.getstrong.domain.model.ActiveSessionState
 import no.utgdev.getstrong.domain.model.SessionPlannedSet
+import no.utgdev.getstrong.domain.model.SlotProgressionUpdate
 import no.utgdev.getstrong.domain.model.WorkoutSession
 
 interface SessionRepository {
@@ -10,6 +11,7 @@ interface SessionRepository {
     suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState?
     suspend fun completePlannedSet(sessionId: Long, plannedSetId: Long, repsAchieved: Int): ActiveSessionState?
     suspend fun completeSession(sessionId: Long)
+    suspend fun completeSessionWithProgression(sessionId: Long, updates: List<SlotProgressionUpdate>)
     suspend fun saveSession(session: WorkoutSession): Long
     suspend fun saveSetResult(result: SetResult): Long
     suspend fun getSetResults(sessionId: Long): List<SetResult>
