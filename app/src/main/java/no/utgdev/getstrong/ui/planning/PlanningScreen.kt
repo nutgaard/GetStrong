@@ -2,13 +2,15 @@ package no.utgdev.getstrong.ui.planning
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -25,30 +27,52 @@ fun PlanningScreen(
     onStartWorkout: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Text(text = "Workout Planning", style = MaterialTheme.typography.headlineMedium)
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Button(
+                    onClick = onCreateWorkout,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 54.dp),
+                ) {
+                    Text("Create Workout")
+                }
+                Button(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 52.dp),
+                ) {
+                    Text("Back to Home")
+                }
+            }
+        },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(text = "Workout Planning", style = MaterialTheme.typography.headlineMedium)
 
-        Button(onClick = onCreateWorkout) {
-            Text("Create Workout")
-        }
-
-        uiState.workouts.forEach { workout ->
-            WorkoutRow(
-                workout = workout,
-                onEditWorkout = onEditWorkout,
-                onDeleteWorkout = onDeleteWorkout,
-                onStartWorkout = onStartWorkout,
-            )
-        }
-
-        Button(onClick = onBack) {
-            Text("Back to Home")
+            uiState.workouts.forEach { workout ->
+                WorkoutRow(
+                    workout = workout,
+                    onEditWorkout = onEditWorkout,
+                    onDeleteWorkout = onDeleteWorkout,
+                    onStartWorkout = onStartWorkout,
+                )
+            }
         }
     }
 }
@@ -60,19 +84,37 @@ private fun WorkoutRow(
     onDeleteWorkout: (Long) -> Unit,
     onStartWorkout: (Long) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         Text(text = workout.name, style = MaterialTheme.typography.titleMedium)
         Text(text = "Exercises: ${workout.slots.size}")
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { onEditWorkout(workout.id) }) {
-                Text("Edit")
-            }
-            Button(onClick = { onDeleteWorkout(workout.id) }) {
-                Text("Delete")
-            }
-            Button(onClick = { onStartWorkout(workout.id) }) {
-                Text("Start")
-            }
+        Button(
+            onClick = { onStartWorkout(workout.id) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 52.dp),
+        ) {
+            Text("Start Workout")
+        }
+        Button(
+            onClick = { onEditWorkout(workout.id) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp),
+        ) {
+            Text("Edit Workout")
+        }
+        Button(
+            onClick = { onDeleteWorkout(workout.id) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp),
+        ) {
+            Text("Delete Workout")
         }
     }
 }

@@ -231,7 +231,7 @@ milestones:
         title: Optimize layout for one-handed use
         description: Adjust key controls and layouts to support quick one-handed operation during training.
         priority: P1
-        status: todo
+        status: done
         acceptance_criteria:
           - Primary set completion control is reachable with one thumb on common phone sizes.
           - Navigation between sets and exercises requires minimal taps and no fine precision.
