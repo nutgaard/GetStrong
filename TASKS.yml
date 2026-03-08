@@ -7,7 +7,7 @@ tasks:
       injection setup suitable for the workout and progression features
       described in the PRD.
     priority: P0
-    status: ready
+    status: in_progress
     depends_on: []
     acceptance_criteria:
       - Android project builds and runs a placeholder screen on a
@@ -28,7 +28,6 @@ tasks:
       - app/src/main/java/.../MainActivity.kt
       - app/src/main/java/.../di/AppModule.kt
       - app/src/test/java/.../ExampleUnitTest.kt
-    blocked_reason: ""
     pr_url: ""
     owner_role: architect
   - id: T2
