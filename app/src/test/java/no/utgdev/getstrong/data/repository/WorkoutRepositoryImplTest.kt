@@ -9,6 +9,7 @@ import no.utgdev.getstrong.domain.model.ProgressionModeCode
 import no.utgdev.getstrong.domain.model.Workout
 import no.utgdev.getstrong.domain.model.WorkoutExerciseSlot
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
@@ -64,6 +65,81 @@ class WorkoutRepositoryImplTest {
         assertEquals(1015, second.exerciseId)
         assertEquals(3, second.targetSets)
         assertEquals(120, second.restSecondsOverride)
+    }
+
+    @Test
+    fun updateReorderAndDeleteArePersistedAndIsolated() = runTest {
+        val dao = FakeWorkoutDao()
+        val repository = WorkoutRepositoryImpl(dao)
+
+        val firstWorkoutId = repository.createWorkout(
+            Workout(
+                name = "Workout A",
+                slots = listOf(
+                    WorkoutExerciseSlot(
+                        exerciseId = 1001,
+                        workoutId = 0,
+                        position = 0,
+                        targetSets = 5,
+                        targetReps = 5,
+                        progressionMode = ProgressionModeCode.WEIGHT_ONLY,
+                        incrementKg = 2.5,
+                        deloadPercent = 10,
+                        restSecondsOverride = null,
+                    ),
+                    WorkoutExerciseSlot(
+                        exerciseId = 1002,
+                        workoutId = 0,
+                        position = 1,
+                        targetSets = 3,
+                        targetReps = 8,
+                        progressionMode = ProgressionModeCode.REPS_ONLY,
+                        incrementKg = 1.0,
+                        deloadPercent = 8,
+                        restSecondsOverride = 90,
+                    ),
+                ),
+            ),
+        )
+
+        val secondWorkoutId = repository.createWorkout(
+            Workout(
+                name = "Workout B",
+                slots = listOf(
+                    WorkoutExerciseSlot(
+                        exerciseId = 1003,
+                        workoutId = 0,
+                        position = 0,
+                        targetSets = 4,
+                        targetReps = 6,
+                        progressionMode = ProgressionModeCode.WEIGHT_ONLY,
+                        incrementKg = 2.5,
+                        deloadPercent = 10,
+                        restSecondsOverride = null,
+                    ),
+                ),
+            ),
+        )
+
+        val loadedFirstBeforeUpdate = repository.getWorkout(firstWorkoutId)!!
+        repository.updateWorkout(
+            loadedFirstBeforeUpdate.copy(
+                name = "Workout A Renamed",
+                slots = loadedFirstBeforeUpdate.slots.reversed().mapIndexed { idx, slot ->
+                    slot.copy(position = idx)
+                },
+            ),
+        )
+
+        val updatedFirst = repository.getWorkout(firstWorkoutId)!!
+        assertEquals("Workout A Renamed", updatedFirst.name)
+        assertEquals(1002, updatedFirst.slots[0].exerciseId)
+        assertEquals(1001, updatedFirst.slots[1].exerciseId)
+
+        repository.deleteWorkout(firstWorkoutId)
+        assertNull(repository.getWorkout(firstWorkoutId))
+        assertNotNull(repository.getWorkout(secondWorkoutId))
+        assertEquals(1, repository.getWorkout(secondWorkoutId)?.slots?.size)
     }
 }
 

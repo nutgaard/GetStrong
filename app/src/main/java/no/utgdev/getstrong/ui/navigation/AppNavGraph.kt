@@ -3,6 +3,8 @@ package no.utgdev.getstrong.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -13,7 +15,11 @@ import no.utgdev.getstrong.ui.activeWorkout.ActiveWorkoutScreen
 import no.utgdev.getstrong.ui.home.HomeScreen
 import no.utgdev.getstrong.ui.home.HomeViewModel
 import no.utgdev.getstrong.ui.planning.PlanningScreen
+import no.utgdev.getstrong.ui.planning.PlanningViewModel
+import no.utgdev.getstrong.ui.planning.WorkoutEditorScreen
+import no.utgdev.getstrong.ui.planning.WorkoutEditorViewModel
 import no.utgdev.getstrong.ui.summary.SummaryScreen
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
@@ -34,11 +40,50 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         composable(route = AppDestination.Planning.route) {
+            val planningViewModel: PlanningViewModel = hiltViewModel()
+            val planningUiState by planningViewModel.uiState.collectAsState()
+            LaunchedEffect(Unit) {
+                planningViewModel.refresh()
+            }
             PlanningScreen(
+                uiState = planningUiState,
                 onBack = { navController.popBackStack() },
-                onStartWorkout = { workoutId ->
-                    navController.navigate(AppDestination.ActiveWorkout.route(workoutId))
+                onCreateWorkout = {
+                    navController.navigate(AppDestination.PlanningEditor.route(workoutId = null))
                 },
+                onEditWorkout = { workoutId ->
+                    navController.navigate(AppDestination.PlanningEditor.route(workoutId = workoutId))
+                },
+                onDeleteWorkout = { workoutId ->
+                    planningViewModel.deleteWorkout(workoutId)
+                },
+                onStartWorkout = { workoutId ->
+                    navController.navigate(AppDestination.ActiveWorkout.route(workoutId.toString()))
+                },
+            )
+        }
+
+        composable(
+            route = AppDestination.PlanningEditor.route,
+            arguments = listOf(navArgument(AppDestination.PlanningEditor.WORKOUT_ID_ARG) { type = NavType.StringType }),
+        ) {
+            val editorViewModel: WorkoutEditorViewModel = hiltViewModel()
+            val editorUiState by editorViewModel.uiState.collectAsState()
+            val coroutineScope = rememberCoroutineScope()
+            WorkoutEditorScreen(
+                uiState = editorUiState,
+                onNameChanged = editorViewModel::setName,
+                onAddExercise = editorViewModel::addExercise,
+                onRemoveSlot = editorViewModel::removeSlot,
+                onMoveSlotUp = editorViewModel::moveSlotUp,
+                onMoveSlotDown = editorViewModel::moveSlotDown,
+                onSave = {
+                    coroutineScope.launch {
+                        editorViewModel.save()
+                        navController.popBackStack()
+                    }
+                },
+                onBack = { navController.popBackStack() },
             )
         }
 

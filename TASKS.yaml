@@ -78,7 +78,7 @@ milestones:
         title: Implement workout CRUD UI
         description: Provide screens to create, edit, and delete multiple named workouts (e.g., Push/Pull/Legs) and manage their exercises.
         priority: P0
-        status: todo
+        status: done
         acceptance_criteria:
           - User can create at least three named workouts.
           - User can add, reorder, and remove exercises within a workout.
