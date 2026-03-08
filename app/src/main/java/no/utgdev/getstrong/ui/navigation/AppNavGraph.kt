@@ -102,7 +102,12 @@ fun AppNavGraph(navController: NavHostController) {
             val activeUiState by activeWorkoutViewModel.uiState.collectAsState()
             ActiveWorkoutScreen(
                 uiState = activeUiState,
-                onCompleteSet = { activeWorkoutViewModel.completeCurrentSet() },
+                onCompleteSet = { setId, repsAchieved ->
+                    activeWorkoutViewModel.completeSet(setId, repsAchieved)
+                },
+                onFocusSet = { setId ->
+                    activeWorkoutViewModel.focusSet(setId)
+                },
                 onFinishSession = {
                     activeWorkoutViewModel.finishSession()
                     navController.navigate(AppDestination.Summary.route(activeUiState.sessionId.toString()))

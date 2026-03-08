@@ -29,4 +29,19 @@ class ActiveSessionStateTest {
         assertTrue(completed.isCompleted)
         assertEquals(null, completed.currentSet)
     }
+
+    @Test
+    fun currentSetRemainsEarliestIncompleteWhenLaterSetCompletesOutOfOrder() {
+        val state = ActiveSessionState(
+            session = WorkoutSession(id = 2, workoutId = 10, startedAtEpochMs = 0),
+            plannedSets = listOf(
+                SessionPlannedSet(id = 10, sessionId = 2, setOrder = 0, exerciseId = 1001, setType = SessionSetType.WARMUP, targetReps = 3, isCompleted = false),
+                SessionPlannedSet(id = 11, sessionId = 2, setOrder = 1, exerciseId = 1001, setType = SessionSetType.WORK, targetReps = 5, isCompleted = true, completedReps = 5),
+                SessionPlannedSet(id = 12, sessionId = 2, setOrder = 2, exerciseId = 1002, setType = SessionSetType.WORK, targetReps = 5, isCompleted = false),
+            ),
+        )
+
+        assertEquals(10L, state.currentSet?.id)
+        assertFalse(state.isCompleted)
+    }
 }

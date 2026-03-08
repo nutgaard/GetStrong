@@ -31,33 +31,23 @@ class ActiveWorkoutViewModel @Inject constructor(
     fun loadSession() {
         viewModelScope.launch {
             val sessionState = sessionRepository.getActiveSessionState(sessionId)
-            _uiState.update {
-                it.copy(
-                    sessionId = sessionId,
-                    isLoaded = true,
-                    plannedSets = sessionState?.plannedSets.orEmpty(),
-                    currentSet = sessionState?.currentSet,
-                    isCompleted = sessionState?.isCompleted == true,
-                )
-            }
+            applySessionState(sessionState)
         }
     }
 
     fun completeCurrentSet() {
         val current = _uiState.value.currentSet ?: return
+        completeSet(current.id, current.targetReps)
+    }
+
+    fun completeSet(plannedSetId: Long, repsAchieved: Int) {
         viewModelScope.launch {
             val sessionState = sessionRepository.completePlannedSet(
                 sessionId = sessionId,
-                plannedSetId = current.id,
-                repsAchieved = current.targetReps,
+                plannedSetId = plannedSetId,
+                repsAchieved = repsAchieved,
             )
-            _uiState.update {
-                it.copy(
-                    plannedSets = sessionState?.plannedSets.orEmpty(),
-                    currentSet = sessionState?.currentSet,
-                    isCompleted = sessionState?.isCompleted == true,
-                )
-            }
+            applySessionState(sessionState, highlightedSetId = plannedSetId)
         }
     }
 
@@ -65,6 +55,26 @@ class ActiveWorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             sessionRepository.completeSession(sessionId)
             loadSession()
+        }
+    }
+
+    fun focusSet(plannedSetId: Long) {
+        _uiState.update { it.copy(highlightedSetId = plannedSetId) }
+    }
+
+    private fun applySessionState(
+        sessionState: no.utgdev.getstrong.domain.model.ActiveSessionState?,
+        highlightedSetId: Long? = null,
+    ) {
+        _uiState.update {
+            it.copy(
+                sessionId = sessionId,
+                isLoaded = true,
+                plannedSets = sessionState?.plannedSets.orEmpty(),
+                currentSet = sessionState?.currentSet,
+                isCompleted = sessionState?.isCompleted == true,
+                highlightedSetId = highlightedSetId ?: sessionState?.currentSet?.id,
+            )
         }
     }
 }

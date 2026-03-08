@@ -102,7 +102,7 @@ milestones:
         title: Set completion interaction and UI
         description: Design and implement the UI to show the current set and allow one-tap completion for any set (warmup or work) at any time.
         priority: P0
-        status: todo
+        status: done
         acceptance_criteria:
           - Current set is prominently displayed with one-tap completion.
           - User can mark any warmup or work set as complete out of order without breaking the session.

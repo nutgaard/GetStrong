@@ -8,4 +8,5 @@ data class ActiveWorkoutUiState(
     val plannedSets: List<SessionPlannedSet> = emptyList(),
     val currentSet: SessionPlannedSet? = null,
     val isCompleted: Boolean = false,
+    val highlightedSetId: Long? = null,
 )
