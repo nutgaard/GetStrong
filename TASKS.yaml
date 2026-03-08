@@ -78,11 +78,15 @@ milestones:
         title: Implement workout CRUD UI
         description: Provide screens to create, edit, and delete multiple named workouts (e.g., Push/Pull/Legs) and manage their exercises.
         priority: P0
-        status: done
+        status: todo
         acceptance_criteria:
           - User can create at least three named workouts.
           - User can add, reorder, and remove exercises within a workout.
           - Workouts remain available with correct structure after app restart.
+          - Workout planning lists show only the exercises selected for that workout, not the entire exercise catalog inline.
+          - The Add exercise action opens a search/scroll picker of exercises not already selected.
+          - Duplicate exercises within the same workout are prevented.
+          - Exercise lists use standard Android list patterns (e.g., item rows with overflow/context menus) instead of cramped inline Add/Edit/Delete buttons.
 
   - id: M4
     name: Workout Execution Flow
@@ -100,13 +104,15 @@ milestones:
           - Session completes when all planned sets in the workout are handled.
       - id: T8
         title: Set completion interaction and UI
-        description: Design and implement the UI to show the current set and allow one-tap completion for any set (warmup or work) at any time.
+        description: Design and implement set completion UI that supports partial reps and contextual actions, following the active workout mockup.
         priority: P0
-        status: done
+        status: todo
         acceptance_criteria:
-          - Current set is prominently displayed with one-tap completion.
-          - User can mark any warmup or work set as complete out of order without breaking the session.
-          - Completed sets are visually distinguishable and their results (reps achieved) are recorded.
+          - Current set is prominently displayed and completion does not hide or remove its information.
+          - Tapping the gray set circle on an incomplete set marks it complete and sets achieved reps to the target.
+          - Tapping the set circle again decrements the achieved reps by one, supporting partial reps (e.g., 4 of 5) down to 0.
+          - Long-pressing a set opens a contextual menu for actions such as setting weight, setting reps, and clearing the set.
+          - Behavior applies to both warmup and work sets and aligns with the interaction patterns shown in docs/images/workoutview.png.
       - id: T9
         title: Keep screen awake during active workout
         description: Ensure the device screen does not sleep during an active workout session.
@@ -246,6 +252,18 @@ milestones:
           - Non-essential information (history, charts, settings) is not shown during active workouts.
           - Users in tests can identify and complete the current set without confusion.
 
+      - id: T28
+        title: Standardize navigation and remove dev UI
+        description: Align navigation with standard Android patterns, introduce bottom navigation, and remove dev-only actions from the frontpage.
+        priority: P1
+        status: todo
+        acceptance_criteria:
+          - The app uses top app bars with standard back/up behavior where appropriate.
+          - A bottom navigation bar with icons exposes the core areas (e.g., Workouts, Progression, History/Settings).
+          - Settings are accessible from a standard overflow/menu entry, not ad-hoc buttons in content.
+          - Persistence demo and catalog debug actions are not visible in production UX on the frontpage or primary flows.
+          - Lists and collections use standard Android list patterns (e.g., row actions, overflow menus, or swipe actions) instead of oversized inline Edit/Delete buttons.
+
   - id: M10
     name: Settings & Accessibility Polish
     description: Expose key training settings and improve accessibility/usability across core flows.
@@ -253,13 +271,13 @@ milestones:
     tasks:
       - id: T22
         title: Expose training settings UI
-        description: Add UI to configure rest duration, default increments, default progression mode, and deload percent, wiring them through existing settings and progression models.
+        description: Add UI to configure rest duration and preferred defaults (increment, progression mode, deload percent) used when creating new workout exercise slots.
         priority: P1
         status: done
         acceptance_criteria:
           - User can change default rest duration and see it reflected in new sessions.
-          - User can adjust default weight increment and deload percent, and progression logic uses the updated values.
-          - User can choose a default progression mode for new exercises/workouts.
+          - User can adjust default weight increment and deload percent, and newly created workout exercise slots use the updated values as their initial configuration (existing slots are unchanged unless edited).
+          - User can choose a default progression mode used to prefill new exercises/workouts; actual progression behavior always reads the stored configuration on each exercise slot, not a global setting.
       - id: T23
         title: Accessibility and TalkBack pass
         description: Improve accessibility labels, focus order, and contrast on Home, Planning, Active Workout, and Summary screens.

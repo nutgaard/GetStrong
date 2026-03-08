@@ -40,11 +40,15 @@ Users need to:
 - `weight_only`: increase weight when all target reps are achieved.
 - `reps_only`: increase reps within configured rep range.
 - `reps_then_weight`: increase reps to rep-range max, then increase weight and reset reps to rep-range min.
-- Default progression mode: `weight_only`.
-- Default increment: `+2.5 kg`.
-- Default working-set prescription:
-- Most exercises: 5 sets x 5 reps.
-- Deadlift: 1 set x 5 reps.
+- Each **exercise slot in a workout** stores its own progression configuration (mode, rep range, increment, deload percent, and working-set prescription).
+- When a user adds a new exercise slot to a workout, the app applies sensible per-slot defaults:
+  - Default progression mode: `weight_only`.
+  - Default increment: `+2.5 kg`.
+  - Default working-set prescription:
+    - Most exercises: 5 sets x 5 reps.
+    - Deadlift: 1 set x 5 reps.
+  - Default deload percent: `10%`.
+- Global settings may change what new slots default to, but **actual training behavior always reads the stored configuration on each exercise slot**, not a global progression setting.
 - Failure rule:
 - A workout for an exercise is considered failed if **any work set** is below target reps.
 - Deload rule:
@@ -96,6 +100,22 @@ Users need to:
 - Minimal clutter.
 - Fast one-handed flow.
 - Functional behavior correctness is higher priority than pixel-perfect cloning.
+- Front page shows only production features; dev/debug actions (such as persistence demos or catalog debug buttons) are not visible in the production UX.
+- Navigation follows standard Android patterns:
+  - Top app bars with expected back/up behavior.
+  - Settings entry from an overflow/menu action (top-right) rather than ad-hoc buttons.
+- Core areas are exposed via a bottom navigation bar with icons (for example Workouts, Progression, History/Settings), consistent across primary screens.
+- Lists and collections use native Android patterns (row actions, overflow/context menus, swipe actions where appropriate) instead of oversized inline Edit/Delete buttons.
+- Active workout UI should follow the interaction and layout cues in `docs/images/workoutview.png`, including:
+  - Completing a set does not hide or remove its information.
+  - Support for partial reps (for example 4 of 5) via tap-to-complete and tap-to-decrement on a gray set circle.
+  - Long-press on a set opens a contextual menu for per-set actions (set weight, set reps, clear set, etc.).
+- Workout planning and exercise selection:
+  - Planning lists show only the exercises selected for a workout, not the entire catalog inline.
+  - An Add exercise action opens a search/scroll picker of exercises not already selected.
+  - Duplicate exercises within the same workout are disallowed.
+  - Add/selection controls have clear spacing; avoid cramped multi-button layouts.
+- Emphasize Android-native patterns and Material components over custom, button-heavy layouts.
 
 ## User Stories
 - As a user, I want to create and save my own workouts so I can run my own program.
@@ -112,7 +132,7 @@ Users need to:
 - User can mark any warmup/work set complete at any time with one tap.
 - Rest timer defaults to 3 minutes, is configurable, and plays a sound when done.
 - Warmup sets are auto-generated deterministically from working weight and match the heuristic rules.
-- Progression mode is configurable per exercise, with defaults applied for new exercises.
+- Progression configuration (mode, increment, deload percent) is stored per exercise slot, with sensible defaults applied only when new slots are created.
 - Deload is triggered after 3 consecutive failed workouts per exercise using configured percent (default 10%).
 - Workout summary displays reps per set, total volume, and elapsed time at completion.
 - Screen remains awake during active workout.
