@@ -17,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -33,6 +35,7 @@ fun ActiveWorkoutScreen(
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    KeepScreenOnEffect(enabled = uiState.isSessionActive)
     val completedCount = uiState.plannedSets.count { it.isCompleted }
     val pendingSets = uiState.plannedSets.filter { !it.isCompleted }
 
@@ -192,3 +195,17 @@ private fun formatSet(set: SessionPlannedSet): String =
 
 private fun setTypeLabel(set: SessionPlannedSet): String =
     if (set.setType == SessionSetType.WARMUP) "WARMUP" else "WORK"
+
+@Composable
+private fun KeepScreenOnEffect(enabled: Boolean) {
+    val view = LocalView.current
+    DisposableEffect(view, enabled) {
+        val previous = view.keepScreenOn
+        if (enabled) {
+            view.keepScreenOn = true
+        }
+        onDispose {
+            view.keepScreenOn = previous
+        }
+    }
+}

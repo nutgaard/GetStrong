@@ -111,7 +111,7 @@ milestones:
         title: Keep screen awake during active workout
         description: Ensure the device screen does not sleep during an active workout session.
         priority: P1
-        status: todo
+        status: done
         acceptance_criteria:
           - While a workout session is active, the OS does not dim or lock the screen.
           - Normal screen behavior resumes once the workout is ended or paused.

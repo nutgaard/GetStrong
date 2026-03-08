@@ -94,6 +94,7 @@ class ActiveWorkoutViewModel @Inject constructor(
             it.copy(
                 sessionId = sessionId,
                 isLoaded = true,
+                isSessionActive = sessionState?.session?.endedAtEpochMs == null,
                 plannedSets = sessionState?.plannedSets.orEmpty(),
                 currentSet = sessionState?.currentSet,
                 isCompleted = sessionState?.isCompleted == true,
