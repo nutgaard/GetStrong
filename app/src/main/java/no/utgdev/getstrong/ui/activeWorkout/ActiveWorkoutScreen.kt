@@ -40,6 +40,22 @@ fun ActiveWorkoutScreen(
     ) {
         Text(text = "Active Workout", style = MaterialTheme.typography.headlineMedium)
         Text(text = "Session ID: ${uiState.sessionId}")
+        when {
+            uiState.isRestTimerActive -> {
+                Text(
+                    text = "Rest: ${uiState.restRemainingSeconds}s",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            uiState.isRestOver -> {
+                Text(
+                    text = "Rest over",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color(0xFF16A34A),
+                )
+            }
+        }
 
         val currentSet = uiState.currentSet
         if (currentSet != null) {

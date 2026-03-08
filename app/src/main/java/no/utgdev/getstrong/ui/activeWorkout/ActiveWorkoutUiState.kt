@@ -9,4 +9,8 @@ data class ActiveWorkoutUiState(
     val currentSet: SessionPlannedSet? = null,
     val isCompleted: Boolean = false,
     val highlightedSetId: Long? = null,
+    val restDurationSeconds: Int = 180,
+    val restRemainingSeconds: Int = 0,
+    val isRestTimerActive: Boolean = false,
+    val isRestOver: Boolean = false,
 )

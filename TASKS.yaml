@@ -191,7 +191,7 @@ milestones:
         title: Implement rest timer with sound notifications
         description: Add a configurable rest timer between work sets with a default of 3 minutes and a sound when rest ends.
         priority: P0
-        status: todo
+        status: done
         acceptance_criteria:
           - Rest timer starts after the last warmup set and before the first work set for an exercise.
           - No rest timer is started between warmup sets.
