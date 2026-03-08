@@ -3,13 +3,20 @@
 Status: accepted
 
 ## Context
-The PRD explicitly requires an offline local exercise catalog, local persistence of workouts and summaries, and excludes authentication or cloud features. The base architecture should reflect those product constraints immediately.
+The PRD requires the exercise catalog, workouts, workout summaries, and progression behavior to work fully offline. Authentication, cloud sync, and remote APIs are explicitly out of scope for MVP.
 
 ## Decision
-Design repositories as local-first and offline-only. Do not add network dependencies or remote data abstractions. When structured persistence is implemented, use a local database approach suitable for Android offline storage, with Room as the default choice for persisted entities and seeded local catalog data.
+Treat all MVP repositories as local-only and offline-first.
+
+- Do not add network dependencies, sync engines, or remote repository abstractions during MVP.
+- Persist structured product records locally.
+- Persist lightweight application settings locally.
+- Keep repository contracts focused on product capabilities, not on potential future remote sources.
+
+This ADR sets the product boundary: all data access is local. Concrete storage technology choices inside that local-only boundary may be refined by later ADRs without changing the offline-only decision itself.
 
 ## Consequences
-- The architecture stays aligned with MVP scope and avoids unnecessary remote complexity.
-- Persistence decisions can support workouts, exercise catalog, summaries, and progression history without redesigning repository contracts.
-- Database schema evolution and migrations become an early technical concern.
-- Any later introduction of sync or cloud capabilities will require a new ADR because it changes core assumptions.
+- The architecture stays aligned with MVP scope and avoids speculative remote complexity.
+- Workouts, exercise catalog data, summaries, and progression history can be modeled without cloud assumptions.
+- Local schema evolution and migrations become a normal engineering concern early.
+- Any future introduction of sync, accounts, or network-backed repositories requires a new ADR because it changes a core product assumption.

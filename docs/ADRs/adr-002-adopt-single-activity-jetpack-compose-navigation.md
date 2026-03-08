@@ -3,13 +3,15 @@
 Status: accepted
 
 ## Context
-The app needs a placeholder screen now and will later require fast, low-friction flows for workout planning and workout execution. A single-activity model aligns well with modern Android navigation and avoids fragment-heavy setup.
+The product requires fast transitions between workout planning, active workout execution, and summary flows. A fragment-heavy approach would add lifecycle and XML overhead without solving a real MVP problem.
 
 ## Decision
-Use a single activity hosting a Jetpack Compose UI tree and a Navigation Compose graph. Each destination or major flow is represented by UI state plus a ViewModel. Navigation remains a presentation concern and does not cross into domain logic.
+Use a single Android activity as the app entry point and host the UI entirely with Jetpack Compose. Manage screen transitions with a single Navigation Compose graph.
+
+Navigation is a presentation concern. Screens and routes live in the `ui` layer, while domain logic remains navigation-agnostic. Each major destination may have its own ViewModel, but route changes must not leak into `domain` contracts.
 
 ## Consequences
-- UI iteration is fast and consistent with modern Android guidance.
-- There is less fragment and XML overhead in the base project.
-- The team must keep composables stateless where practical and avoid embedding business rules in UI code.
-- Typed or well-structured route conventions should be maintained to avoid fragile navigation coupling.
+- UI iteration remains fast and aligned with modern Android guidance.
+- Fragment and XML complexity are avoided during MVP.
+- The team must keep composables as presentation components and avoid embedding business rules in the UI layer.
+- Route conventions need to stay structured and stable so navigation does not become stringly coupled across the app.

@@ -1,0 +1,237 @@
+version: 1
+owner: team-lead
+
+milestones:
+  - id: M1
+    name: Android App Shell & Architecture
+    description: Set up the Android project, core architecture, and persistence foundation.
+    priority: P0
+    tasks:
+      - id: T1
+        title: Scaffold Android project and navigation
+        description: Create the base Android app (package, build config, navigation structure, and theme) suitable for the workout and planning flows.
+        priority: P0
+        status: done
+        acceptance_criteria:
+          - Project builds and runs on an Android emulator/device with no runtime errors.
+          - App shows a basic home screen entry point for workouts.
+          - Navigation framework is in place to support at least Home, Workout Planning, and Active Workout screens.
+      - id: T2
+        title: Choose and wire persistence mechanism
+        description: Select and integrate a local persistence solution (e.g., Room/SQL, DataStore) for workouts, exercises, and workout summaries.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - Persistence layer is implemented behind clear interfaces usable by feature modules.
+          - Data for workouts, exercises, and summaries can be saved and retrieved in a simple demo flow.
+          - Solution requires no network or cloud services.
+
+  - id: M2
+    name: Exercise Catalog
+    description: Ship a built-in offline catalog of common exercises with metadata.
+    priority: P0
+    tasks:
+      - id: T3
+        title: Define exercise data model and storage
+        description: Design the model for exercises including primary/secondary muscle groups and equipment type, and store it locally.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - Exercise entity includes name, primary_muscle_group, secondary_muscle_groups (optional), and equipment_type.
+          - Data model is persisted via the chosen persistence layer.
+          - Model supports referencing exercises from workouts by stable ID.
+      - id: T4
+        title: Seed 50 common exercises locally
+        description: Populate and expose a built-in catalog of at least 50 common resistance training exercises.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - At least 50 exercises are present at first app launch with no network access.
+          - Each exercise in the catalog has populated primary muscle group and equipment type.
+          - Catalog can be listed in a simple UI screen for selection.
+
+  - id: M3
+    name: Workout Planning
+    description: Allow users to create, edit, delete, and persist multiple named workouts.
+    priority: P0
+    tasks:
+      - id: T5
+        title: Design workout and exercise-in-workout models
+        description: Define data structures for a workout and its ordered list of exercises, including per-exercise configuration hooks (sets, reps, progression mode, etc.).
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - Workout model includes a name and ordered collection of exercise slots.
+          - Each exercise in a workout references an exercise from the catalog and supports per-exercise configuration fields.
+          - Model is persisted and can be loaded reliably between app restarts.
+      - id: T6
+        title: Implement workout CRUD UI
+        description: Provide screens to create, edit, and delete multiple named workouts (e.g., Push/Pull/Legs) and manage their exercises.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - User can create at least three named workouts.
+          - User can add, reorder, and remove exercises within a workout.
+          - Workouts remain available with correct structure after app restart.
+
+  - id: M4
+    name: Workout Execution Flow
+    description: Guide users through running a saved workout, including warmups and work sets per exercise.
+    priority: P0
+    tasks:
+      - id: T7
+        title: Implement workout session engine and flow
+        description: Build the execution logic that runs a saved workout in the specified order, including warmups then work sets for each exercise.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - User can start any saved workout from the planning list.
+          - Session iterates through exercises in the workout, presenting warmup sets first and work sets afterward for each exercise.
+          - Session completes when all planned sets in the workout are handled.
+      - id: T8
+        title: Set completion interaction and UI
+        description: Design and implement the UI to show the current set and allow one-tap completion for any set (warmup or work) at any time.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - Current set is prominently displayed with one-tap completion.
+          - User can mark any warmup or work set as complete out of order without breaking the session.
+          - Completed sets are visually distinguishable and their results (reps achieved) are recorded.
+      - id: T9
+        title: Keep screen awake during active workout
+        description: Ensure the device screen does not sleep during an active workout session.
+        priority: P1
+        status: todo
+        acceptance_criteria:
+          - While a workout session is active, the OS does not dim or lock the screen.
+          - Normal screen behavior resumes once the workout is ended or paused.
+
+  - id: M5
+    name: Progression & Deload Logic
+    description: Implement per-exercise progression modes, failure detection, and deload rules.
+    priority: P0
+    tasks:
+      - id: T10
+        title: Model per-exercise progression settings
+        description: Add configuration for each exercise’s progression mode, rep range, weight increment, and deload percent with sensible defaults.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - Each exercise in a workout has a progression_mode field supporting weight_only, reps_only, and reps_then_weight.
+          - Default progression mode is weight_only with a 2.5 kg increment.
+          - Default working-set prescriptions are 5×5 for most exercises and 1×5 for deadlift.
+      - id: T11
+        title: Implement progression update rules
+        description: Compute the next working weight and/or rep targets per exercise according to the configured progression mode after each workout.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - For weight_only, weight increases when all work sets meet target reps; otherwise weight stays the same.
+          - For reps_only, reps increase within the configured range until max is reached before adjusting weight.
+          - For reps_then_weight, reps increase up to rep-range max, then weight increases and reps reset to the rep-range min.
+      - id: T12
+        title: Track failures and apply deload
+        description: Detect failed workouts and apply configurable deload percent after three consecutive failures per exercise.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - A workout for an exercise is flagged as failed if any work set is below target reps.
+          - Consecutive failures are tracked separately per exercise across sessions.
+          - After three consecutive failures, working weight is reduced by the configured deload percent (default 10%) and failure streak resets.
+
+  - id: M6
+    name: Warmup Generation
+    description: Generate deterministic warmup sets from working weight using the specified heuristics and rounding rules.
+    priority: P0
+    tasks:
+      - id: T13
+        title: Implement warmup heuristics and rounding
+        description: Given a planned working weight and equipment type, generate warmup sets that match the documented percentage-based heuristics and rounding.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - Warmup sets are calculated using the correct bands: <20 kg, 20–79.9 kg, 80–119.9 kg, and ≥120 kg.
+          - Barbell loads are rounded to the nearest 2.5 kg total; dumbbell/machine loads to the nearest available increment (default 1.0 kg).
+          - Example cases such as 9 kg lateral raises and 140 kg deadlifts produce warmups per the PRD examples.
+      - id: T14
+        title: Integrate warmups into workout session UI
+        description: Surface generated warmup sets seamlessly in the workout execution flow before work sets for each exercise.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - Warmup sets appear in order before work sets for each exercise.
+          - Users can complete warmup sets with one tap, same as work sets.
+          - Warmup generation is deterministic for the same exercise configuration.
+
+  - id: M7
+    name: Timers
+    description: Provide workout elapsed timer and rest timer behavior with notifications.
+    priority: P0
+    tasks:
+      - id: T15
+        title: Implement workout elapsed timer
+        description: Track and display time from workout start to completion.
+        priority: P1
+        status: todo
+        acceptance_criteria:
+          - Elapsed workout time starts when the user begins a session.
+          - Elapsed time pauses or stops appropriately if a workout is ended or cancelled.
+          - Final elapsed time is available for the workout summary.
+      - id: T16
+        title: Implement rest timer with sound notifications
+        description: Add a configurable rest timer between work sets with a default of 3 minutes and a sound when rest ends.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - Rest timer starts after the last warmup set and before the first work set for an exercise.
+          - No rest timer is started between warmup sets.
+          - Default rest duration is 3 minutes, configurable per user or workout.
+          - When the timer ends, a sound notification plays even if the screen is on.
+
+  - id: M8
+    name: Workout Summary & History
+    description: Show and persist workout summaries for later analytics.
+    priority: P0
+    tasks:
+      - id: T17
+        title: Implement workout summary screen
+        description: Display per-set results, total volume, and total time when a workout completes.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - At workout completion, user sees reps achieved per set, total lifted volume, and total workout time.
+          - Summary clearly distinguishes warmup vs work sets.
+          - User can dismiss the summary and return to the main app without losing data.
+      - id: T18
+        title: Persist workout summaries for history
+        description: Store workout summaries locally for future analytics and charting.
+        priority: P0
+        status: todo
+        acceptance_criteria:
+          - Workout summaries are saved via the persistence layer at session completion.
+          - Summaries remain available across app restarts.
+          - A simple history list view can display past workouts and basic details from their summaries.
+
+  - id: M9
+    name: UX Flow & StrongLifts-Style Interaction
+    description: Refine layout and interactions to match StrongLifts-style apps with minimal friction and one-handed use.
+    priority: P1
+    tasks:
+      - id: T19
+        title: Optimize layout for one-handed use
+        description: Adjust key controls and layouts to support quick one-handed operation during training.
+        priority: P1
+        status: todo
+        acceptance_criteria:
+          - Primary set completion control is reachable with one thumb on common phone sizes.
+          - Navigation between sets and exercises requires minimal taps and no fine precision.
+          - No critical workout controls are hidden behind deep menus during an active session.
+      - id: T20
+        title: Simplify active workout UI and reduce clutter
+        description: Ensure the active workout screen has a clean, focused design with prominent current set and minimal distractions.
+        priority: P1
+        status: todo
+        acceptance_criteria:
+          - Current exercise and set information is visually dominant on the active workout screen.
+          - Non-essential information (history, charts, settings) is not shown during active workouts.
+          - Users in tests can identify and complete the current set without confusion.

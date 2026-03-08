@@ -3,13 +3,19 @@
 Status: accepted
 
 ## Context
-The base architecture requires verifiable dependency injection, ViewModel wiring, and scalable construction of repositories and use cases. A standardized Android DI approach reduces custom bootstrapping.
+The chosen architecture requires predictable construction of repositories, use cases, and ViewModels. Hand-wired dependency creation would become repetitive and fragile as more planning, execution, and persistence features are added.
 
 ## Decision
-Use Hilt as the application dependency injection framework. Bind repository interfaces to data-layer implementations in the DI layer, inject ViewModels through Hilt, and keep the domain layer unaware of the DI framework.
+Use Hilt as the single dependency injection mechanism for the application.
+
+- Bind repository interfaces to data-layer implementations in `di`.
+- Construct ViewModels through Hilt.
+- Keep DI annotations and module definitions out of `domain`.
+
+Hilt is the only approved DI pattern for MVP. Do not introduce service locators, manual singleton registries, or a second DI framework.
 
 ## Consequences
-- Dependency ownership becomes explicit and test-friendly.
-- The project incurs annotation-processing and build configuration overhead.
-- Service-locator style access patterns should be avoided because Hilt is the single DI mechanism.
-- Framework-specific DI annotations remain outside the domain layer.
+- Dependency ownership becomes explicit, testable, and consistent.
+- The build gains annotation-processing and configuration overhead.
+- Wiring stays centralized in `di` instead of spreading constructor assembly logic through the app.
+- Domain code remains unaware of the DI framework.

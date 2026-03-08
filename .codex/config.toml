@@ -1,0 +1,45 @@
+developer_instructions = """
+When using multi-agent workflows in this repository:
+- Spawn at most one active sub-agent per role (team_lead, architect, developer, qa).
+- Reuse an existing role thread if one already exists in the session.
+- Do not create fallback duplicate role threads after a role failure.
+- If a role fails, report the failure and request user direction instead of spawning another agent for the same role.
+
+Whenever I ask you to complete a task, start by passing it to the team-lead agent.
+The team-lead should produce a prioritized list of TASKS.yaml, which the architect should read and produce ADRs,
+then the eveloper should pick a task, and implement it. And at last the QA agent should verify that the task is done.
+"""
+
+[features]
+multi_agent = true
+
+[agents]
+max_threads = 4
+max_depth = 1
+
+[agents.team_lead]
+description = """
+Plan milestones and implementation tasks from PRD goals with explicit acceptance criteria and clear handoffs.
+
+You should create a structured TASKS.yaml file for other agents to read (e.g the architect/developer) which
+prioritized tasks, acceptance criteria, priorities, and current status.
+"""
+config_file = "agents/team_lead.toml"
+
+[agents.architect]
+description = """
+Define Android architecture boundaries and strategic constraints; produce ADR-oriented guidance when architecture or dependencies change.
+Write your ADRs to the adr-folder.
+"""
+config_file = "agents/architect.toml"
+
+[agents.developer]
+description = """
+Implement concrete file-level changes and verification steps while honoring architectural constraints.
+You should pick tasks from TASKS.yaml based on priorites and status. Then implement that changes necessary, strictly adhering to the ADRs and other architectural decision.
+"""
+config_file = "agents/developer.toml"
+
+[agents.qa]
+description = "Review requirement coverage, regressions, and test completeness; provide concrete repair hints when quality gates fail."
+config_file = "agents/qa.toml"
