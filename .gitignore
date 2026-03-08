@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+.ai-runs/
+ai-harness/node_modules/
+ai-harness/.env
+
+.env
