@@ -240,7 +240,7 @@ milestones:
         title: Simplify active workout UI and reduce clutter
         description: Ensure the active workout screen has a clean, focused design with prominent current set and minimal distractions.
         priority: P1
-        status: todo
+        status: done
         acceptance_criteria:
           - Current exercise and set information is visually dominant on the active workout screen.
           - Non-essential information (history, charts, settings) is not shown during active workouts.

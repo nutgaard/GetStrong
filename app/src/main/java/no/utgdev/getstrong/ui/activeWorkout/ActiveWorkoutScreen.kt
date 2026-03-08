@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import no.utgdev.getstrong.domain.model.SessionPlannedSet
 import no.utgdev.getstrong.domain.model.SessionSetType
 
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun ActiveWorkoutScreen(
     uiState: ActiveWorkoutUiState,
@@ -33,6 +34,7 @@ fun ActiveWorkoutScreen(
     modifier: Modifier = Modifier,
 ) {
     val completedCount = uiState.plannedSets.count { it.isCompleted }
+    val pendingSets = uiState.plannedSets.filter { !it.isCompleted }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -92,7 +94,6 @@ fun ActiveWorkoutScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(text = "Active Workout", style = MaterialTheme.typography.headlineMedium)
-            Text(text = "Session ID: ${uiState.sessionId}")
             when {
                 uiState.isRestTimerActive -> {
                     Text(
@@ -120,12 +121,12 @@ fun ActiveWorkoutScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
-                        text = "Current Set",
+                        text = "Current Set • ${setTypeLabel(currentSet)}",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                     Text(
-                        text = formatSet(currentSet),
+                        text = formatCurrentSet(currentSet),
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
@@ -133,14 +134,15 @@ fun ActiveWorkoutScreen(
                 Text(text = "No pending sets")
             }
 
-            Text(text = "Completed sets: $completedCount / ${uiState.plannedSets.size}")
-            Text(text = "All Planned Sets", style = MaterialTheme.typography.titleMedium)
-            uiState.plannedSets.forEach { set ->
+            Text(
+                text = "Progress: $completedCount / ${uiState.plannedSets.size}",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(text = "Pending Sets", style = MaterialTheme.typography.titleMedium)
+            pendingSets.forEach { set ->
                 PlannedSetRow(
                     set = set,
                     isCurrent = uiState.currentSet?.id == set.id,
-                    isHighlighted = uiState.highlightedSetId == set.id,
-                    onFocusSet = onFocusSet,
                     onCompleteSet = onCompleteSet,
                 )
             }
@@ -153,15 +155,11 @@ fun ActiveWorkoutScreen(
 private fun PlannedSetRow(
     set: SessionPlannedSet,
     isCurrent: Boolean,
-    isHighlighted: Boolean,
-    onFocusSet: (Long) -> Unit,
     onCompleteSet: (Long, Int) -> Unit,
 ) {
     val bgColor = when {
-        set.isCompleted -> Color(0xFFDCFCE7)
         isCurrent -> MaterialTheme.colorScheme.secondaryContainer
         set.setType == SessionSetType.WARMUP -> Color(0xFFE0F2FE)
-        isHighlighted -> MaterialTheme.colorScheme.surfaceVariant
         else -> MaterialTheme.colorScheme.surface
     }
 
@@ -172,23 +170,13 @@ private fun PlannedSetRow(
             .padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        val completionText = if (set.isCompleted) {
-            "Completed (${set.completedReps ?: 0} reps)"
-        } else {
-            "Pending"
-        }
-        Text(text = "${setTypeLabel(set)} - ${formatSet(set)} - $completionText")
+        Text(text = "${setTypeLabel(set)} • ${formatSet(set)}")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
-                onClick = { onFocusSet(set.id) },
-                modifier = Modifier.heightIn(min = 48.dp),
-            ) {
-                Text("Focus")
-            }
-            Button(
                 onClick = { onCompleteSet(set.id, set.targetReps) },
-                enabled = !set.isCompleted,
-                modifier = Modifier.heightIn(min = 48.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp),
             ) {
                 Text("Complete")
             }
@@ -196,8 +184,11 @@ private fun PlannedSetRow(
     }
 }
 
+private fun formatCurrentSet(set: SessionPlannedSet): String =
+    "Exercise ${set.exerciseId} • target ${set.targetReps}${set.targetWeightKg?.let { " @${it}kg" } ?: ""}"
+
 private fun formatSet(set: SessionPlannedSet): String =
-    "#${set.setOrder + 1} exercise=${set.exerciseId} target=${set.targetReps}${set.targetWeightKg?.let { " @${it}kg" } ?: ""}"
+    "#${set.setOrder + 1} ex ${set.exerciseId} • ${set.targetReps}${set.targetWeightKg?.let { " @${it}kg" } ?: ""}"
 
 private fun setTypeLabel(set: SessionPlannedSet): String =
     if (set.setType == SessionSetType.WARMUP) "WARMUP" else "WORK"
