@@ -18,6 +18,7 @@ import no.utgdev.getstrong.domain.repository.SessionRepository
 import no.utgdev.getstrong.domain.repository.SettingsRepository
 import no.utgdev.getstrong.domain.time.TimeProvider
 import no.utgdev.getstrong.domain.usecase.CompleteSessionAndSaveSummaryUseCase
+import no.utgdev.getstrong.domain.usecase.ElapsedTimeCalculator
 import no.utgdev.getstrong.domain.usecase.RestTimerCalculator
 import no.utgdev.getstrong.domain.usecase.RestTimerPolicy
 import no.utgdev.getstrong.ui.navigation.AppDestination
@@ -30,12 +31,14 @@ class ActiveWorkoutViewModel @Inject constructor(
     private val completeSessionAndSaveSummary: CompleteSessionAndSaveSummaryUseCase,
     private val restTimerPolicy: RestTimerPolicy,
     private val restTimerCalculator: RestTimerCalculator,
+    private val elapsedTimeCalculator: ElapsedTimeCalculator,
     private val restSignalPlayer: RestSignalPlayer,
     private val timeProvider: TimeProvider,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ActiveWorkoutUiState())
     val uiState: StateFlow<ActiveWorkoutUiState> = _uiState.asStateFlow()
     private var restTimerJob: Job? = null
+    private var elapsedTimerJob: Job? = null
     private val restTimerEndAtKey = "rest_timer_end_at_ms"
     private val restTimerTargetSetIdKey = "rest_timer_target_set_id"
 
@@ -90,6 +93,11 @@ class ActiveWorkoutViewModel @Inject constructor(
         sessionState: no.utgdev.getstrong.domain.model.ActiveSessionState?,
         highlightedSetId: Long? = null,
     ) {
+        val session = sessionState?.session
+        updateElapsedTimer(
+            startedAtEpochMs = session?.startedAtEpochMs,
+            endedAtEpochMs = session?.endedAtEpochMs,
+        )
         _uiState.update {
             it.copy(
                 sessionId = sessionId,
@@ -100,6 +108,41 @@ class ActiveWorkoutViewModel @Inject constructor(
                 isCompleted = sessionState?.isCompleted == true,
                 highlightedSetId = highlightedSetId ?: sessionState?.currentSet?.id,
             )
+        }
+    }
+
+    private fun updateElapsedTimer(startedAtEpochMs: Long?, endedAtEpochMs: Long?) {
+        elapsedTimerJob?.cancel()
+        if (startedAtEpochMs == null) {
+            _uiState.update { it.copy(elapsedSeconds = 0L) }
+            return
+        }
+        if (endedAtEpochMs != null) {
+            _uiState.update {
+                it.copy(
+                    elapsedSeconds = elapsedTimeCalculator.elapsedSeconds(
+                        startedAtEpochMs = startedAtEpochMs,
+                        endedAtEpochMs = endedAtEpochMs,
+                        nowEpochMs = endedAtEpochMs,
+                    ),
+                )
+            }
+            return
+        }
+        elapsedTimerJob = viewModelScope.launch {
+            while (true) {
+                val nowMs = timeProvider.nowMs()
+                _uiState.update {
+                    it.copy(
+                        elapsedSeconds = elapsedTimeCalculator.elapsedSeconds(
+                            startedAtEpochMs = startedAtEpochMs,
+                            endedAtEpochMs = null,
+                            nowEpochMs = nowMs,
+                        ),
+                    )
+                }
+                delay(1000L)
+            }
         }
     }
 

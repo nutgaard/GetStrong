@@ -7,6 +7,7 @@ import no.utgdev.getstrong.data.local.entity.SessionPlannedSetEntity
 import no.utgdev.getstrong.data.local.entity.SetResultEntity
 import no.utgdev.getstrong.data.local.entity.WorkoutSessionEntity
 import no.utgdev.getstrong.domain.model.SessionSetType
+import no.utgdev.getstrong.domain.usecase.ElapsedTimeCalculator
 import no.utgdev.getstrong.domain.usecase.SessionSummaryCalculator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -74,7 +75,7 @@ class SessionSummaryRepositoryImplTest {
 
         val repository = SessionSummaryRepositoryImpl(
             sessionDao = dao,
-            sessionSummaryCalculator = SessionSummaryCalculator(),
+            sessionSummaryCalculator = SessionSummaryCalculator(ElapsedTimeCalculator()),
         )
 
         val summary = repository.getSessionSummary(sessionId)

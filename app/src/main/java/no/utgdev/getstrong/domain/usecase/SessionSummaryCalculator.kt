@@ -8,7 +8,9 @@ import no.utgdev.getstrong.domain.model.WorkoutSession
 import no.utgdev.getstrong.domain.model.WorkoutSessionSummary
 import no.utgdev.getstrong.domain.model.WorkoutSessionSummarySet
 
-class SessionSummaryCalculator @Inject constructor() {
+class SessionSummaryCalculator @Inject constructor(
+    private val elapsedTimeCalculator: ElapsedTimeCalculator,
+) {
     companion object {
         const val VOLUME_RULE = "WORK_SETS_ONLY"
     }
@@ -39,8 +41,11 @@ class SessionSummaryCalculator @Inject constructor() {
             .filter { it.setType == SessionSetType.WORK }
             .sumOf { row -> (row.achievedReps ?: 0) * (row.loadKg ?: 0.0) }
 
-        val endedAt = session.endedAtEpochMs ?: session.startedAtEpochMs
-        val totalDurationSeconds = ((endedAt - session.startedAtEpochMs).coerceAtLeast(0L)) / 1000L
+        val totalDurationSeconds = elapsedTimeCalculator.elapsedSeconds(
+            startedAtEpochMs = session.startedAtEpochMs,
+            endedAtEpochMs = session.endedAtEpochMs,
+            nowEpochMs = session.endedAtEpochMs ?: session.startedAtEpochMs,
+        )
 
         return WorkoutSessionSummary(
             sessionId = session.id,

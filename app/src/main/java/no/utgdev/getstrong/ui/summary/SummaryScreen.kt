@@ -51,7 +51,7 @@ fun SummaryScreen(
         ) {
             Text(text = "Workout Summary", style = MaterialTheme.typography.headlineMedium)
             Text(text = "Session ID: ${uiState.sessionId}")
-            Text(text = "Total time: ${uiState.totalDurationSeconds}s")
+            Text(text = "Total time: ${formatElapsed(uiState.totalDurationSeconds)}")
             Text(text = "Total volume: ${"%.1f".format(uiState.totalVolumeKg)} kg")
             Text(text = "Volume rule: ${uiState.volumeRule}")
 
@@ -89,4 +89,16 @@ private fun formatSummaryRow(row: SummarySetRowUi): String {
     val reps = row.achievedReps?.toString() ?: "-"
     val load = row.loadKg?.let { "${"%.1f".format(it)}kg" } ?: "-"
     return "#${row.setOrder + 1} ${row.setType} ex=${row.exerciseId} target=${row.targetReps} reps=$reps load=$load"
+}
+
+private fun formatElapsed(seconds: Long): String {
+    val total = seconds.coerceAtLeast(0L)
+    val hours = total / 3600
+    val minutes = (total % 3600) / 60
+    val secs = total % 60
+    return if (hours > 0) {
+        "%d:%02d:%02d".format(hours, minutes, secs)
+    } else {
+        "%02d:%02d".format(minutes, secs)
+    }
 }

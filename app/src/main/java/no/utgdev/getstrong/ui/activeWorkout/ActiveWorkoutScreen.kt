@@ -97,6 +97,10 @@ fun ActiveWorkoutScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(text = "Active Workout", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                text = "Elapsed ${formatElapsed(uiState.elapsedSeconds)}",
+                style = MaterialTheme.typography.titleMedium,
+            )
             when {
                 uiState.isRestTimerActive -> {
                     Text(
@@ -195,6 +199,18 @@ private fun formatSet(set: SessionPlannedSet): String =
 
 private fun setTypeLabel(set: SessionPlannedSet): String =
     if (set.setType == SessionSetType.WARMUP) "WARMUP" else "WORK"
+
+private fun formatElapsed(seconds: Long): String {
+    val total = seconds.coerceAtLeast(0L)
+    val hours = total / 3600
+    val minutes = (total % 3600) / 60
+    val secs = total % 60
+    return if (hours > 0) {
+        "%d:%02d:%02d".format(hours, minutes, secs)
+    } else {
+        "%02d:%02d".format(minutes, secs)
+    }
+}
 
 @Composable
 private fun KeepScreenOnEffect(enabled: Boolean) {

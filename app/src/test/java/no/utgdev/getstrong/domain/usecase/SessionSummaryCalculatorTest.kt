@@ -8,7 +8,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class SessionSummaryCalculatorTest {
-    private val calculator = SessionSummaryCalculator()
+    private val calculator = SessionSummaryCalculator(ElapsedTimeCalculator())
 
     @Test
     fun computesDurationAndVolumeUsingWorkSetsOnly() {

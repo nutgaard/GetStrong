@@ -182,7 +182,7 @@ milestones:
         title: Implement workout elapsed timer
         description: Track and display time from workout start to completion.
         priority: P1
-        status: todo
+        status: done
         acceptance_criteria:
           - Elapsed workout time starts when the user begins a session.
           - Elapsed time pauses or stops appropriately if a workout is ended or cancelled.

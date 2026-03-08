@@ -6,6 +6,7 @@ data class ActiveWorkoutUiState(
     val sessionId: Long = 0,
     val isLoaded: Boolean = false,
     val isSessionActive: Boolean = false,
+    val elapsedSeconds: Long = 0L,
     val plannedSets: List<SessionPlannedSet> = emptyList(),
     val currentSet: SessionPlannedSet? = null,
     val isCompleted: Boolean = false,
