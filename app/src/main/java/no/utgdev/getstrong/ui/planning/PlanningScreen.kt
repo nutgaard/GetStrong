@@ -25,6 +25,7 @@ fun PlanningScreen(
     uiState: PlanningUiState,
     onBack: () -> Unit,
     onCreateWorkout: () -> Unit,
+    onRetryLoad: () -> Unit,
     onEditWorkout: (Long) -> Unit,
     onDeleteWorkout: (Long) -> Unit,
     onStartWorkout: (Long) -> Unit,
@@ -74,20 +75,48 @@ fun PlanningScreen(
                 modifier = Modifier.semantics { heading() },
             )
 
-            if (uiState.workouts.isEmpty()) {
-                Text(
-                    text = "No workouts yet. Create one to get started.",
-                    modifier = Modifier.semantics { contentDescription = "No workouts yet. Create one to get started." },
-                )
-            }
-
-            uiState.workouts.forEach { workout ->
-                WorkoutRow(
-                    workout = workout,
-                    onEditWorkout = onEditWorkout,
-                    onDeleteWorkout = onDeleteWorkout,
-                    onStartWorkout = onStartWorkout,
-                )
+            when {
+                uiState.isLoading -> {
+                    Text("Loading workouts...")
+                }
+                uiState.errorMessage != null -> {
+                    Text(
+                        text = uiState.errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Button(
+                        onClick = onRetryLoad,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp),
+                    ) {
+                        Text("Retry")
+                    }
+                }
+                uiState.workouts.isEmpty() -> {
+                    Text(
+                        text = "No workouts yet. Create one to get started.",
+                        modifier = Modifier.semantics { contentDescription = "No workouts yet. Create one to get started." },
+                    )
+                    Button(
+                        onClick = onCreateWorkout,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp),
+                    ) {
+                        Text("Create Workout")
+                    }
+                }
+                else -> {
+                    uiState.workouts.forEach { workout ->
+                        WorkoutRow(
+                            workout = workout,
+                            onEditWorkout = onEditWorkout,
+                            onDeleteWorkout = onDeleteWorkout,
+                            onStartWorkout = onStartWorkout,
+                        )
+                    }
+                }
             }
         }
     }

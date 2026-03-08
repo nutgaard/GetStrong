@@ -24,22 +24,33 @@ class HistoryViewModel @Inject constructor(
 
     fun load() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val history = workoutSummaryRepository.getHistory()
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    items = history.map { item ->
-                        HistoryItemUi(
-                            id = item.id,
-                            sessionId = item.sessionId,
-                            workoutName = item.workoutName,
-                            totalVolumeKg = item.totalVolumeKg,
-                            totalDurationSeconds = item.totalDurationSeconds,
-                            completedAtEpochMs = item.completedAtEpochMs,
-                        )
-                    },
-                )
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            try {
+                val history = workoutSummaryRepository.getHistory()
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = null,
+                        items = history.map { item ->
+                            HistoryItemUi(
+                                id = item.id,
+                                sessionId = item.sessionId,
+                                workoutName = item.workoutName,
+                                totalVolumeKg = item.totalVolumeKg,
+                                totalDurationSeconds = item.totalDurationSeconds,
+                                completedAtEpochMs = item.completedAtEpochMs,
+                            )
+                        },
+                    )
+                }
+            } catch (_: Throwable) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Could not load workout history. Please try again.",
+                        items = emptyList(),
+                    )
+                }
             }
         }
     }

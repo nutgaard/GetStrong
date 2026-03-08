@@ -2,6 +2,7 @@ package no.utgdev.getstrong.ui.history
 
 data class HistoryUiState(
     val isLoading: Boolean = true,
+    val errorMessage: String? = null,
     val items: List<HistoryItemUi> = emptyList(),
 )
 

@@ -16,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -27,6 +26,7 @@ import no.utgdev.getstrong.domain.model.SessionSetType
 fun SummaryScreen(
     uiState: SummaryUiState,
     onDone: () -> Unit,
+    onRetryLoad: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -58,59 +58,83 @@ fun SummaryScreen(
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.semantics { heading() },
             )
-            Text(
-                text = "Session ID: ${uiState.sessionId}",
-                modifier = Modifier.semantics { contentDescription = "Session ${uiState.sessionId}" },
-            )
-            Text(
-                text = "Total time: ${formatElapsed(uiState.totalDurationSeconds)}",
-                modifier = Modifier.semantics { contentDescription = "Total time ${formatElapsed(uiState.totalDurationSeconds)}" },
-            )
-            Text(
-                text = "Total volume: ${"%.1f".format(uiState.totalVolumeKg)} kg",
-                modifier = Modifier.semantics { contentDescription = "Total volume ${"%.1f".format(uiState.totalVolumeKg)} kilograms" },
-            )
-            Text(
-                text = "Volume rule: ${uiState.volumeRule}",
-                modifier = Modifier.semantics { contentDescription = "Volume rule ${uiState.volumeRule}" },
-            )
+            when {
+                uiState.isLoading -> {
+                    Text("Loading summary...")
+                }
+                uiState.errorMessage != null -> {
+                    Text(
+                        text = uiState.errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Button(
+                        onClick = onRetryLoad,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp),
+                    ) {
+                        Text("Retry")
+                    }
+                }
+                uiState.sets.isEmpty() -> {
+                    Text("No summary data available for this session.")
+                }
+                else -> {
+                    Text(
+                        text = "Session ID: ${uiState.sessionId}",
+                        modifier = Modifier.semantics { contentDescription = "Session ${uiState.sessionId}" },
+                    )
+                    Text(
+                        text = "Total time: ${formatElapsed(uiState.totalDurationSeconds)}",
+                        modifier = Modifier.semantics { contentDescription = "Total time ${formatElapsed(uiState.totalDurationSeconds)}" },
+                    )
+                    Text(
+                        text = "Total volume: ${"%.1f".format(uiState.totalVolumeKg)} kg",
+                        modifier = Modifier.semantics { contentDescription = "Total volume ${"%.1f".format(uiState.totalVolumeKg)} kilograms" },
+                    )
+                    Text(
+                        text = "Volume rule: ${uiState.volumeRule}",
+                        modifier = Modifier.semantics { contentDescription = "Volume rule ${uiState.volumeRule}" },
+                    )
 
-            Column(
-                modifier = Modifier
-                    .weight(1f, fill = true)
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                val scroll = rememberScrollState()
-                Column(
-                    modifier = Modifier.verticalScroll(scroll),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    uiState.sets.forEach { row ->
-                        val tint =
-                            if (row.setType == SessionSetType.WARMUP) {
-                                MaterialTheme.colorScheme.tertiaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.secondaryContainer
+                    Column(
+                        modifier = Modifier
+                            .weight(1f, fill = true)
+                            .fillMaxWidth()
+                            .padding(top = 8.dp)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        val scroll = rememberScrollState()
+                        Column(
+                            modifier = Modifier.verticalScroll(scroll),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            uiState.sets.forEach { row ->
+                                val tint =
+                                    if (row.setType == SessionSetType.WARMUP) {
+                                        MaterialTheme.colorScheme.tertiaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.secondaryContainer
+                                    }
+                                val textColor =
+                                    if (row.setType == SessionSetType.WARMUP) {
+                                        MaterialTheme.colorScheme.onTertiaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSecondaryContainer
+                                    }
+                                Text(
+                                    text = formatSummaryRow(row),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(tint)
+                                        .padding(8.dp)
+                                        .semantics { contentDescription = "Summary row ${formatSummaryRow(row)}" },
+                                    color = textColor,
+                                )
                             }
-                        val textColor =
-                            if (row.setType == SessionSetType.WARMUP) {
-                                MaterialTheme.colorScheme.onTertiaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.onSecondaryContainer
-                            }
-                        Text(
-                            text = formatSummaryRow(row),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(tint)
-                                .padding(8.dp)
-                                .semantics { contentDescription = "Summary row ${formatSummaryRow(row)}" },
-                            color = textColor,
-                        )
+                        }
                     }
                 }
             }

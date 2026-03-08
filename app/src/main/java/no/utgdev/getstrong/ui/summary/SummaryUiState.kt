@@ -3,6 +3,7 @@ package no.utgdev.getstrong.ui.summary
 data class SummaryUiState(
     val sessionId: Long = 0L,
     val isLoading: Boolean = true,
+    val errorMessage: String? = null,
     val totalVolumeKg: Double = 0.0,
     val totalDurationSeconds: Long = 0L,
     val volumeRule: String = "",

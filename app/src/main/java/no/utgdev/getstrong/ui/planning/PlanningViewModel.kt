@@ -26,8 +26,25 @@ class PlanningViewModel @Inject constructor(
 
     fun refresh() {
         viewModelScope.launch {
-            val workouts = workoutRepository.getAllWorkouts()
-            _uiState.update { it.copy(workouts = workouts) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            try {
+                val workouts = workoutRepository.getAllWorkouts()
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = null,
+                        workouts = workouts,
+                    )
+                }
+            } catch (_: Throwable) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Could not load workouts. Please try again.",
+                        workouts = emptyList(),
+                    )
+                }
+            }
         }
     }
 

@@ -273,7 +273,7 @@ milestones:
         title: Error and empty state UX
         description: Add clear empty and error states for workouts, exercise catalog, and history lists.
         priority: P2
-        status: todo
+        status: done
         acceptance_criteria:
           - When there are no workouts, exercises, or history entries, users see contextual empty-state messaging with a clear next action.
           - Common data/load errors show user-friendly messages instead of silent failures or crashes.

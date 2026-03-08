@@ -28,27 +28,41 @@ class SummaryViewModel @Inject constructor(
         loadSummary()
     }
 
-    private fun loadSummary() {
+    fun loadSummary() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, sessionId = sessionId) }
-            val summary = sessionSummaryRepository.getSessionSummary(sessionId)
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    totalVolumeKg = summary?.totalVolumeKg ?: 0.0,
-                    totalDurationSeconds = summary?.totalDurationSeconds ?: 0L,
-                    volumeRule = summary?.volumeRule.orEmpty(),
-                    sets = summary?.sets.orEmpty().map { row ->
-                        SummarySetRowUi(
-                            setOrder = row.setOrder,
-                            setType = row.setType,
-                            exerciseId = row.exerciseId,
-                            targetReps = row.targetReps,
-                            achievedReps = row.achievedReps,
-                            loadKg = row.loadKg,
-                        )
-                    },
-                )
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, sessionId = sessionId) }
+            try {
+                val summary = sessionSummaryRepository.getSessionSummary(sessionId)
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = if (summary == null) "Summary unavailable for this session." else null,
+                        totalVolumeKg = summary?.totalVolumeKg ?: 0.0,
+                        totalDurationSeconds = summary?.totalDurationSeconds ?: 0L,
+                        volumeRule = summary?.volumeRule.orEmpty(),
+                        sets = summary?.sets.orEmpty().map { row ->
+                            SummarySetRowUi(
+                                setOrder = row.setOrder,
+                                setType = row.setType,
+                                exerciseId = row.exerciseId,
+                                targetReps = row.targetReps,
+                                achievedReps = row.achievedReps,
+                                loadKg = row.loadKg,
+                            )
+                        },
+                    )
+                }
+            } catch (_: Throwable) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Could not load workout summary. Please try again.",
+                        totalVolumeKg = 0.0,
+                        totalDurationSeconds = 0L,
+                        volumeRule = "",
+                        sets = emptyList(),
+                    )
+                }
             }
         }
     }

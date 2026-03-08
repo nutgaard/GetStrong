@@ -67,6 +67,8 @@ fun AppNavGraph(navController: NavHostController) {
             HistoryScreen(
                 uiState = historyUiState,
                 onBack = { navController.popBackStack() },
+                onRetry = { historyViewModel.load() },
+                onStartWorkoutFlow = { navController.navigate(AppDestination.Planning.route) },
             )
         }
 
@@ -83,6 +85,7 @@ fun AppNavGraph(navController: NavHostController) {
                 onCreateWorkout = {
                     navController.navigate(AppDestination.PlanningEditor.route(workoutId = null))
                 },
+                onRetryLoad = { planningViewModel.refresh() },
                 onEditWorkout = { workoutId ->
                     navController.navigate(AppDestination.PlanningEditor.route(workoutId = workoutId))
                 },
@@ -161,6 +164,7 @@ fun AppNavGraph(navController: NavHostController) {
             val summaryUiState by summaryViewModel.uiState.collectAsState()
             SummaryScreen(
                 uiState = summaryUiState,
+                onRetryLoad = { summaryViewModel.loadSummary() },
                 onDone = {
                     navController.navigate(AppDestination.Home.route) {
                         popUpTo(AppDestination.Home.route) { inclusive = true }

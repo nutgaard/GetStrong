@@ -43,111 +43,132 @@ class HomeViewModel @Inject constructor(
     fun runPersistenceDemo() {
         viewModelScope.launch {
             _uiState.update { it.copy(isRunningDemo = true) }
+            try {
+                val exerciseId = exerciseRepository.save(
+                    Exercise(
+                        name = "Barbell Row",
+                        primaryMuscleGroup = MuscleGroupCode.BACK,
+                        secondaryMuscleGroups = listOf(MuscleGroupCode.BICEPS, MuscleGroupCode.REAR_DELTS),
+                        equipmentType = EquipmentTypeCode.BARBELL,
+                    ),
+                )
 
-            val exerciseId = exerciseRepository.save(
-                Exercise(
-                    name = "Barbell Row",
-                    primaryMuscleGroup = MuscleGroupCode.BACK,
-                    secondaryMuscleGroups = listOf(MuscleGroupCode.BICEPS, MuscleGroupCode.REAR_DELTS),
-                    equipmentType = EquipmentTypeCode.BARBELL,
-                ),
-            )
-
-            val workoutId = workoutRepository.createWorkout(
-                Workout(
-                    name = "Demo Pull Workout",
-                    slots = listOf(
-                        WorkoutExerciseSlot(
-                            workoutId = 0,
-                            exerciseId = exerciseId,
-                            position = 0,
-                            targetSets = 5,
-                            targetReps = 5,
-                            repRangeMin = 5,
-                            repRangeMax = 5,
-                            progressionMode = ProgressionModeCode.WEIGHT_ONLY,
-                            incrementKg = 2.5,
-                            deloadPercent = 10,
-                            currentWorkingWeightKg = 0.0,
-                            failureStreak = 0,
-                            lastProgressionSessionId = null,
-                            restSecondsOverride = null,
+                val workoutId = workoutRepository.createWorkout(
+                    Workout(
+                        name = "Demo Pull Workout",
+                        slots = listOf(
+                            WorkoutExerciseSlot(
+                                workoutId = 0,
+                                exerciseId = exerciseId,
+                                position = 0,
+                                targetSets = 5,
+                                targetReps = 5,
+                                repRangeMin = 5,
+                                repRangeMax = 5,
+                                progressionMode = ProgressionModeCode.WEIGHT_ONLY,
+                                incrementKg = 2.5,
+                                deloadPercent = 10,
+                                currentWorkingWeightKg = 0.0,
+                                failureStreak = 0,
+                                lastProgressionSessionId = null,
+                                restSecondsOverride = null,
+                            ),
                         ),
                     ),
-                ),
-            )
-
-            val startedAt = System.currentTimeMillis()
-            val sessionId = sessionRepository.saveSession(
-                WorkoutSession(
-                    workoutId = workoutId,
-                    startedAtEpochMs = startedAt,
-                    endedAtEpochMs = startedAt + 120000,
-                ),
-            )
-
-            sessionRepository.saveSetResult(
-                SetResult(
-                    sessionId = sessionId,
-                    workoutSlotId = null,
-                    exerciseId = exerciseId,
-                    setType = "work",
-                    reps = 5,
-                    weightKg = 60.0,
-                ),
-            )
-
-            workoutSummaryRepository.saveSummary(
-                WorkoutSummary(
-                    workoutId = workoutId,
-                    sessionId = sessionId,
-                    workoutName = "Demo Pull Workout",
-                    totalVolumeKg = 300.0,
-                    totalDurationSeconds = 120,
-                    completedAtEpochMs = System.currentTimeMillis(),
-                ),
-            )
-
-            settingsRepository.updateDefaults(
-                restDurationSeconds = 180,
-                loadIncrementKg = 2.5,
-                deloadPercent = 10,
-                defaultProgressionMode = ProgressionModeCode.WEIGHT_ONLY,
-            )
-
-            val loadedExerciseCount = exerciseRepository.getAll().size
-            val loadedExercise = exerciseRepository.getById(exerciseId)
-            val loadedWorkout = workoutRepository.getWorkout(workoutId)
-            val loadedSetResults = sessionRepository.getSetResults(sessionId).size
-            val loadedSummaries = workoutSummaryRepository.getAllSummaries().size
-            val settings = settingsRepository.settings.first()
-
-            _uiState.update {
-                it.copy(
-                    isRunningDemo = false,
-                    demoResultMessage =
-                        "Saved+loaded demo data: exercises=$loadedExerciseCount, " +
-                            "exercise='${loadedExercise?.name}', secondary=${loadedExercise?.secondaryMuscleGroups?.size ?: 0}, " +
-                            "workout='${loadedWorkout?.name}', setResults=$loadedSetResults, " +
-                            "summaries=$loadedSummaries, rest=${settings.restDurationSeconds}s",
                 )
+
+                val startedAt = System.currentTimeMillis()
+                val sessionId = sessionRepository.saveSession(
+                    WorkoutSession(
+                        workoutId = workoutId,
+                        startedAtEpochMs = startedAt,
+                        endedAtEpochMs = startedAt + 120000,
+                    ),
+                )
+
+                sessionRepository.saveSetResult(
+                    SetResult(
+                        sessionId = sessionId,
+                        workoutSlotId = null,
+                        exerciseId = exerciseId,
+                        setType = "work",
+                        reps = 5,
+                        weightKg = 60.0,
+                    ),
+                )
+
+                workoutSummaryRepository.saveSummary(
+                    WorkoutSummary(
+                        workoutId = workoutId,
+                        sessionId = sessionId,
+                        workoutName = "Demo Pull Workout",
+                        totalVolumeKg = 300.0,
+                        totalDurationSeconds = 120,
+                        completedAtEpochMs = System.currentTimeMillis(),
+                    ),
+                )
+
+                settingsRepository.updateDefaults(
+                    restDurationSeconds = 180,
+                    loadIncrementKg = 2.5,
+                    deloadPercent = 10,
+                    defaultProgressionMode = ProgressionModeCode.WEIGHT_ONLY,
+                )
+
+                val loadedExerciseCount = exerciseRepository.getAll().size
+                val loadedExercise = exerciseRepository.getById(exerciseId)
+                val loadedWorkout = workoutRepository.getWorkout(workoutId)
+                val loadedSetResults = sessionRepository.getSetResults(sessionId).size
+                val loadedSummaries = workoutSummaryRepository.getAllSummaries().size
+                val settings = settingsRepository.settings.first()
+
+                _uiState.update {
+                    it.copy(
+                        isRunningDemo = false,
+                        demoResultMessage =
+                            "Saved+loaded demo data: exercises=$loadedExerciseCount, " +
+                                "exercise='${loadedExercise?.name}', secondary=${loadedExercise?.secondaryMuscleGroups?.size ?: 0}, " +
+                                "workout='${loadedWorkout?.name}', setResults=$loadedSetResults, " +
+                                "summaries=$loadedSummaries, rest=${settings.restDurationSeconds}s",
+                    )
+                }
+                loadCatalog()
+            } catch (_: Throwable) {
+                _uiState.update {
+                    it.copy(
+                        isRunningDemo = false,
+                        demoResultMessage = "Could not run persistence demo. Please try again.",
+                    )
+                }
+                loadCatalog()
             }
-            loadCatalog()
         }
     }
 
     fun loadCatalog() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoadingCatalog = true) }
-            val catalog = exerciseRepository.getAll()
-            _uiState.update {
-                it.copy(
-                    isLoadingCatalog = false,
-                    catalogCount = catalog.size,
-                    catalogPreview = catalog.take(10).map { exercise ->
-                        "${exercise.id}: ${exercise.name} (${exercise.primaryMuscleGroup})"
-                    },
-                )
+            _uiState.update { it.copy(isLoadingCatalog = true, catalogErrorMessage = null) }
+            try {
+                val catalog = exerciseRepository.getAll()
+                _uiState.update {
+                    it.copy(
+                        isLoadingCatalog = false,
+                        catalogErrorMessage = null,
+                        catalogCount = catalog.size,
+                        catalogPreview = catalog.take(10).map { exercise ->
+                            "${exercise.id}: ${exercise.name} (${exercise.primaryMuscleGroup})"
+                        },
+                    )
+                }
+            } catch (_: Throwable) {
+                _uiState.update {
+                    it.copy(
+                        isLoadingCatalog = false,
+                        catalogErrorMessage = "Could not load exercise catalog. Please retry.",
+                        catalogCount = 0,
+                        catalogPreview = emptyList(),
+                    )
+                }
             }
         }
     }

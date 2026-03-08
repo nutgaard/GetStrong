@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 fun HistoryScreen(
     uiState: HistoryUiState,
     onBack: () -> Unit,
+    onRetry: () -> Unit,
+    onStartWorkoutFlow: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -45,10 +47,42 @@ fun HistoryScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(text = "Workout History", style = MaterialTheme.typography.headlineMedium)
-            uiState.items.forEach { item ->
-                Text(
-                    text = "${item.workoutName} | session=${item.sessionId} | vol=${"%.1f".format(item.totalVolumeKg)}kg | time=${item.totalDurationSeconds}s",
-                )
+            when {
+                uiState.isLoading -> {
+                    Text("Loading history...")
+                }
+                uiState.errorMessage != null -> {
+                    Text(
+                        text = uiState.errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Button(
+                        onClick = onRetry,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp),
+                    ) {
+                        Text("Retry")
+                    }
+                }
+                uiState.items.isEmpty() -> {
+                    Text("No workout history yet. Complete a workout to see summaries here.")
+                    Button(
+                        onClick = onStartWorkoutFlow,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp),
+                    ) {
+                        Text("Start a Workout")
+                    }
+                }
+                else -> {
+                    uiState.items.forEach { item ->
+                        Text(
+                            text = "${item.workoutName} | session=${item.sessionId} | vol=${"%.1f".format(item.totalVolumeKg)}kg | time=${item.totalDurationSeconds}s",
+                        )
+                    }
+                }
             }
         }
     }

@@ -114,10 +114,6 @@ fun HomeScreen(
                 text = uiState.demoResultMessage,
                 modifier = Modifier.semantics { contentDescription = "Persistence demo result ${uiState.demoResultMessage}" },
             )
-            Text(
-                text = "Catalog count: ${uiState.catalogCount}",
-                modifier = Modifier.semantics { contentDescription = "Catalog count ${uiState.catalogCount}" },
-            )
 
             Button(
                 onClick = onLoadCatalog,
@@ -133,8 +129,44 @@ fun HomeScreen(
                 Text(if (uiState.isLoadingCatalog) "Loading..." else "Refresh Catalog")
             }
 
-            uiState.catalogPreview.forEach { previewRow ->
-                Text(text = previewRow, style = MaterialTheme.typography.bodySmall)
+            when {
+                uiState.isLoadingCatalog -> {
+                    Text("Loading exercise catalog...")
+                }
+                uiState.catalogErrorMessage != null -> {
+                    Text(
+                        text = uiState.catalogErrorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Button(
+                        onClick = onLoadCatalog,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp),
+                    ) {
+                        Text("Retry Catalog Load")
+                    }
+                }
+                uiState.catalogCount == 0 -> {
+                    Text("No exercises found in catalog.")
+                    Button(
+                        onClick = onLoadCatalog,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp),
+                    ) {
+                        Text("Reload Catalog")
+                    }
+                }
+                else -> {
+                    Text(
+                        text = "Catalog count: ${uiState.catalogCount}",
+                        modifier = Modifier.semantics { contentDescription = "Catalog count ${uiState.catalogCount}" },
+                    )
+                    uiState.catalogPreview.forEach { previewRow ->
+                        Text(text = previewRow, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
             }
             Spacer(modifier = Modifier.padding(bottom = 8.dp))
         }
