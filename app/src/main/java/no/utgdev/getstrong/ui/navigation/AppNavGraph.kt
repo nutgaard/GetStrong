@@ -29,6 +29,7 @@ fun AppNavGraph(navController: NavHostController) {
                 onOpenPlanning = { navController.navigate(AppDestination.Planning.route) },
                 onStartWorkout = { navController.navigate(AppDestination.ActiveWorkout.route("quick-start")) },
                 onRunPersistenceDemo = { homeViewModel.runPersistenceDemo() },
+                onLoadCatalog = { homeViewModel.loadCatalog() },
             )
         }
 

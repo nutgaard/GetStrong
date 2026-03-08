@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,14 +20,16 @@ fun HomeScreen(
     onOpenPlanning: () -> Unit,
     onStartWorkout: () -> Unit,
     onRunPersistenceDemo: () -> Unit,
+    onLoadCatalog: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.Start,
     ) {
         Text(text = "GetStrong", style = MaterialTheme.typography.headlineMedium)
         Text(text = "Plan and run your workouts")
@@ -46,5 +50,17 @@ fun HomeScreen(
         }
 
         Text(text = uiState.demoResultMessage)
+        Text(text = "Catalog count: ${uiState.catalogCount}")
+
+        Button(
+            onClick = onLoadCatalog,
+            enabled = !uiState.isLoadingCatalog,
+        ) {
+            Text(if (uiState.isLoadingCatalog) "Loading..." else "Refresh Catalog")
+        }
+
+        uiState.catalogPreview.forEach { previewRow ->
+            Text(text = previewRow, style = MaterialTheme.typography.bodySmall)
+        }
     }
 }

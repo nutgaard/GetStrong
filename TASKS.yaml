@@ -54,7 +54,7 @@ milestones:
         title: Seed 50 common exercises locally
         description: Populate and expose a built-in catalog of at least 50 common resistance training exercises.
         priority: P0
-        status: todo
+        status: done
         acceptance_criteria:
           - At least 50 exercises are present at first app launch with no network access.
           - Each exercise in the catalog has populated primary muscle group and equipment type.

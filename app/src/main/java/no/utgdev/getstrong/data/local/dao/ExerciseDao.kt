@@ -13,6 +13,9 @@ interface ExerciseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(exercise: ExerciseEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAllIgnore(exercises: List<ExerciseEntity>)
+
     @Update
     suspend fun update(exercise: ExerciseEntity)
 

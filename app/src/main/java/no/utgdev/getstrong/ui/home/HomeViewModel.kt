@@ -35,6 +35,10 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    init {
+        loadCatalog()
+    }
+
     fun runPersistenceDemo() {
         viewModelScope.launch {
             _uiState.update { it.copy(isRunningDemo = true) }
@@ -111,6 +115,23 @@ class HomeViewModel @Inject constructor(
                             "exercise='${loadedExercise?.name}', secondary=${loadedExercise?.secondaryMuscleGroups?.size ?: 0}, " +
                             "workout='${loadedWorkout?.name}', setResults=$loadedSetResults, " +
                             "summaries=$loadedSummaries, rest=${settings.restDurationSeconds}s",
+                )
+            }
+            loadCatalog()
+        }
+    }
+
+    fun loadCatalog() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingCatalog = true) }
+            val catalog = exerciseRepository.getAll()
+            _uiState.update {
+                it.copy(
+                    isLoadingCatalog = false,
+                    catalogCount = catalog.size,
+                    catalogPreview = catalog.take(10).map { exercise ->
+                        "${exercise.id}: ${exercise.name} (${exercise.primaryMuscleGroup})"
+                    },
                 )
             }
         }
