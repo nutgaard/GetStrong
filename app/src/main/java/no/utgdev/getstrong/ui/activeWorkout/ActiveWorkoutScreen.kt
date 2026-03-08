@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import no.utgdev.getstrong.domain.model.SessionPlannedSet
+import no.utgdev.getstrong.domain.model.SessionSetType
 
 @Composable
 fun ActiveWorkoutScreen(
@@ -100,6 +101,7 @@ private fun PlannedSetRow(
     val bgColor = when {
         set.isCompleted -> Color(0xFFDCFCE7)
         isCurrent -> MaterialTheme.colorScheme.secondaryContainer
+        set.setType == SessionSetType.WARMUP -> Color(0xFFE0F2FE)
         isHighlighted -> MaterialTheme.colorScheme.surfaceVariant
         else -> MaterialTheme.colorScheme.surface
     }
@@ -116,7 +118,7 @@ private fun PlannedSetRow(
         } else {
             "Pending"
         }
-        Text(text = "${formatSet(set)} - $completionText")
+        Text(text = "${setTypeLabel(set)} - ${formatSet(set)} - $completionText")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { onFocusSet(set.id) }) {
                 Text("Focus")
@@ -132,4 +134,7 @@ private fun PlannedSetRow(
 }
 
 private fun formatSet(set: SessionPlannedSet): String =
-    "#${set.setOrder + 1} ${set.setType} exercise=${set.exerciseId} target=${set.targetReps}"
+    "#${set.setOrder + 1} exercise=${set.exerciseId} target=${set.targetReps}${set.targetWeightKg?.let { " @${it}kg" } ?: ""}"
+
+private fun setTypeLabel(set: SessionPlannedSet): String =
+    if (set.setType == SessionSetType.WARMUP) "WARMUP" else "WORK"

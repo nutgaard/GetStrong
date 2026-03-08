@@ -273,6 +273,99 @@ class CompleteSessionWithProgressionUseCaseTest {
         assertEquals(100.0, update.nextWorkingWeightKg, 0.0)
         assertEquals(2, update.nextFailureStreak)
     }
+
+    @Test
+    fun ignoresWarmupSetResultsWhenEvaluatingFailureAndProgression() = runTest {
+        val workoutId = 10L
+        val slotId = 20L
+        val exerciseId = 1006L
+        val sessionId = 30L
+
+        val workoutRepository = FakeWorkoutRepository(
+            Workout(
+                id = workoutId,
+                name = "A",
+                slots = listOf(
+                    WorkoutExerciseSlot(
+                        id = slotId,
+                        workoutId = workoutId,
+                        exerciseId = exerciseId,
+                        position = 0,
+                        targetSets = 2,
+                        targetReps = 5,
+                        repRangeMin = 5,
+                        repRangeMax = 5,
+                        progressionMode = ProgressionModeCode.WEIGHT_ONLY,
+                        incrementKg = 2.5,
+                        deloadPercent = 10,
+                        currentWorkingWeightKg = 100.0,
+                        failureStreak = 1,
+                        restSecondsOverride = null,
+                    ),
+                ),
+            ),
+        )
+        val sessionRepository = FakeSessionRepository(
+            activeState = ActiveSessionState(
+                session = WorkoutSession(id = sessionId, workoutId = workoutId, startedAtEpochMs = 1L),
+                plannedSets = listOf(
+                    SessionPlannedSet(
+                        id = 1,
+                        sessionId = sessionId,
+                        workoutSlotId = slotId,
+                        setOrder = 0,
+                        exerciseId = exerciseId,
+                        setType = SessionSetType.WARMUP,
+                        targetReps = 3,
+                        isCompleted = true,
+                        completedReps = 2,
+                    ),
+                ),
+            ),
+            results = listOf(
+                SetResult(
+                    id = 1,
+                    sessionId = sessionId,
+                    workoutSlotId = slotId,
+                    exerciseId = exerciseId,
+                    setType = SessionSetType.WARMUP,
+                    reps = 1,
+                    weightKg = 60.0,
+                ),
+                SetResult(
+                    id = 2,
+                    sessionId = sessionId,
+                    workoutSlotId = slotId,
+                    exerciseId = exerciseId,
+                    setType = SessionSetType.WORK,
+                    reps = 5,
+                    weightKg = 100.0,
+                ),
+                SetResult(
+                    id = 3,
+                    sessionId = sessionId,
+                    workoutSlotId = slotId,
+                    exerciseId = exerciseId,
+                    setType = SessionSetType.WORK,
+                    reps = 5,
+                    weightKg = 100.0,
+                ),
+            ),
+        )
+
+        val useCase = CompleteSessionWithProgressionUseCase(
+            sessionRepository = sessionRepository,
+            workoutRepository = workoutRepository,
+            progressionCalculator = ProgressionCalculator(),
+        )
+
+        useCase(sessionId)
+
+        val update = sessionRepository.completedUpdates.single().single()
+        assertEquals(slotId, update.slotId)
+        assertEquals(102.5, update.nextWorkingWeightKg, 0.0)
+        assertEquals(0, update.nextFailureStreak)
+    }
 }
 
 private class FakeSessionRepository(

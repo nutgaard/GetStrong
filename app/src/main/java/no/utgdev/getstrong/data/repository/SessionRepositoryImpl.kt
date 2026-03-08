@@ -58,7 +58,7 @@ class SessionRepositoryImpl @Inject constructor(
                 exerciseId = plannedSet.exerciseId,
                 setType = plannedSet.setType,
                 reps = repsAchieved,
-                weightKg = 0.0,
+                weightKg = plannedSet.targetWeightKg ?: 0.0,
             ),
         )
         return getActiveSessionState(sessionId)
@@ -118,6 +118,7 @@ private fun SessionPlannedSet.toEntity(sessionId: Long): SessionPlannedSetEntity
         exerciseId = exerciseId,
         setType = setType,
         targetReps = targetReps,
+        targetWeightKg = targetWeightKg,
         isCompleted = isCompleted,
         completedReps = completedReps,
     )
@@ -131,6 +132,7 @@ private fun SessionPlannedSetEntity.toDomain(): SessionPlannedSet =
         exerciseId = exerciseId,
         setType = setType,
         targetReps = targetReps,
+        targetWeightKg = targetWeightKg,
         isCompleted = isCompleted,
         completedReps = completedReps,
     )

@@ -167,7 +167,7 @@ milestones:
         title: Integrate warmups into workout session UI
         description: Surface generated warmup sets seamlessly in the workout execution flow before work sets for each exercise.
         priority: P0
-        status: todo
+        status: done
         acceptance_criteria:
           - Warmup sets appear in order before work sets for each exercise.
           - Users can complete warmup sets with one tap, same as work sets.

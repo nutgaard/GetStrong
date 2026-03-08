@@ -31,6 +31,7 @@ data class SessionPlannedSetEntity(
     val exerciseId: Long,
     val setType: String,
     val targetReps: Int,
+    val targetWeightKg: Double?,
     val isCompleted: Boolean,
     val completedReps: Int?,
 )
