@@ -56,6 +56,7 @@ class WorkoutEditorViewModel @Inject constructor(
                     incrementKg = slot.incrementKg,
                     deloadPercent = slot.deloadPercent,
                     currentWorkingWeightKg = slot.currentWorkingWeightKg,
+                    failureStreak = slot.failureStreak,
                     lastProgressionSessionId = slot.lastProgressionSessionId,
                     restSecondsOverride = slot.restSecondsOverride,
                 )
@@ -94,6 +95,7 @@ class WorkoutEditorViewModel @Inject constructor(
             incrementKg = defaults.incrementKg,
             deloadPercent = defaults.deloadPercent,
             currentWorkingWeightKg = 0.0,
+            failureStreak = 0,
             lastProgressionSessionId = null,
             restSecondsOverride = null,
         )
@@ -154,6 +156,7 @@ class WorkoutEditorViewModel @Inject constructor(
                     incrementKg = slot.incrementKg,
                     deloadPercent = slot.deloadPercent,
                     currentWorkingWeightKg = slot.currentWorkingWeightKg,
+                    failureStreak = slot.failureStreak,
                     lastProgressionSessionId = slot.lastProgressionSessionId,
                     restSecondsOverride = slot.restSecondsOverride,
                 )

@@ -82,3 +82,17 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         )
     }
 }
+
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE workout_exercise_slots ADD COLUMN failureStreak INTEGER NOT NULL DEFAULT 0",
+        )
+        db.execSQL(
+            "ALTER TABLE session_planned_sets ADD COLUMN workoutSlotId INTEGER NOT NULL DEFAULT 0",
+        )
+        db.execSQL(
+            "ALTER TABLE set_results ADD COLUMN workoutSlotId INTEGER",
+        )
+    }
+}

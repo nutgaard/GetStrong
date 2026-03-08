@@ -54,6 +54,7 @@ class SessionRepositoryImpl @Inject constructor(
         sessionDao.upsertSetResult(
             SetResultEntity(
                 sessionId = sessionId,
+                workoutSlotId = plannedSet.workoutSlotId,
                 exerciseId = plannedSet.exerciseId,
                 setType = plannedSet.setType,
                 reps = repsAchieved,
@@ -79,6 +80,7 @@ class SessionRepositoryImpl @Inject constructor(
                     slotId = it.slotId,
                     nextTargetReps = it.nextTargetReps,
                     nextWorkingWeightKg = it.nextWorkingWeightKg,
+                    nextFailureStreak = it.nextFailureStreak,
                 )
             },
         )
@@ -111,6 +113,7 @@ private fun SessionPlannedSet.toEntity(sessionId: Long): SessionPlannedSetEntity
     SessionPlannedSetEntity(
         id = id,
         sessionId = sessionId,
+        workoutSlotId = workoutSlotId,
         setOrder = setOrder,
         exerciseId = exerciseId,
         setType = setType,
@@ -123,6 +126,7 @@ private fun SessionPlannedSetEntity.toDomain(): SessionPlannedSet =
     SessionPlannedSet(
         id = id,
         sessionId = sessionId,
+        workoutSlotId = workoutSlotId,
         setOrder = setOrder,
         exerciseId = exerciseId,
         setType = setType,
@@ -135,6 +139,7 @@ private fun SetResult.toEntity(): SetResultEntity =
     SetResultEntity(
         id = id,
         sessionId = sessionId,
+        workoutSlotId = workoutSlotId,
         exerciseId = exerciseId,
         setType = setType,
         reps = reps,
@@ -145,6 +150,7 @@ private fun SetResultEntity.toDomain(): SetResult =
     SetResult(
         id = id,
         sessionId = sessionId,
+        workoutSlotId = workoutSlotId,
         exerciseId = exerciseId,
         setType = setType,
         reps = reps,

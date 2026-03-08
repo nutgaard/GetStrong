@@ -15,6 +15,7 @@ class WorkoutSessionEngine @Inject constructor() {
             plannedSets += SessionPlannedSet(
                 setOrder = setOrder++,
                 sessionId = 0,
+                workoutSlotId = slot.id,
                 exerciseId = slot.exerciseId,
                 setType = SessionSetType.WARMUP,
                 targetReps = warmupRepsFor(slot.targetReps),
@@ -24,6 +25,7 @@ class WorkoutSessionEngine @Inject constructor() {
                 plannedSets += SessionPlannedSet(
                     setOrder = setOrder++,
                     sessionId = 0,
+                    workoutSlotId = slot.id,
                     exerciseId = slot.exerciseId,
                     setType = SessionSetType.WORK,
                     targetReps = slot.targetReps,

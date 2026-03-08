@@ -20,6 +20,7 @@ import no.utgdev.getstrong.data.local.db.MIGRATION_2_3
 import no.utgdev.getstrong.data.local.db.MIGRATION_3_4
 import no.utgdev.getstrong.data.local.db.MIGRATION_4_5
 import no.utgdev.getstrong.data.local.db.MIGRATION_5_6
+import no.utgdev.getstrong.data.local.db.MIGRATION_6_7
 import no.utgdev.getstrong.data.seed.ExerciseSeedData
 
 @Module
@@ -38,6 +39,7 @@ object DatabaseModule {
             .addMigrations(MIGRATION_3_4)
             .addMigrations(MIGRATION_4_5)
             .addMigrations(MIGRATION_5_6)
+            .addMigrations(MIGRATION_6_7)
             .build()
         runBlocking {
             database.withTransaction {

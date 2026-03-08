@@ -37,6 +37,7 @@ interface SessionDao {
         UPDATE workout_exercise_slots
         SET targetReps = :nextTargetReps,
             currentWorkingWeightKg = :nextWorkingWeightKg,
+            failureStreak = :nextFailureStreak,
             lastProgressionSessionId = :sessionId
         WHERE id = :slotId
           AND (lastProgressionSessionId IS NULL OR lastProgressionSessionId != :sessionId)
@@ -47,6 +48,7 @@ interface SessionDao {
         slotId: Long,
         nextTargetReps: Int,
         nextWorkingWeightKg: Double,
+        nextFailureStreak: Int,
     )
 
     @Query("SELECT * FROM set_results WHERE sessionId = :sessionId ORDER BY id ASC")
@@ -75,6 +77,7 @@ interface SessionDao {
                 slotId = update.slotId,
                 nextTargetReps = update.nextTargetReps,
                 nextWorkingWeightKg = update.nextWorkingWeightKg,
+                nextFailureStreak = update.nextFailureStreak,
             )
         }
         markSessionCompleted(sessionId, endedAtEpochMs)
@@ -85,4 +88,5 @@ data class SlotProgressionRecord(
     val slotId: Long,
     val nextTargetReps: Int,
     val nextWorkingWeightKg: Double,
+    val nextFailureStreak: Int,
 )

@@ -26,6 +26,7 @@ import androidx.room.PrimaryKey
 data class SessionPlannedSetEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val sessionId: Long,
+    val workoutSlotId: Long,
     val setOrder: Int,
     val exerciseId: Long,
     val setType: String,

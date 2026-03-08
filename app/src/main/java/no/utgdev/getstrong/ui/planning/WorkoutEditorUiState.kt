@@ -23,6 +23,7 @@ data class WorkoutSlotDraft(
     val incrementKg: Double,
     val deloadPercent: Int,
     val currentWorkingWeightKg: Double,
+    val failureStreak: Int,
     val lastProgressionSessionId: Long? = null,
     val restSecondsOverride: Int?,
 )

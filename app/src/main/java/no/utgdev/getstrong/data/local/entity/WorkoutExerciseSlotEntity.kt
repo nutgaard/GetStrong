@@ -36,6 +36,7 @@ data class WorkoutExerciseSlotEntity(
     val incrementKg: Double,
     val deloadPercent: Int,
     val currentWorkingWeightKg: Double,
+    val failureStreak: Int,
     val lastProgressionSessionId: Long?,
     val restSecondsOverride: Int?,
 )

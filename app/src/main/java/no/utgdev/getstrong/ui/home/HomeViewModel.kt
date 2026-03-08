@@ -69,6 +69,7 @@ class HomeViewModel @Inject constructor(
                             incrementKg = 2.5,
                             deloadPercent = 10,
                             currentWorkingWeightKg = 0.0,
+                            failureStreak = 0,
                             lastProgressionSessionId = null,
                             restSecondsOverride = null,
                         ),
@@ -88,6 +89,7 @@ class HomeViewModel @Inject constructor(
             sessionRepository.saveSetResult(
                 SetResult(
                     sessionId = sessionId,
+                    workoutSlotId = null,
                     exerciseId = exerciseId,
                     setType = "work",
                     reps = 5,

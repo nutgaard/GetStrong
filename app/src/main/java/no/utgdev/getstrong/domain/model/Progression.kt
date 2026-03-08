@@ -21,4 +21,5 @@ data class SlotProgressionUpdate(
     val slotId: Long,
     val nextTargetReps: Int,
     val nextWorkingWeightKg: Double,
+    val nextFailureStreak: Int,
 )

@@ -25,10 +25,14 @@ class CompleteSessionWithProgressionUseCase @Inject constructor(
             val completedWorkReps = setResults
                 .asSequence()
                 .filter { result ->
-                    result.exerciseId == slot.exerciseId && result.setType == SessionSetType.WORK
+                    result.workoutSlotId == slot.id && result.setType == SessionSetType.WORK
                 }
                 .map { it.reps }
                 .toList()
+
+            val isFailure = completedWorkReps.any { reps -> reps < slot.targetReps }
+            val streakAfterOutcome = if (isFailure) slot.failureStreak + 1 else 0
+            val shouldDeload = isFailure && streakAfterOutcome >= 3
 
             val result = progressionCalculator.calculate(
                 ProgressionInput(
@@ -44,19 +48,24 @@ class CompleteSessionWithProgressionUseCase @Inject constructor(
                 ),
             )
 
-            if (result.nextTargetReps == slot.targetReps && result.nextWorkingWeightKg == slot.currentWorkingWeightKg) {
-                SlotProgressionUpdate(
-                    slotId = slot.id,
-                    nextTargetReps = slot.targetReps,
-                    nextWorkingWeightKg = slot.currentWorkingWeightKg,
+            val nextWeight = if (shouldDeload) {
+                progressionCalculator.applyDeload(
+                    currentWorkingWeightKg = slot.currentWorkingWeightKg,
+                    deloadPercent = slot.deloadPercent,
+                    incrementKg = slot.incrementKg,
                 )
             } else {
-                SlotProgressionUpdate(
-                    slotId = slot.id,
-                    nextTargetReps = result.nextTargetReps,
-                    nextWorkingWeightKg = result.nextWorkingWeightKg,
-                )
+                result.nextWorkingWeightKg
             }
+
+            val nextFailureStreak = if (shouldDeload) 0 else streakAfterOutcome
+
+            SlotProgressionUpdate(
+                slotId = slot.id,
+                nextTargetReps = result.nextTargetReps,
+                nextWorkingWeightKg = nextWeight,
+                nextFailureStreak = nextFailureStreak,
+            )
         }
 
         sessionRepository.completeSessionWithProgression(

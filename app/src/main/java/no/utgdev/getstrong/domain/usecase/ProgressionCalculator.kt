@@ -53,4 +53,9 @@ class ProgressionCalculator @Inject constructor() {
         val roundedQuotient = quotient.setScale(0, RoundingMode.HALF_UP)
         return roundedQuotient.multiply(BigDecimal.valueOf(increment)).setScale(3, RoundingMode.HALF_UP).toDouble()
     }
+
+    fun applyDeload(currentWorkingWeightKg: Double, deloadPercent: Int, incrementKg: Double): Double {
+        val multiplier = ((100 - deloadPercent).coerceIn(0, 100)).toDouble() / 100.0
+        return normalizeToIncrement(currentWorkingWeightKg * multiplier, incrementKg)
+    }
 }

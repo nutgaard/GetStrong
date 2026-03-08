@@ -27,6 +27,7 @@ class WorkoutSessionEngineTest {
                     incrementKg = 2.5,
                     deloadPercent = 10,
                     currentWorkingWeightKg = 0.0,
+                    failureStreak = 0,
                     restSecondsOverride = null,
                 ),
                 WorkoutExerciseSlot(
@@ -42,6 +43,7 @@ class WorkoutSessionEngineTest {
                     incrementKg = 2.5,
                     deloadPercent = 10,
                     currentWorkingWeightKg = 0.0,
+                    failureStreak = 0,
                     restSecondsOverride = null,
                 ),
             ),
@@ -51,11 +53,13 @@ class WorkoutSessionEngineTest {
 
         assertEquals(5, plan.size)
         assertEquals(SessionSetType.WARMUP, plan[0].setType)
+        assertEquals(10L, plan[0].workoutSlotId)
         assertEquals(1006, plan[0].exerciseId)
         assertEquals(SessionSetType.WORK, plan[1].setType)
         assertEquals(SessionSetType.WORK, plan[2].setType)
 
         assertEquals(SessionSetType.WARMUP, plan[3].setType)
+        assertEquals(11L, plan[3].workoutSlotId)
         assertEquals(1036, plan[3].exerciseId)
         assertEquals(SessionSetType.WORK, plan[4].setType)
 
