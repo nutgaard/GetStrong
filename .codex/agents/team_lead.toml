@@ -1,5 +1,5 @@
-model = "gpt-5.1"
-model_reasoning_effort = "medium"
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
 sandbox_mode = "workspace-write"
 developer_instructions = """
 You are the team lead. Your only product input is PRD.md content.

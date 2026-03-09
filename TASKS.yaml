@@ -1,6 +1,26 @@
 version: 1
 owner: team-lead
 
+ux_contract:
+  source_of_truth: UX.md
+  semantics:
+    - "`status` tracks implementation progress only."
+    - "`ux_status` tracks UX acceptance against UX.md for user-visible tasks that carry `ux_references`."
+    - "`status: done` does not mean a task is accepted to spec unless `ux_status: verified`."
+  ux_status_values:
+    planned: UX expectations are defined, but the task is not yet ready for UX acceptance.
+    pending_review: Implementation is ready for UX review against the declared `ux_references`.
+    needs_rework: Implementation exists, but it is not accepted against UX.md and must not be treated as UX-complete.
+    verified: QA or the user has accepted the task against its declared `ux_references`.
+  rules:
+    - Any task that changes user-visible UI and is covered by the current UX contract must include `ux_references` pointing to the relevant screens or sections in UX.md.
+    - If a user-visible task has no meaningful UX reference yet, update UX.md or the documentation-maintenance task first so the feature task can point to a concrete contract.
+    - Broader section references such as `UX.md#Overall Structure` or `UX.md#Repeated Interaction Patterns` are acceptable when a dedicated screen mock does not yet exist, but the task should tighten those references once a concrete screen contract is documented.
+    - UI tasks must carry explicit UX-focused acceptance criteria alongside functional requirements.
+    - QA uses the listed `ux_references` to move `ux_status` to `verified`; implementation `status` is tracked separately.
+    - Legacy user-visible tasks completed before the UX contract should default to `ux_status: needs_rework` unless they have been explicitly re-accepted against UX.md.
+    - Documentation tasks keep UX.md, product-description.md, and ADRs aligned; they do not act as a late UI/UX fix-up bucket.
+
 milestones:
   - id: M1
     name: Android App Shell & Architecture
@@ -9,13 +29,20 @@ milestones:
     tasks:
       - id: T1
         title: Scaffold Android project and navigation
-        description: Create the base Android app (package, build config, navigation structure, and theme) suitable for the workout and planning flows.
+        description: Create the base Android app (package, build config, navigation structure, and theme) suitable for the Home, Programs, and Active Workout flows.
         priority: P0
         status: done
+        ux_status: needs_rework
+        ux_references:
+          - "UX.md#Overall Structure"
+          - "UX.md#Top-Level Navigation"
+          - "UX.md -> start_screen.png"
         acceptance_criteria:
           - Project builds and runs on an Android emulator/device with no runtime errors.
-          - App shows a basic home screen entry point for workouts.
-          - Navigation framework is in place to support at least Home, Workout Planning, and Active Workout screens.
+          - App shows a home screen entry point for workouts with the primary quick-start action.
+          - Navigation framework is in place to support at least the Home, Programs, and Active Workout flows.
+          - The top-level shell structure matches the UX contract for persistent bottom navigation versus focused child flows.
+          - QA can verify the shell and Home entry point against the listed ux_references.
       - id: T2
         title: Choose and wire persistence mechanism
         description: Select and integrate a local persistence solution (e.g., Room/SQL, DataStore) for workouts, exercises, and workout summaries.
@@ -79,6 +106,12 @@ milestones:
         description: Provide screens to create, edit, and delete multiple named workouts (e.g., Push/Pull/Legs) and manage their exercises.
         priority: P0
         status: todo
+        ux_status: planned
+        ux_references:
+          - "UX.md -> workout_overview.png"
+          - "UX.md -> edit_workout.png"
+          - "UX.md -> edit_exercise.png"
+          - "UX.md#Navigation Relationships"
         acceptance_criteria:
           - User can create at least three named workouts.
           - User can add, reorder, and remove exercises within a workout.
@@ -87,6 +120,34 @@ milestones:
           - The Add exercise action opens a search/scroll picker of exercises not already selected.
           - Duplicate exercises within the same workout are prevented.
           - Exercise lists use standard Android list patterns (e.g., item rows with overflow/context menus) instead of cramped inline Add/Edit/Delete buttons.
+          - The Programs flow matches the documented workout overview, workout editor, and exercise detail navigation in the referenced UX screens.
+          - QA can verify the Programs and editor flows against the listed ux_references.
+      - id: T32
+        title: Resolve Programs tabs beyond Workouts before shipping them
+        description: Define the purpose and scope of the `Program`, `Weights`, and `Sets×Reps` tabs before they ship as part of the Programs area.
+        priority: P2
+        status: todo
+        ux_status: planned
+        ux_references:
+          - "UX.md -> workout_overview.png"
+          - "UX.md#Assumptions And Ambiguities"
+        acceptance_criteria:
+          - Each non-`Workouts` Programs tab is either documented with clear scope and owned behavior or explicitly deferred/hidden from the shipped UI.
+          - product-description.md and UX.md are updated before implementation if any of these tabs become active work.
+          - QA can verify that no undocumented placeholder tabs ship in the Programs area.
+      - id: T33
+        title: Resolve the Exercise Detail Form tab before shipping it
+        description: Define the purpose and scope of the `Form` tab in exercise detail before it ships as part of the tabbed editor flow.
+        priority: P2
+        status: todo
+        ux_status: planned
+        ux_references:
+          - "UX.md -> edit_exercise.png"
+          - "UX.md#Assumptions And Ambiguities"
+        acceptance_criteria:
+          - The `Form` tab is either documented with explicit in-scope content and behavior or explicitly deferred/hidden from the shipped UI.
+          - UX.md and product-description.md are updated before implementation if the `Form` tab becomes active work.
+          - QA can verify that no undocumented placeholder `Form` tab ships in exercise detail.
 
   - id: M4
     name: Workout Execution Flow
@@ -98,21 +159,39 @@ milestones:
         description: Build the execution logic that runs a saved workout in the specified order, including warmups then work sets for each exercise.
         priority: P0
         status: done
+        ux_status: needs_rework
+        ux_references:
+          - "UX.md#Navigation Relationships"
+          - "UX.md -> start_screen.png"
+          - "UX.md -> workout_in_progress_0.png"
+          - "UX.md -> workout_warmup.png"
         acceptance_criteria:
-          - User can start any saved workout from the planning list.
+          - User can start any saved workout from the Programs flow.
           - Session iterates through exercises in the workout, presenting warmup sets first and work sets afterward for each exercise.
           - Session completes when all planned sets in the workout are handled.
+          - QA can verify the workout-start and in-session flow against the listed ux_references before this task is treated as UX-complete.
       - id: T8
         title: Set completion interaction and UI
         description: Design and implement set completion UI that supports partial reps and contextual actions, following the active workout mockup.
         priority: P0
         status: todo
+        ux_status: planned
+        ux_references:
+          - "UX.md -> workout_in_progress_0.png"
+          - "UX.md -> workout_in_progress_1.png"
+          - "UX.md -> workout_in_progress_2.png"
+          - "UX.md -> workout_warmup.png"
+          - "UX.md#Repeated Interaction Patterns"
         acceptance_criteria:
           - Current set is prominently displayed and completion does not hide or remove its information.
           - Tapping the gray set circle on an incomplete set marks it complete and sets achieved reps to the target.
           - Tapping the set circle again decrements the achieved reps by one, supporting partial reps (e.g., 4 of 5) down to 0.
           - Long-pressing a set opens a contextual menu for actions such as setting weight, setting reps, and clearing the set.
-          - Behavior applies to both warmup and work sets and aligns with the interaction patterns shown in docs/images/workoutview.png.
+          - Behavior applies to both warmup and work sets and aligns with the interaction patterns shown in docs/images/workout_in_progress_0.png.
+          - The active workout flow exposes the documented Workout/Warmup session structure without showing the top-level bottom navigation.
+          - Users can add extra sets inline with the trailing plus affordance shown in the UX references.
+          - Rest countdown feedback appears as a transient bottom overlay rather than a blocking full-screen interruption.
+          - QA can verify the active workout interactions against the listed ux_references.
       - id: T9
         title: Keep screen awake during active workout
         description: Ensure the device screen does not sleep during an active workout session.
@@ -174,10 +253,16 @@ milestones:
         description: Surface generated warmup sets seamlessly in the workout execution flow before work sets for each exercise.
         priority: P0
         status: done
+        ux_status: needs_rework
+        ux_references:
+          - "UX.md -> workout_warmup.png"
+          - "UX.md -> workout_in_progress_0.png"
+          - "UX.md#Navigation Relationships"
         acceptance_criteria:
           - Warmup sets appear in order before work sets for each exercise.
           - Users can complete warmup sets with one tap, same as work sets.
           - Warmup generation is deterministic for the same exercise configuration.
+          - Warmups are surfaced in the same session flow as the active workout screens, consistent with the UX references.
 
   - id: M7
     name: Timers
@@ -214,10 +299,15 @@ milestones:
         description: Display per-set results, total volume, and total time when a workout completes.
         priority: P0
         status: done
+        ux_status: needs_rework
+        ux_references:
+          - "UX.md#Overall Structure"
+          - "UX.md#Navigation Relationships"
         acceptance_criteria:
           - At workout completion, user sees reps achieved per set, total lifted volume, and total workout time.
           - Summary clearly distinguishes warmup vs work sets.
           - User can dismiss the summary and return to the main app without losing data.
+          - QA can verify the post-workout summary flow against the listed ux_references until a dedicated summary mock is added.
       - id: T18
         title: Persist workout summaries for history
         description: Store workout summaries locally for future analytics and charting.
@@ -227,42 +317,107 @@ milestones:
           - Workout summaries are saved via the persistence layer at session completion.
           - Summaries remain available across app restarts.
           - A simple history list view can display past workouts and basic details from their summaries.
+      - id: T30
+        title: Implement history list, calendar, and exercise history views
+        description: Use persisted workout summaries to drive the History area, including list and calendar navigation plus per-exercise history drill-downs.
+        priority: P1
+        status: todo
+        ux_status: planned
+        ux_references:
+          - "UX.md -> history_workout.png"
+          - "UX.md -> history_calendar.png"
+          - "UX.md -> history_exercise.png"
+          - "UX.md#Navigation Relationships"
+        acceptance_criteria:
+          - History supports both list and calendar views of completed workouts.
+          - History drill-downs show enough detail to match the documented workout-card and per-exercise history flows.
+          - Per-exercise history lists non-warmup sets with date, reps, weight, and estimated 1RM or equivalent derived value.
+          - QA can verify the History flows against the listed ux_references.
+      - id: T34
+        title: Resolve the History Notes tab before shipping it
+        description: Define the purpose and scope of the `Notes` tab in the History area before it ships alongside the documented list and calendar views.
+        priority: P2
+        status: todo
+        ux_status: planned
+        ux_references:
+          - "UX.md -> history_workout.png"
+          - "UX.md#Assumptions And Ambiguities"
+        acceptance_criteria:
+          - The `Notes` tab is either documented with explicit in-scope behavior or explicitly deferred/hidden from the shipped UI.
+          - UX.md and product-description.md are updated before implementation if the `Notes` tab becomes active work.
+          - QA can verify that no undocumented placeholder `Notes` tab ships in the History area.
+      - id: T31
+        title: Implement progress overview and exercise chart drill-downs
+        description: Use persisted workout history to power the top-level Progress screen and per-exercise progress charts described in UX.md.
+        priority: P1
+        status: todo
+        ux_status: planned
+        ux_references:
+          - "UX.md -> progress.png"
+          - "UX.md -> progress_exercise.png"
+          - "UX.md#Navigation Relationships"
+        acceptance_criteria:
+          - The top-level Progress screen lists tracked exercises with current weight and a compact trend indicator.
+          - Selecting an exercise opens a dedicated progress chart view with at least one recent time-range selector.
+          - Progress drill-down is reachable from both the top-level Progress area and exercise detail where appropriate.
+          - QA can verify the Progress flows against the listed ux_references.
 
   - id: M9
-    name: UX Flow & StrongLifts-Style Interaction
-    description: Refine layout and interactions to match StrongLifts-style apps with minimal friction and one-handed use.
+    name: Cross-Cutting UX Guardrails
+    description: Capture UX constraints that all UI work must satisfy during implementation rather than leaving them to a late polish pass.
     priority: P1
     tasks:
       - id: T19
         title: Optimize layout for one-handed use
-        description: Adjust key controls and layouts to support quick one-handed operation during training.
+        description: Keep one-handed operation as a standing constraint for every workout-facing screen and interaction.
         priority: P1
         status: done
+        ux_status: needs_rework
+        ux_references:
+          - "UX.md#Repeated Interaction Patterns"
+          - "UX.md -> workout_in_progress_0.png"
+          - "UX.md -> workout_in_progress_1.png"
         acceptance_criteria:
           - Primary set completion control is reachable with one thumb on common phone sizes.
           - Navigation between sets and exercises requires minimal taps and no fine precision.
           - No critical workout controls are hidden behind deep menus during an active session.
+          - QA can use the listed ux_references when evaluating one-handed flow on affected screens.
       - id: T20
         title: Simplify active workout UI and reduce clutter
-        description: Ensure the active workout screen has a clean, focused design with prominent current set and minimal distractions.
+        description: Treat visual focus and low-clutter workout execution as a baseline guardrail for active-workout work, not as end-stage cleanup.
         priority: P1
         status: done
+        ux_status: needs_rework
+        ux_references:
+          - "UX.md -> workout_in_progress_0.png"
+          - "UX.md -> workout_in_progress_1.png"
+          - "UX.md -> workout_in_progress_2.png"
         acceptance_criteria:
           - Current exercise and set information is visually dominant on the active workout screen.
           - Non-essential information (history, charts, settings) is not shown during active workouts.
           - Users in tests can identify and complete the current set without confusion.
+          - QA can evaluate active-workout focus and clutter against the listed ux_references.
 
       - id: T28
         title: Standardize navigation and remove dev UI
-        description: Align navigation with standard Android patterns, introduce bottom navigation, and remove dev-only actions from the frontpage.
+        description: Make the documented navigation shell and production-only entry points part of the core implementation baseline.
         priority: P1
         status: todo
+        ux_status: planned
+        ux_references:
+          - "UX.md#Overall Structure"
+          - "UX.md#Top-Level Navigation"
+          - "UX.md -> start_screen.png"
+          - "UX.md -> workout_overview.png"
+          - "UX.md -> history_workout.png"
+          - "UX.md -> progress.png"
         acceptance_criteria:
           - The app uses top app bars with standard back/up behavior where appropriate.
-          - A bottom navigation bar with icons exposes the core areas (e.g., Workouts, Progression, History/Settings).
-          - Settings are accessible from a standard overflow/menu entry, not ad-hoc buttons in content.
+          - A bottom navigation bar with icons exposes the core areas `Home`, `Programs`, `History`, `Progress`, and `Settings`.
+          - Focused edit/detail flows and active workouts intentionally drop the bottom-navigation chrome and use back/up navigation instead.
           - Persistence demo and catalog debug actions are not visible in production UX on the frontpage or primary flows.
           - Lists and collections use standard Android list patterns (e.g., row actions, overflow menus, or swipe actions) instead of oversized inline Edit/Delete buttons.
+          - QA can verify the production navigation shell against the listed ux_references.
 
   - id: M10
     name: Settings & Accessibility Polish
@@ -274,25 +429,58 @@ milestones:
         description: Add UI to configure rest duration and preferred defaults (increment, progression mode, deload percent) used when creating new workout exercise slots.
         priority: P1
         status: done
+        ux_status: needs_rework
+        ux_references:
+          - "UX.md#Overall Structure"
+          - "UX.md#Top-Level Navigation"
         acceptance_criteria:
           - User can change default rest duration and see it reflected in new sessions.
           - User can adjust default weight increment and deload percent, and newly created workout exercise slots use the updated values as their initial configuration (existing slots are unchanged unless edited).
           - User can choose a default progression mode used to prefill new exercises/workouts; actual progression behavior always reads the stored configuration on each exercise slot, not a global setting.
+          - QA can verify the Settings entry point and settings-scope expectations against the listed ux_references.
       - id: T23
         title: Accessibility and TalkBack pass
-        description: Improve accessibility labels, focus order, and contrast on Home, Planning, Active Workout, and Summary screens.
+        description: Improve accessibility labels, focus order, and contrast on Home, Programs, Active Workout, and Summary screens.
         priority: P2
         status: done
+        ux_status: needs_rework
+        ux_references:
+          - "UX.md#Overall Structure"
+          - "UX.md#Repeated Interaction Patterns"
         acceptance_criteria:
           - Core controls on the four key screens have meaningful content descriptions for TalkBack.
           - Focus order allows completing a workout via keyboard/TalkBack without getting stuck.
           - Color and typography choices meet basic contrast/readability expectations.
+          - QA can evaluate accessibility on the referenced screens and interaction patterns against the listed ux_references.
       - id: T24
         title: Error and empty state UX
         description: Add clear empty and error states for workouts, exercise catalog, and history lists.
         priority: P2
         status: done
+        ux_status: needs_rework
+        ux_references:
+          - "UX.md -> start_screen.png"
+          - "UX.md -> workout_overview.png"
+          - "UX.md -> history_workout.png"
         acceptance_criteria:
           - When there are no workouts, exercises, or history entries, users see contextual empty-state messaging with a clear next action.
           - Common data/load errors show user-friendly messages instead of silent failures or crashes.
           - QA can intentionally simulate a repository error and observe a non-crashing, understandable error state in the UI.
+          - QA can verify that empty/error states preserve the structure of the referenced UX flows instead of replacing them with ad-hoc layouts.
+
+  - id: M11
+    name: UX Contract & Documentation Maintenance
+    description: Keep the UX contract and supporting product/architecture documentation aligned as screen decisions evolve.
+    priority: P1
+    tasks:
+      - id: T29
+        title: Keep UX and architecture documentation in sync
+        description: Update UX.md, product-description.md, and relevant ADRs whenever a screen contract or navigation expectation changes.
+        priority: P1
+        status: todo
+        acceptance_criteria:
+          - UX.md remains the canonical UX summary for the current screenshot pack and implemented screen contracts.
+          - product-description.md and any relevant ADRs are updated when UX decisions materially change navigation, screen ownership, or interaction patterns.
+          - Documentation uses the current screenshot filenames consistently, and QA can verify that no active documentation still references removed or renamed UI image assets.
+          - This task is treated as documentation maintenance only; feature tasks remain responsible for shipping their own UX behavior through `ux_references` and UX acceptance criteria.
+          - Any task that materially changes user-visible UX must update the relevant documentation in the same change or explicitly pair with this task before the work is considered complete.

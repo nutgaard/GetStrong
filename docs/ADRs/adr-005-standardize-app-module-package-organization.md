@@ -13,7 +13,7 @@ Standardize package ownership inside the single `app` module as follows:
 - `data`: Room entities, DAOs, local data sources, mappers, repository implementations, and seed import code
 - `di`: Hilt modules, bindings, and provider configuration
 
-Inside `ui`, organize by feature flow rather than by widget type. The initial flows are `home`, `planning`, `activeWorkout`, and `summary`, with shared routing code under `ui/navigation`.
+Inside `ui`, organize by feature flow rather than by widget type. The current flows are `home`, `programs`, `history`, `progress`, `settings`, `workoutEditor`, `exerciseDetail`, `activeWorkout`, and `summary`, with shared routing code under `ui/navigation`.
 
 This ADR refines ADR-001. It does not change the layered model; it makes that model concrete enough for implementation.
 
