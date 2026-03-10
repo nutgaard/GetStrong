@@ -27,16 +27,22 @@ The top-level shell is production-only. Dev/demo/debug actions such as persisten
 Focused child flows are separate destinations and do not share the persistent bottom navigation chrome:
 
 - `workoutEditor/{workoutId?}`: create/edit a workout and reorder its exercises
-- `exerciseDetail/{exerciseId}`: exercise configuration and drill-down views
 - `activeWorkout/{sessionId}`: in-session workout execution
 - `summary/{sessionId}`: completed workout summary
 
 Screen-internal tab rows shown in the screenshot pack are presentation structure first, not automatically separate app routes. The current contract is:
 
-- `programs`, `history`, `exerciseDetail`, and `activeWorkout` may each host local tab/section state inside the destination
+- `programs`, `history`, and `activeWorkout` may each host local tab/section state inside the destination
 - promote a tab/section to its own child route only when it needs stable deep-linking, independent back-stack behavior, or materially different route arguments
 
-Navigation remains part of `ui/navigation`. Route arguments must be stable identifiers such as `workoutId`, `exerciseId`, and `sessionId`. Do not pass Room entities, domain aggregates, or mutable state through routes.
+For the current Programs/workout CRUD scope, only the workout-management path is committed:
+
+- `programs` exposes the workout overview/list behavior
+- `workoutEditor` owns the selected-workout draft, its ordered slot list, the add-exercise picker entry point, and the minimum slot-scoped editing needed for this flow
+- slot-specific editing may remain local inside `workoutEditor` for the minimum shippable T6 implementation; promote it to a child route later only if deeper slot editing or navigation needs justify it
+- unresolved secondary Programs tabs are explicitly deferred and must not block the workout CRUD implementation
+
+Navigation remains part of `ui/navigation`. Route arguments must be stable identifiers such as `workoutId` and `sessionId`. Do not pass Room entities, domain aggregates, or mutable state through routes.
 
 Back/up behavior follows standard Android rules:
 
