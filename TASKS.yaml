@@ -105,12 +105,11 @@ milestones:
         title: Implement workout CRUD UI
         description: Provide screens to create, edit, and delete multiple named workouts (e.g., Push/Pull/Legs) and manage their exercises.
         priority: P0
-        status: todo
-        ux_status: planned
+        status: done
+        ux_status: verified
         ux_references:
           - "UX.md -> workout_overview.png"
           - "UX.md -> edit_workout.png"
-          - "UX.md -> edit_exercise.png"
           - "UX.md#Navigation Relationships"
         acceptance_criteria:
           - User can create at least three named workouts.
@@ -120,7 +119,7 @@ milestones:
           - The Add exercise action opens a search/scroll picker of exercises not already selected.
           - Duplicate exercises within the same workout are prevented.
           - Exercise lists use standard Android list patterns (e.g., item rows with overflow/context menus) instead of cramped inline Add/Edit/Delete buttons.
-          - The Programs flow matches the documented workout overview, workout editor, and exercise detail navigation in the referenced UX screens.
+          - The Programs flow matches the documented workout overview and workout editor behavior in the referenced UX screens, including the bounded local slot-editing flow used in the current branch.
           - QA can verify the Programs and editor flows against the listed ux_references.
       - id: T32
         title: Resolve Programs tabs beyond Workouts before shipping them

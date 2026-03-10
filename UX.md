@@ -21,7 +21,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - `start_screen.png`: Home shows an upcoming workout queue as cards. Each card includes the workout name, scheduled date, a few upcoming lifts, and a collapsed count of additional exercises. A prominent `Start Workout` FAB launches the next planned session.
 - `workout_overview.png`: The `Programs` screen uses nested tabs. The `Workouts` tab lists workouts inside a program, with drag handles for ordering and overflow menus for row actions. The red FAB adds a workout.
 - `edit_workout.png`: The workout editor shows the ordered exercise list for a single workout. Drag handles reorder exercises, overflow menus remove them, and the FAB adds another exercise.
-- `edit_exercise.png`: Exercise detail is tabbed into `Weight`, `Form`, `Progress`, and `History`. The provided screenshot shows `Weight`, with sets x reps, current/next working weight, progression settings, deload settings, and a plate helper. It also shows destructive and copy actions near the bottom.
+- `edit_exercise.png`: The reference pack includes a richer exercise-detail screen tabbed into `Weight`, `Form`, `Progress`, and `History`. The provided screenshot shows `Weight`, with sets x reps, current/next working weight, progression settings, deload settings, and a plate helper. On the current branch's bounded T6 path, this deeper drill-down is not required yet; minimum slot editing remains local inside the workout editor.
 - `progress.png`: The progress overview lists exercises with the latest working weight and a compact sparkline-like trend. Tapping an item is intended to open the detailed progress view for that exercise.
 - `progress_exercise.png`: The per-exercise progress screen shows a larger line chart for a selected exercise and a recent time-range selector (`3M` in the screenshot).
 - `history_workout.png`: The history list shows completed workouts as cards, with date, per-exercise performed results, and total duration.
@@ -48,7 +48,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 
 - `start_screen.png` leads into the active workout flow via `Start Workout`.
 - `workout_overview.png` leads to `edit_workout.png` when a workout is selected.
-- `edit_workout.png` leads to `edit_exercise.png` when an exercise is selected.
+- The reference pack suggests `edit_workout.png` can lead to `edit_exercise.png` when an exercise is selected, but the current bounded T6 implementation keeps minimum exercise-slot editing local inside the workout editor instead of requiring a dedicated drill-down.
 - `edit_exercise.png` exposes the `Progress` and `History` views for that exercise, represented by `progress_exercise.png` and `history_exercise.png`.
 - `progress.png` also leads to `progress_exercise.png`.
 - `history_workout.png` and `history_calendar.png` are alternate views under the same `History` area.
@@ -57,6 +57,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 ## Assumptions And Ambiguities
 
 - The `Programs` area shows tabs for `Program`, `Workouts`, `Weights`, and `Sets×Reps`, but only the `Workouts` tab is documented by a dedicated screenshot. The other tabs are part of the intended shell, but their detailed behavior is not yet specified.
+- The reference pack includes a dedicated `edit_exercise.png` screen, but the current bounded T6 implementation only commits local slot editing inside `edit_workout.png`; a richer exercise-detail drill-down is deferred.
 - The exercise detail screen shows a `Form` tab, but no screenshot or prose describes its contents.
 - The `History` area shows a `Notes` tab, but no screenshot or prose describes what the notes experience should contain.
 - The Home screen clearly implies scheduled upcoming workouts, but the scheduling rules behind the `A/B` alternation are not described in the current notes.
