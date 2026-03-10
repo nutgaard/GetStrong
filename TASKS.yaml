@@ -338,15 +338,16 @@ milestones:
           - QA can verify the History flows against the listed ux_references.
       - id: T34
         title: Resolve the History Notes tab before shipping it
-        description: Define the purpose and scope of the `Notes` tab in the History area before it ships alongside the documented list and calendar views.
+        description: Resolve the screenshot-only `Notes` tab in the History area before it ships alongside the documented list and calendar views. On the current branch, it remains explicitly deferred and hidden until a later task defines its scope.
         priority: P2
-        status: todo
-        ux_status: planned
+        status: done
+        ux_status: verified
         ux_references:
           - "UX.md -> history_workout.png"
           - "UX.md#Assumptions And Ambiguities"
         acceptance_criteria:
-          - The `Notes` tab is either documented with explicit in-scope behavior or explicitly deferred/hidden from the shipped UI.
+          - On the current branch, the screenshot-only `Notes` tab is explicitly deferred and hidden from the shipped UI.
+          - If the `Notes` tab later becomes active work, it must first be documented with explicit in-scope behavior and owned screen contract.
           - UX.md and product-description.md are updated before implementation if the `Notes` tab becomes active work.
           - QA can verify that no undocumented placeholder `Notes` tab ships in the History area.
       - id: T31

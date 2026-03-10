@@ -29,7 +29,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - `progress_exercise.png`: The per-exercise progress screen is a focused drill-down view. It shows a larger line chart for a selected exercise and a recent time-range selector (`3M` in the screenshot).
 - `Settings` (no dedicated screenshot): Settings is a top-level training-defaults form. It exposes rest duration, load increment, deload percent, and default progression mode; those values prefill new sessions and new workout slots but do not rewrite existing saved slot configuration.
 - `history_workout.png`: The history list shows completed workouts as cards, with date, per-exercise performed results, and total duration.
-- `history_calendar.png`: The calendar view marks workout-completion dates with red circles. It sits under the same `History` shell as the list view, as a local section rather than a separate top-level route.
+- `history_calendar.png`: The calendar view marks workout-completion dates with red circles. It sits under the same `History` shell as the list view, as a local section rather than a separate top-level route. On the current branch, `List` and `Calendar` are the only shipped History sections; the screenshot-only `Notes` tab remains deferred and hidden.
 - `history_exercise.png`: The per-exercise history table lists individual non-warmup sets with date, reps, weight, and estimated 1RM. It is a focused drill-down view rather than another local `History` tab.
 - `workout_in_progress_0.png`: The active workout screen shows the `Workout` tab before significant completion. Each exercise row has circles for planned sets, a target prescription on the right, and access to additional set actions.
 - `workout_in_progress_1.png`: The same screen shows partial progress, including support for partial reps and a bottom rest timer overlay.
@@ -83,7 +83,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 ## Assumptions And Ambiguities
 
 - The reference pack includes a dedicated `edit_exercise.png` screen, but the current bounded T6 implementation only commits local slot editing inside `edit_workout.png`; a richer exercise-detail drill-down remains deferred, and the screenshot-only `Form` tab stays hidden until separately scoped.
-- The `History` area shows a `Notes` tab in the reference pack, but its behavior is not defined and it is deferred/out of scope for the current bounded `T30` implementation.
+- The `History` area shows a `Notes` tab in the reference pack, but its behavior is not defined. On the current branch it remains deferred, out of scope, and hidden until separately scoped.
 - The Home screen clearly implies scheduled upcoming workouts, but the exact scheduling rules behind the `A/B` alternation are still undefined; the current bounded Home implementation may use a simple deterministic ordering heuristic while preserving the start-screen structure.
 - No dedicated summary mock is currently provided, so the post-workout summary content is driven by the task contract: per-set results, warmup/work distinction, total time, and total volume.
 - The reference pack does not show any additional top-level or nested-tab Progress states beyond the overview list and per-exercise chart drill-down.

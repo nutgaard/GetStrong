@@ -48,7 +48,7 @@ For the current Programs/workout CRUD scope, only the workout-management path is
 For the current History scope, only the documented review path is committed:
 
 - `history` owns the top-level History surface and keeps `List` and `Calendar` as local sections inside that destination rather than promoting them to separate routes
-- `Notes` is explicitly out of scope for this cycle and must not ship as an active or placeholder History section until its behavior is defined
+- `Notes` is explicitly out of scope for this cycle, must remain hidden from the shipped History UI, and must not ship as an active or placeholder History section until its behavior is defined
 - per-exercise history is a focused child drill-down keyed by `exerciseId`; it is not a third local History section and is not exposed as a top-level destination
 
 For the current Progress scope, only the documented overview-and-drill-down path is committed:

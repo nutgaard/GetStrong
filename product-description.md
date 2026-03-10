@@ -123,6 +123,7 @@ Users need to:
 - Broader `Programs` tabs such as `Program`, `Weights`, and `Sets×Reps` until their scope is explicitly defined; they remain hidden on the current branch.
 - The screenshot-only `Form` tab until its scope is explicitly defined; it remains hidden on the current branch.
 - Rich coaching or media content for the `Form` tab beyond basic structure/navigation.
+- The screenshot-only History `Notes` tab until its scope is explicitly defined; it remains hidden on the current branch.
 - History `Notes` workflows until their scope is explicitly defined.
 
 ## UX Direction
@@ -141,7 +142,7 @@ Users need to:
 - Home and top-level browsing screens should follow the reference pack:
   - Home shows upcoming workout cards and a prominent `Start Workout` FAB. The exact long-term scheduling logic behind the queue is still not committed beyond a simple deterministic ordering heuristic.
   - `Programs` is the entry point for workout definitions, but the current branch commits only the `Workouts` surface. Broader `Programs` tabs remain deferred and hidden.
-  - `History` uses local `List` and `Calendar` sections for the current bounded scope. `Notes` remains deferred until its behavior is explicitly defined.
+  - `History` uses local `List` and `Calendar` sections for the current bounded scope. The screenshot-only `Notes` tab remains deferred and hidden until its behavior is explicitly defined.
   - `Progress` shows a scrollable list of exercise trend rows and supports drill-down into a single exercise.
   - `Settings` is a standard top-level form for training defaults rather than a deeper settings architecture.
 - Active workout UI should follow the interaction and layout cues in `docs/images/workout_in_progress_0.png`, `docs/images/workout_in_progress_1.png`, `docs/images/workout_in_progress_2.png`, and `docs/images/workout_warmup.png`, including:
