@@ -92,8 +92,24 @@ fun AppNavGraph(navController: NavHostController) {
             startDestination = AppDestination.Home.route,
         ) {
         composable(route = AppDestination.Home.route) {
+            val homeViewModel: no.utgdev.getstrong.ui.home.HomeViewModel = hiltViewModel()
+            val homeUiState by homeViewModel.uiState.collectAsState()
+            val coroutineScope = rememberCoroutineScope()
+            LaunchedEffect(Unit) {
+                homeViewModel.load()
+            }
             HomeScreen(
-                onStartWorkout = { navController.navigate(AppDestination.Programs.route) },
+                uiState = homeUiState,
+                onQuickStart = {
+                    coroutineScope.launch {
+                        val sessionId = homeViewModel.startQuickWorkout()
+                        if (sessionId != null) {
+                            navController.navigate(AppDestination.ActiveWorkout.route(sessionId))
+                        }
+                    }
+                },
+                onOpenPrograms = { navController.navigate(AppDestination.Programs.route) },
+                onRetry = { homeViewModel.load() },
             )
         }
 
