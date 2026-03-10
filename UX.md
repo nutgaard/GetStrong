@@ -44,6 +44,8 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - The active workout flow supports partial reps by repeated taps on the same set control.
 - Extra sets can be added inline with a trailing `+` circle.
 - Rest timing feedback appears as a transient bottom overlay rather than a full-screen interruption.
+- Active workout hierarchy prioritizes the current set and set-circle interaction area; timers, counts, tabs, and helper copy stay visually secondary.
+- The reference pack does not surface history, charts, or settings content during active workouts; the session screen stays focused on execution and short supporting status only.
 
 ## Navigation Relationships
 

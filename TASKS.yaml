@@ -386,7 +386,7 @@ milestones:
         description: Treat visual focus and low-clutter workout execution as a baseline guardrail for active-workout work, not as end-stage cleanup.
         priority: P1
         status: done
-        ux_status: needs_rework
+        ux_status: verified
         ux_references:
           - "UX.md -> workout_in_progress_0.png"
           - "UX.md -> workout_in_progress_1.png"
@@ -394,6 +394,7 @@ milestones:
         acceptance_criteria:
           - Current exercise and set information is visually dominant on the active workout screen.
           - Non-essential information (history, charts, settings) is not shown during active workouts.
+          - Supporting stats, tabs, and instructional copy remain visually secondary to the current set and set-circle interaction area.
           - Users in tests can identify and complete the current set without confusion.
           - QA can evaluate active-workout focus and clutter against the listed ux_references.
 
