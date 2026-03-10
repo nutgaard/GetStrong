@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Modifier
@@ -37,6 +38,7 @@ import no.utgdev.getstrong.ui.progress.ProgressScreen
 import no.utgdev.getstrong.ui.progress.ProgressViewModel
 import no.utgdev.getstrong.ui.planning.WorkoutEditorScreen
 import no.utgdev.getstrong.ui.planning.WorkoutEditorViewModel
+import no.utgdev.getstrong.ui.planning.ExerciseDetailScreen
 import no.utgdev.getstrong.ui.settings.SettingsScreen
 import no.utgdev.getstrong.ui.settings.SettingsViewModel
 import no.utgdev.getstrong.ui.summary.SummaryScreen
@@ -231,7 +233,9 @@ fun AppNavGraph(navController: NavHostController) {
                 onRemoveSlot = editorViewModel::removeSlot,
                 onMoveSlotUp = editorViewModel::moveSlotUp,
                 onMoveSlotDown = editorViewModel::moveSlotDown,
-                onUpdateSlotTargets = editorViewModel::updateSlotTargets,
+                onOpenSlotDetail = { exerciseId ->
+                    navController.navigate(AppDestination.ExerciseDetail.route(editorUiState.workoutId, exerciseId))
+                },
                 onSave = {
                     coroutineScope.launch {
                         editorViewModel.save()
@@ -240,6 +244,49 @@ fun AppNavGraph(navController: NavHostController) {
                 },
                 onBack = { navController.popBackStack() },
                 onClearMessage = editorViewModel::clearMessage,
+            )
+        }
+
+        composable(
+            route = AppDestination.ExerciseDetail.route,
+            arguments = listOf(
+                navArgument(AppDestination.ExerciseDetail.WORKOUT_ID_ARG) { type = NavType.StringType },
+                navArgument(AppDestination.ExerciseDetail.EXERCISE_ID_ARG) { type = NavType.StringType },
+            ),
+        ) { entry ->
+            val workoutIdArg = entry.arguments?.getString(AppDestination.ExerciseDetail.WORKOUT_ID_ARG)
+            val parentEntry = remember(workoutIdArg) {
+                navController.getBackStackEntry("workoutEditor/$workoutIdArg")
+            }
+            val editorViewModel: WorkoutEditorViewModel = hiltViewModel(parentEntry)
+            val editorUiState by editorViewModel.uiState.collectAsState()
+            val exerciseId = entry.arguments
+                ?.getString(AppDestination.ExerciseDetail.EXERCISE_ID_ARG)
+                ?.toLongOrNull()
+            val detail = exerciseId?.let(editorViewModel::getSlotDetail)
+
+            ExerciseDetailScreen(
+                detail = detail,
+                onBack = { navController.popBackStack() },
+                onSave = { targetSets, targetReps, workingWeightKg, progressionMode, incrementKg, deloadPercent ->
+                    if (detail != null) {
+                        editorViewModel.updateSlotDetail(
+                            exerciseId = detail.exerciseId,
+                            targetSets = targetSets,
+                            targetReps = targetReps,
+                            currentWorkingWeightKg = workingWeightKg,
+                            progressionMode = progressionMode,
+                            incrementKg = incrementKg,
+                            deloadPercent = deloadPercent,
+                        )
+                    }
+                },
+                onOpenProgress = { id ->
+                    navController.navigate(AppDestination.ExerciseProgress.route(id))
+                },
+                onOpenHistory = { id ->
+                    navController.navigate(AppDestination.ExerciseHistory.route(id))
+                },
             )
         }
 

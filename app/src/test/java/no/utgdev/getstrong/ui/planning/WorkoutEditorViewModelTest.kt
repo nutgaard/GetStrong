@@ -21,6 +21,7 @@ import no.utgdev.getstrong.domain.repository.WorkoutRepository
 import no.utgdev.getstrong.domain.usecase.WorkoutSlotDefaultsResolver
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -126,6 +127,50 @@ class WorkoutEditorViewModelTest {
         assertEquals(8, slot.targetReps)
         assertEquals(8, slot.repRangeMin)
         assertEquals(8, slot.repRangeMax)
+    }
+
+    @Test
+    fun updateSlotDetailUpdatesSlotScopedFieldsAndPlateGuidance() = runTest {
+        val exerciseRepository = FakeExerciseRepository()
+        val workoutRepository = FakeWorkoutRepository()
+        val settingsRepository = FakeSettingsRepository(
+            AppSettings(
+                restDurationSeconds = 180,
+                loadIncrementKg = 2.5,
+                deloadPercent = 10,
+                defaultProgressionMode = ProgressionModeCode.WEIGHT_ONLY,
+            ),
+        )
+        val viewModel = WorkoutEditorViewModel(
+            savedStateHandle = SavedStateHandle(),
+            workoutRepository = workoutRepository,
+            exerciseRepository = exerciseRepository,
+            settingsRepository = settingsRepository,
+            workoutSlotDefaultsResolver = WorkoutSlotDefaultsResolver(),
+        )
+        advanceUntilIdle()
+
+        viewModel.addExercise(1001L)
+        advanceUntilIdle()
+        viewModel.updateSlotDetail(
+            exerciseId = 1001L,
+            targetSets = 3,
+            targetReps = 8,
+            currentWorkingWeightKg = 100.0,
+            progressionMode = ProgressionModeCode.REPS_THEN_WEIGHT,
+            incrementKg = 1.25,
+            deloadPercent = 15,
+        )
+
+        val detail = viewModel.getSlotDetail(1001L)
+        assertNotNull(detail)
+        assertEquals(3, detail!!.targetSets)
+        assertEquals(8, detail.targetReps)
+        assertEquals(100.0, detail.currentWorkingWeightKg, 0.0)
+        assertEquals(ProgressionModeCode.REPS_THEN_WEIGHT, detail.progressionMode)
+        assertEquals(1.25, detail.incrementKg, 0.0)
+        assertEquals(15, detail.deloadPercent)
+        assertTrue(detail.plateGuidance.contains("per side"))
     }
 }
 

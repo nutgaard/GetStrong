@@ -16,6 +16,16 @@ sealed class AppDestination(val route: String) {
         }
     }
 
+    data object ExerciseDetail : AppDestination("exerciseDetail/{workoutId}/{exerciseId}") {
+        const val WORKOUT_ID_ARG = "workoutId"
+        const val EXERCISE_ID_ARG = "exerciseId"
+
+        fun route(workoutId: Long?, exerciseId: Long): String {
+            val encodedWorkoutId = workoutId?.toString() ?: WorkoutEditor.NEW_WORKOUT_TOKEN
+            return "exerciseDetail/$encodedWorkoutId/$exerciseId"
+        }
+    }
+
     data object ExerciseHistory : AppDestination("exerciseHistory/{exerciseId}") {
         const val EXERCISE_ID_ARG = "exerciseId"
 

@@ -507,10 +507,10 @@ milestones:
         description: Replace the current inert Home card behavior with a schedule-backed upcoming queue and explicit schedule configuration that match the reference screenshots and the issue audit.
         priority: P0
         status: done
-        owner: qa
+        owner: none
         next_owner: none
         bundle: M12-B2
-        ux_status: pending_review
+        ux_status: verified
         ux_references:
           - "UX.md -> start_screen.png"
           - "UX.md -> workout_overview.png"
@@ -546,10 +546,10 @@ milestones:
         description: Replace the current ad hoc Programs actions with the reference row/menu pattern and standardize floating-action-button spacing across workout-planning surfaces.
         priority: P1
         status: done
-        owner: qa
+        owner: none
         next_owner: none
         bundle: M12-B2
-        ux_status: pending_review
+        ux_status: verified
         ux_references:
           - "UX.md -> workout_overview.png"
           - "UX.md -> edit_workout.png"
@@ -564,8 +564,11 @@ milestones:
         title: Ship exercise-detail controls for weight and progression settings
         description: Replace the current limited exercise editing flow with the weight/progression controls shown in the reference exercise-detail screen.
         priority: P0
-        status: planned
-        ux_status: planned
+        status: done
+        owner: qa
+        next_owner: none
+        bundle: M12-B3
+        ux_status: pending_review
         ux_references:
           - "UX.md -> edit_exercise.png"
           - "UX.md -> progress_exercise.png"

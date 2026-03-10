@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlin.math.max
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -172,6 +173,63 @@ class WorkoutEditorViewModel @Inject constructor(
         }
     }
 
+    fun updateSlotDetail(
+        exerciseId: Long,
+        targetSets: Int,
+        targetReps: Int,
+        currentWorkingWeightKg: Double,
+        progressionMode: String,
+        incrementKg: Double,
+        deloadPercent: Int,
+    ) {
+        val normalizedSets = targetSets.coerceAtLeast(1)
+        val normalizedReps = targetReps.coerceAtLeast(1)
+        val normalizedWeight = max(0.0, currentWorkingWeightKg)
+        val normalizedIncrement = max(0.0, incrementKg)
+        val normalizedDeload = deloadPercent.coerceIn(0, 100)
+        _uiState.update { state ->
+            val updated = state.slots.map { slot ->
+                if (slot.exerciseId != exerciseId) {
+                    slot
+                } else {
+                    slot.copy(
+                        targetSets = normalizedSets,
+                        targetReps = normalizedReps,
+                        repRangeMin = normalizedReps,
+                        repRangeMax = normalizedReps,
+                        currentWorkingWeightKg = normalizedWeight,
+                        progressionMode = progressionMode,
+                        incrementKg = normalizedIncrement,
+                        deloadPercent = normalizedDeload,
+                    )
+                }
+            }
+            state.copy(slots = updated, message = null)
+        }
+    }
+
+    fun getSlotDetail(exerciseId: Long): ExerciseSlotDetailUi? {
+        val state = _uiState.value
+        val slot = state.slots.firstOrNull { it.exerciseId == exerciseId } ?: return null
+        val exercise = state.availableExercises.firstOrNull { it.id == exerciseId }
+        return ExerciseSlotDetailUi(
+            workoutId = state.workoutId,
+            exerciseId = exerciseId,
+            exerciseName = slot.exerciseName,
+            equipmentType = exercise?.equipmentType ?: "",
+            targetSets = slot.targetSets,
+            targetReps = slot.targetReps,
+            currentWorkingWeightKg = slot.currentWorkingWeightKg,
+            progressionMode = slot.progressionMode,
+            incrementKg = slot.incrementKg,
+            deloadPercent = slot.deloadPercent,
+            plateGuidance = buildPlateGuidance(
+                equipmentType = exercise?.equipmentType ?: "",
+                targetWeightKg = slot.currentWorkingWeightKg,
+            ),
+        )
+    }
+
     fun clearMessage() {
         _uiState.update { it.copy(message = null) }
     }
@@ -216,3 +274,43 @@ class WorkoutEditorViewModel @Inject constructor(
     private fun List<WorkoutSlotDraft>.reindexPositions(): List<WorkoutSlotDraft> =
         mapIndexed { idx, slot -> slot.copy(position = idx) }
 }
+
+data class ExerciseSlotDetailUi(
+    val workoutId: Long?,
+    val exerciseId: Long,
+    val exerciseName: String,
+    val equipmentType: String,
+    val targetSets: Int,
+    val targetReps: Int,
+    val currentWorkingWeightKg: Double,
+    val progressionMode: String,
+    val incrementKg: Double,
+    val deloadPercent: Int,
+    val plateGuidance: String,
+)
+
+private fun buildPlateGuidance(
+    equipmentType: String,
+    targetWeightKg: Double,
+): String {
+    if (targetWeightKg <= 0.0) {
+        return "Set a working weight to show plate guidance."
+    }
+    return if (equipmentType.uppercase() == "BARBELL") {
+        val platePerSide = ((targetWeightKg - 20.0) / 2.0).coerceAtLeast(0.0)
+        if (platePerSide <= 0.0) {
+            "Use the empty bar."
+        } else {
+            "Use the 20kg bar plus ${formatLoad(platePerSide)} per side."
+        }
+    } else {
+        "Set machine/dumbbell load to ${formatLoad(targetWeightKg)}."
+    }
+}
+
+private fun formatLoad(weightKg: Double): String =
+    if (weightKg % 1.0 == 0.0) {
+        "${weightKg.toInt()}kg"
+    } else {
+        "${"%.1f".format(weightKg)}kg"
+    }

@@ -27,6 +27,7 @@ The top-level shell is production-only. Dev/demo/debug actions such as persisten
 Focused child flows are separate destinations and do not share the persistent bottom navigation chrome:
 
 - `workoutEditor/{workoutId?}`: create/edit a workout and reorder its exercises
+- `exerciseDetail/{workoutId}/{exerciseId}`: focused slot detail inside the workout-editing flow
 - `exerciseHistory/{exerciseId}`: focused per-exercise history drill-down
 - `exerciseProgress/{exerciseId}`: focused per-exercise progress chart drill-down
 - `activeWorkout/{sessionId}`: in-session workout execution
@@ -40,9 +41,10 @@ Screen-internal tab rows shown in the screenshot pack are presentation structure
 For the current Programs/workout CRUD scope, only the workout-management path is committed:
 
 - `programs` exposes the workout overview/list behavior
-- `workoutEditor` owns the selected-workout draft, its ordered slot list, the add-exercise picker entry point, and the minimum slot-scoped editing needed for this flow
-- slot-specific editing may remain local inside `workoutEditor` for the minimum shippable T6 implementation; promote it to a child route later only if deeper slot editing or navigation needs justify it
-- the screenshot-only richer exercise-detail flow, including its `Form` tab, is explicitly deferred and must remain hidden until separately scoped
+- `workoutEditor` owns the selected-workout draft, its ordered slot list, and the add-exercise picker entry point
+- `exerciseDetail` is the focused child flow for slot-scoped exercise configuration such as working weight, progression, increment, deload, and plate guidance
+- `exerciseDetail` works on the current workout draft and returns to `workoutEditor` without breaking draft ownership
+- the screenshot-only `Form` tab inside exercise detail remains explicitly deferred and must remain hidden until separately scoped
 - unresolved secondary Programs tabs are explicitly deferred, must remain hidden from the shipped Programs UI until separately scoped, and must not block the workout CRUD implementation
 
 For the current History scope, only the documented review path is committed:

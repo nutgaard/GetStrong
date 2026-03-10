@@ -48,14 +48,13 @@ fun WorkoutEditorScreen(
     onRemoveSlot: (Long, Int) -> Unit,
     onMoveSlotUp: (Int) -> Unit,
     onMoveSlotDown: (Int) -> Unit,
-    onUpdateSlotTargets: (Int, Int, Int) -> Unit,
+    onOpenSlotDetail: (Long) -> Unit,
     onSave: () -> Unit,
     onBack: () -> Unit,
     onClearMessage: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showExercisePicker by rememberSaveable { mutableStateOf(false) }
-    var editingPosition by rememberSaveable { mutableStateOf<Int?>(null) }
     val listState = rememberLazyListState()
 
     Scaffold(
@@ -122,7 +121,7 @@ fun WorkoutEditorScreen(
                             slot = slot,
                             canMoveUp = slot.position > 0,
                             canMoveDown = slot.position < uiState.slots.lastIndex,
-                            onEdit = { editingPosition = slot.position },
+                            onEdit = { onOpenSlotDetail(slot.exerciseId) },
                             onMoveUp = { onMoveSlotUp(slot.position) },
                             onMoveDown = { onMoveSlotDown(slot.position) },
                             onRemove = { onRemoveSlot(slot.id, slot.position) },
@@ -163,17 +162,6 @@ fun WorkoutEditorScreen(
         )
     }
 
-    val editingSlot = uiState.slots.firstOrNull { it.position == editingPosition }
-    if (editingSlot != null) {
-        SlotTargetsDialog(
-            slot = editingSlot,
-            onDismiss = { editingPosition = null },
-            onSave = { sets, reps ->
-                onUpdateSlotTargets(editingSlot.position, sets, reps)
-                editingPosition = null
-            },
-        )
-    }
 }
 
 @Composable
@@ -218,7 +206,7 @@ private fun WorkoutSlotRow(
                     onDismissRequest = { showMenu = false },
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Edit sets/reps") },
+                        text = { Text("Exercise details") },
                         onClick = {
                             showMenu = false
                             onEdit()
@@ -320,51 +308,6 @@ private fun ExercisePickerDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) { Text("Close") }
-        },
-    )
-}
-
-@Composable
-private fun SlotTargetsDialog(
-    slot: WorkoutSlotDraft,
-    onDismiss: () -> Unit,
-    onSave: (Int, Int) -> Unit,
-) {
-    var setsInput by rememberSaveable(slot.position) { mutableStateOf(slot.targetSets.toString()) }
-    var repsInput by rememberSaveable(slot.position) { mutableStateOf(slot.targetReps.toString()) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Edit ${slot.exerciseName}") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = setsInput,
-                    onValueChange = { setsInput = it },
-                    label = { Text("Sets") },
-                    singleLine = true,
-                )
-                OutlinedTextField(
-                    value = repsInput,
-                    onValueChange = { repsInput = it },
-                    label = { Text("Reps") },
-                    singleLine = true,
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val sets = setsInput.toIntOrNull() ?: slot.targetSets
-                    val reps = repsInput.toIntOrNull() ?: slot.targetReps
-                    onSave(sets, reps)
-                },
-            ) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
         },
     )
 }
