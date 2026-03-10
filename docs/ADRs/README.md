@@ -16,3 +16,4 @@ Current ADR set:
 - `ADR-008`: active-workout inline session and resume contract
 - `ADR-009`: Home schedule and Programs action contract
 - `ADR-010`: exercise detail slot ownership and drill-down contract
+- `ADR-011`: History calendar aggregation and day drill-down contract

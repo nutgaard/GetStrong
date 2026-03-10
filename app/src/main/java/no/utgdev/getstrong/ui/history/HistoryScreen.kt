@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -56,7 +57,10 @@ fun HistoryScreen(
 ) {
     var selectedSection by rememberSaveable { mutableStateOf(HistorySection.LIST) }
     var displayedMonth by rememberSaveable { mutableStateOf(YearMonth.now().toString()) }
+    var selectedWorkoutDetail by remember { mutableStateOf<HistoryWorkoutCardUi?>(null) }
+    var selectableDayWorkouts by remember { mutableStateOf<List<HistoryWorkoutCardUi>>(emptyList()) }
     val month = remember(displayedMonth) { YearMonth.parse(displayedMonth) }
+    val workoutsByDate = remember(uiState.workouts) { workoutsGroupedByDate(uiState.workouts) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -146,11 +150,87 @@ fun HistoryScreen(
                         HistoryCalendarCard(
                             month = month,
                             workouts = uiState.workouts,
+                            onDaySelected = { date ->
+                                val dayWorkouts = workoutsByDate[date].orEmpty().sortedByDescending { it.completedAtEpochMs }
+                                when (calendarDaySelection(dayWorkouts)) {
+                                    CalendarDaySelection.NONE -> Unit
+                                    CalendarDaySelection.SINGLE -> selectedWorkoutDetail = dayWorkouts.first()
+                                    CalendarDaySelection.MULTIPLE -> selectableDayWorkouts = dayWorkouts
+                                }
+                            },
                         )
                     }
                 }
             }
         }
+    }
+
+    val singleWorkout = selectedWorkoutDetail
+    if (singleWorkout != null) {
+        AlertDialog(
+            onDismissRequest = { selectedWorkoutDetail = null },
+            title = { Text(singleWorkout.workoutName) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = formatDate(singleWorkout.completedAtEpochMs),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = "Duration ${formatElapsedDuration(singleWorkout.totalDurationSeconds)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = "Volume ${formatWeight(singleWorkout.totalVolumeKg)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    if (singleWorkout.exerciseResults.isNotEmpty()) {
+                        singleWorkout.exerciseResults.forEach { result ->
+                            Text(
+                                text = "${result.exerciseName}: ${result.resultSummary}",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedWorkoutDetail = null }) {
+                    Text("Close")
+                }
+            },
+        )
+    }
+
+    if (selectableDayWorkouts.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { selectableDayWorkouts = emptyList() },
+            title = { Text("Choose workout") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    selectableDayWorkouts.forEach { workout ->
+                        TextButton(
+                            onClick = {
+                                selectableDayWorkouts = emptyList()
+                                selectedWorkoutDetail = workout
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(
+                                text = "${workout.workoutName} • ${formatTime(workout.completedAtEpochMs)}",
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectableDayWorkouts = emptyList() }) {
+                    Text("Close")
+                }
+            },
+        )
     }
 }
 
@@ -371,14 +451,13 @@ private fun CalendarHeader(
 private fun HistoryCalendarCard(
     month: YearMonth,
     workouts: List<HistoryWorkoutCardUi>,
+    onDaySelected: (LocalDate) -> Unit,
 ) {
-    val completionCounts = workouts
-        .groupingBy { epochMsToLocalDate(it.completedAtEpochMs) }
-        .eachCount()
+    val completionCounts = workoutsGroupedByDate(workouts).mapValues { (_, dayWorkouts) -> dayWorkouts.size }
     val firstDay = month.atDay(1)
-    val leadingSlots = firstDay.dayOfWeek.value % 7
+    val leadingSlots = mondayFirstLeadingSlots(firstDay)
     val daysInMonth = month.lengthOfMonth()
-    val weekDays = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+    val weekDays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -413,7 +492,8 @@ private fun HistoryCalendarCard(
                             val count = completionCounts[date] ?: 0
                             CalendarDayCell(
                                 dayNumber = dayNumber,
-                                workoutCount = count,
+                                hasWorkout = count > 0,
+                                onClick = { onDaySelected(date) },
                                 modifier = Modifier.weight(1f),
                             )
                         }
@@ -427,11 +507,15 @@ private fun HistoryCalendarCard(
 @Composable
 private fun CalendarDayCell(
     dayNumber: Int,
-    workoutCount: Int,
+    hasWorkout: Boolean,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.height(44.dp),
+        modifier = modifier
+            .height(44.dp)
+            .clip(MaterialTheme.shapes.small)
+            .clickable(enabled = hasWorkout, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -440,26 +524,19 @@ private fun CalendarDayCell(
                 .size(28.dp)
                 .clip(CircleShape)
                 .background(
-                    if (workoutCount > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                    if (hasWorkout) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                 ),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = dayNumber.toString(),
-                color = if (workoutCount > 0) {
+                color = if (hasWorkout) {
                     MaterialTheme.colorScheme.onPrimary
                 } else {
                     MaterialTheme.colorScheme.onSurface
                 },
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = if (workoutCount > 0) FontWeight.Bold else FontWeight.Normal,
-            )
-        }
-        if (workoutCount > 1) {
-            Text(
-                text = "$workoutCount",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
+                fontWeight = if (hasWorkout) FontWeight.Bold else FontWeight.Normal,
             )
         }
     }
@@ -473,8 +550,33 @@ private enum class HistorySection(val title: String) {
 private fun epochMsToLocalDate(epochMs: Long): LocalDate =
     Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()).toLocalDate()
 
+internal fun workoutsGroupedByDate(workouts: List<HistoryWorkoutCardUi>): Map<LocalDate, List<HistoryWorkoutCardUi>> =
+    workouts.groupBy { workout -> epochMsToLocalDate(workout.completedAtEpochMs) }
+
+internal fun mondayFirstLeadingSlots(firstDayOfMonth: LocalDate): Int =
+    firstDayOfMonth.dayOfWeek.value - 1
+
+internal fun calendarDaySelection(dayWorkouts: List<HistoryWorkoutCardUi>): CalendarDaySelection =
+    when (dayWorkouts.size) {
+        0 -> CalendarDaySelection.NONE
+        1 -> CalendarDaySelection.SINGLE
+        else -> CalendarDaySelection.MULTIPLE
+    }
+
+internal enum class CalendarDaySelection {
+    NONE,
+    SINGLE,
+    MULTIPLE,
+}
+
 private fun formatDate(epochMs: Long): String =
     epochMsToLocalDate(epochMs).format(DateTimeFormatter.ofPattern("d MMM yyyy"))
+
+private fun formatTime(epochMs: Long): String =
+    Instant.ofEpochMilli(epochMs)
+        .atZone(ZoneId.systemDefault())
+        .toLocalTime()
+        .format(DateTimeFormatter.ofPattern("HH:mm"))
 
 private fun formatWeight(weightKg: Double): String =
     if (weightKg % 1.0 == 0.0) {

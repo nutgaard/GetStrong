@@ -528,8 +528,11 @@ milestones:
         title: Bring History calendar layout and drill-down behavior to spec
         description: Align the History calendar with the reference screenshot and the written audit for week layout, marker density, and day selection behavior.
         priority: P0
-        status: planned
-        ux_status: planned
+        status: done
+        owner: qa
+        next_owner: none
+        bundle: M12-B4
+        ux_status: pending_review
         ux_references:
           - "UX.md -> history_calendar.png"
           - "UX.md -> history_workout.png"
@@ -565,10 +568,10 @@ milestones:
         description: Replace the current limited exercise editing flow with the weight/progression controls shown in the reference exercise-detail screen.
         priority: P0
         status: done
-        owner: qa
+        owner: none
         next_owner: none
         bundle: M12-B3
-        ux_status: pending_review
+        ux_status: verified
         ux_references:
           - "UX.md -> edit_exercise.png"
           - "UX.md -> progress_exercise.png"
