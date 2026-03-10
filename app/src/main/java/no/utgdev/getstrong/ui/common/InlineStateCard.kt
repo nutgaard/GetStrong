@@ -10,6 +10,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Column
 
@@ -18,6 +20,7 @@ fun InlineStateCard(
     title: String,
     body: String? = null,
     actionLabel: String? = null,
+    actionContentDescription: String? = null,
     onAction: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -44,7 +47,10 @@ fun InlineStateCard(
                     onClick = onAction,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 48.dp),
+                        .heightIn(min = 48.dp)
+                        .semantics {
+                            actionContentDescription?.let { contentDescription = it }
+                        },
                 ) {
                     Text(actionLabel)
                 }

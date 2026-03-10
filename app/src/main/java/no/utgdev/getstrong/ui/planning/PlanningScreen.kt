@@ -1,6 +1,7 @@
 package no.utgdev.getstrong.ui.planning
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,12 +20,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -50,8 +55,13 @@ fun PlanningScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onCreateWorkout) {
-                Text("Add")
+            FloatingActionButton(
+                onClick = onCreateWorkout,
+                modifier = Modifier.semantics {
+                    contentDescription = "Create new workout"
+                },
+            ) {
+                Text("New Workout")
             }
         },
     ) { innerPadding ->
@@ -79,6 +89,7 @@ fun PlanningScreen(
                         title = "Couldn't load your workouts.",
                         body = "Try again to reload your Programs workout list.",
                         actionLabel = "Retry",
+                        actionContentDescription = "Retry loading workouts in Programs",
                         onAction = onRetryLoad,
                     )
                 }
@@ -87,6 +98,7 @@ fun PlanningScreen(
                         title = "No workouts yet.",
                         body = "Create your first workout to start training from Programs.",
                         actionLabel = "Create Workout",
+                        actionContentDescription = "Create your first workout from Programs",
                         onAction = onCreateWorkout,
                     )
                 }
@@ -118,10 +130,25 @@ private fun WorkoutRow(
     onStartWorkout: (Long) -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    var shouldRestoreActionFocus by remember { mutableStateOf(false) }
+    val actionFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(menuExpanded, shouldRestoreActionFocus) {
+        if (!menuExpanded && shouldRestoreActionFocus) {
+            actionFocusRequester.requestFocus()
+            shouldRestoreActionFocus = false
+        }
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onEditWorkout(workout.id) },
+            .semantics {
+                contentDescription = buildWorkoutRowContentDescription(workout)
+            }
+            .clickable(
+                onClickLabel = "Edit workout ${workout.name}",
+            ) { onEditWorkout(workout.id) },
     ) {
         Column(
             modifier = Modifier
@@ -138,31 +165,54 @@ private fun WorkoutRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.End,
             ) {
-                TextButton(onClick = { menuExpanded = true }) {
-                    Text("Actions")
+                TextButton(
+                    onClick = { menuExpanded = true },
+                    modifier = Modifier
+                        .focusRequester(actionFocusRequester)
+                        .focusable()
+                        .semantics {
+                            contentDescription = "Open workout actions for ${workout.name}"
+                        },
+                ) {
+                    Text("Workout Actions")
                 }
                 DropdownMenu(
                     expanded = menuExpanded,
-                    onDismissRequest = { menuExpanded = false },
+                    onDismissRequest = {
+                        menuExpanded = false
+                        shouldRestoreActionFocus = true
+                    },
                 ) {
                     DropdownMenuItem(
                         text = { Text("Start workout") },
+                        modifier = Modifier.semantics {
+                            contentDescription = "Start workout ${workout.name}"
+                        },
                         onClick = {
                             menuExpanded = false
+                            shouldRestoreActionFocus = true
                             onStartWorkout(workout.id)
                         },
                     )
                     DropdownMenuItem(
                         text = { Text("Edit workout") },
+                        modifier = Modifier.semantics {
+                            contentDescription = "Edit workout ${workout.name}"
+                        },
                         onClick = {
                             menuExpanded = false
+                            shouldRestoreActionFocus = true
                             onEditWorkout(workout.id)
                         },
                     )
                     DropdownMenuItem(
                         text = { Text("Delete workout") },
+                        modifier = Modifier.semantics {
+                            contentDescription = "Delete workout ${workout.name}"
+                        },
                         onClick = {
                             menuExpanded = false
+                            shouldRestoreActionFocus = true
                             onDeleteWorkout(workout.id)
                         },
                     )
@@ -170,4 +220,14 @@ private fun WorkoutRow(
             }
         }
     }
+}
+
+internal fun buildWorkoutRowContentDescription(workout: Workout): String {
+    val exerciseCount = workout.slots.size
+    val exerciseSummary = when (exerciseCount) {
+        0 -> "No exercises yet."
+        1 -> "1 exercise."
+        else -> "$exerciseCount exercises."
+    }
+    return "${workout.name}. $exerciseSummary"
 }

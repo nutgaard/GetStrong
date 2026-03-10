@@ -23,6 +23,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -54,7 +55,7 @@ fun SummaryScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
                     .heightIn(min = 52.dp)
-                    .semantics { contentDescription = "Dismiss workout summary and return to the app" },
+                    .semantics { contentDescription = "Dismiss workout summary and return to Home" },
             ) {
                 Text("Return To App")
             }
@@ -186,7 +187,10 @@ private fun SummaryMetricCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(16.dp)
+                .clearAndSetSemantics {
+                    contentDescription = "$label, $value"
+                },
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(label, style = MaterialTheme.typography.labelLarge)
@@ -215,14 +219,8 @@ private fun SummarySetCard(row: SummarySetRowUi) {
                 .fillMaxWidth()
                 .background(containerColor)
                 .padding(16.dp)
-                .semantics {
-                    contentDescription = buildString {
-                        append("${if (isWarmup) "Warmup" else "Work"} set ${row.setOrder + 1}. ")
-                        append("${row.exerciseName}. ")
-                        append("Target ${row.targetReps} reps. ")
-                        append("Achieved ${row.achievedReps ?: 0} reps. ")
-                        append("Load ${row.loadKg?.let(::formatWeight) ?: "not recorded"}")
-                    }
+                .clearAndSetSemantics {
+                    contentDescription = buildSummarySetContentDescription(row)
                 },
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -310,4 +308,14 @@ private fun formatWeight(weightKg: Double): String =
         "${weightKg.toInt()} kg"
     } else {
         "${"%.1f".format(weightKg)} kg"
+    }
+
+internal fun buildSummarySetContentDescription(row: SummarySetRowUi): String =
+    buildString {
+        append(if (row.setType == SessionSetType.WARMUP) "Warmup" else "Work")
+        append(" set ${row.setOrder + 1}. ")
+        append("${row.exerciseName}. ")
+        append("Target ${row.targetReps} reps. ")
+        append("Achieved ${row.achievedReps ?: 0} reps. ")
+        append("Load ${row.loadKg?.let(::formatWeight) ?: "not recorded"}.")
     }

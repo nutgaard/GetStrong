@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,7 +37,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -44,12 +47,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -81,10 +91,15 @@ fun ActiveWorkoutScreen(
     var actionSetId by rememberSaveable { mutableStateOf<Long?>(null) }
     var editRepsSetId by rememberSaveable { mutableStateOf<Long?>(null) }
     var editWeightSetId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var restoreFocusSetId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val setFocusRequesters = remember { mutableStateMapOf<Long, FocusRequester>() }
 
     val actionSet = uiState.plannedSets.firstOrNull { it.id == actionSetId }
     val repsSet = uiState.plannedSets.firstOrNull { it.id == editRepsSetId }
     val weightSet = uiState.plannedSets.firstOrNull { it.id == editWeightSetId }
+    val focusRequesterForSet: (Long) -> FocusRequester = { setId ->
+        setFocusRequesters.getOrPut(setId) { FocusRequester() }
+    }
     val workoutGroups = remember(uiState.plannedSets, uiState.exerciseNamesById) {
         buildExerciseGroups(
             plannedSets = uiState.plannedSets,
@@ -120,13 +135,26 @@ fun ActiveWorkoutScreen(
         else -> 120.dp
     }
 
+    LaunchedEffect(actionSetId, editRepsSetId, editWeightSetId, restoreFocusSetId) {
+        if (actionSetId == null && editRepsSetId == null && editWeightSetId == null) {
+            val targetSetId = restoreFocusSetId ?: return@LaunchedEffect
+            setFocusRequesters[targetSetId]?.requestFocus()
+            restoreFocusSetId = null
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 title = { Text("Workout") },
                 navigationIcon = {
-                    TextButton(onClick = onExit) {
+                    TextButton(
+                        onClick = onExit,
+                        modifier = Modifier.semantics {
+                            contentDescription = "Exit active workout"
+                        },
+                    ) {
                         Text("Back")
                     }
                 },
@@ -139,7 +167,12 @@ fun ActiveWorkoutScreen(
                 .padding(innerPadding),
         ) {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .semantics {
+                        isTraversalGroup = true
+                        traversalIndex = 2f
+                    },
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
                     start = 16.dp,
                     top = 12.dp,
@@ -156,6 +189,10 @@ fun ActiveWorkoutScreen(
                         selectedSection = selectedSection,
                         onSectionSelected = { selectedSection = it },
                         showPinnedHint = currentSet != null,
+                        modifier = Modifier.semantics {
+                            isTraversalGroup = true
+                            traversalIndex = 0f
+                        },
                     )
                 }
 
@@ -173,8 +210,12 @@ fun ActiveWorkoutScreen(
                                 onToggleSet(setId)
                                 actionSetId = null
                             },
-                            onOpenActions = { setId -> actionSetId = setId },
+                            onOpenActions = { setId ->
+                                restoreFocusSetId = setId
+                                actionSetId = setId
+                            },
                             onAddExtraSet = { onAddExtraSet(group.sets.last().id) },
+                            focusRequesterForSet = focusRequesterForSet,
                         )
                     }
                 }
@@ -199,7 +240,10 @@ fun ActiveWorkoutScreen(
                             onToggleSet(setId)
                             actionSetId = null
                         },
-                        onOpenActions = { setId -> actionSetId = setId },
+                        onOpenActions = { setId ->
+                            restoreFocusSetId = setId
+                            actionSetId = setId
+                        },
                         onAddExtraSet = {
                             val anchorSetId = currentActionGroup?.sets?.lastOrNull()?.id ?: currentSet?.id
                             if (anchorSetId != null) {
@@ -207,6 +251,11 @@ fun ActiveWorkoutScreen(
                             }
                         },
                         onFinishSession = onFinishSession,
+                        focusRequesterForSet = focusRequesterForSet,
+                        modifier = Modifier.semantics {
+                            isTraversalGroup = true
+                            traversalIndex = 1f
+                        },
                     )
                 }
 
@@ -281,8 +330,10 @@ private fun SessionOverviewStrip(
     selectedSection: ActiveWorkoutSection,
     onSectionSelected: (ActiveWorkoutSection) -> Unit,
     showPinnedHint: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     Column(
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(
@@ -303,6 +354,7 @@ private fun SessionOverviewStrip(
                 text = "Current controls stay pinned near the bottom for easy thumb reach.",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.clearAndSetSemantics { },
             )
         }
     }
@@ -321,9 +373,11 @@ private fun CurrentActionDock(
     onOpenActions: (Long) -> Unit,
     onAddExtraSet: () -> Unit,
     onFinishSession: () -> Unit,
+    focusRequesterForSet: (Long) -> FocusRequester,
+    modifier: Modifier = Modifier,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
         ),
@@ -366,7 +420,11 @@ private fun CurrentActionDock(
                 )
                 Button(
                     onClick = onFinishSession,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .semantics {
+                            contentDescription = "Finish workout and open summary"
+                        },
                 ) {
                     Text("Finish Workout")
                 }
@@ -385,23 +443,33 @@ private fun CurrentActionDock(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                (group?.sets ?: listOf(currentSet)).forEach { set ->
+                val actionSets = group?.sets ?: listOf(currentSet)
+                actionSets.forEachIndexed { index, set ->
                     SetCircle(
                         set = set,
+                        exerciseName = exerciseName ?: "Current exercise",
+                        setIndex = index + 1,
+                        setCount = actionSets.size,
                         isCurrent = currentSet.id == set.id,
                         isHighlighted = isHighlighted && currentSet.id == set.id,
                         diameter = if (currentSet.id == set.id) 74.dp else 60.dp,
                         onClick = { onToggleSet(set.id) },
                         onLongClick = { onOpenActions(set.id) },
+                        focusRequester = focusRequesterForSet(set.id),
                     )
                 }
-                AddSetCircle(onClick = onAddExtraSet)
+                AddSetCircle(
+                    exerciseName = exerciseName ?: "Current exercise",
+                    setType = currentSet.setType,
+                    onClick = onAddExtraSet,
+                )
             }
 
             Text(
                 text = "Tap the current circle to progress. Long-press any set for reps, weight, reset, or removal.",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.clearAndSetSemantics { },
             )
         }
     }
@@ -425,6 +493,7 @@ private fun ExerciseSetGroupCard(
     onToggleSet: (Long) -> Unit,
     onOpenActions: (Long) -> Unit,
     onAddExtraSet: () -> Unit,
+    focusRequesterForSet: (Long) -> FocusRequester,
 ) {
     val containsCurrentSet = group.sets.any { it.id == currentSetId }
 
@@ -469,17 +538,25 @@ private fun ExerciseSetGroupCard(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                group.sets.forEach { set ->
+                group.sets.forEachIndexed { index, set ->
                     SetCircle(
                         set = set,
+                        exerciseName = group.exerciseName,
+                        setIndex = index + 1,
+                        setCount = group.sets.size,
                         isCurrent = currentSetId == set.id,
                         isHighlighted = highlightedSetId == set.id,
                         diameter = 62.dp,
                         onClick = { onToggleSet(set.id) },
                         onLongClick = { onOpenActions(set.id) },
+                        focusRequester = focusRequesterForSet(set.id),
                     )
                 }
-                AddSetCircle(onClick = onAddExtraSet)
+                AddSetCircle(
+                    exerciseName = group.exerciseName,
+                    setType = group.sets.firstOrNull()?.setType ?: SessionSetType.WORK,
+                    onClick = onAddExtraSet,
+                )
             }
         }
     }
@@ -489,12 +566,16 @@ private fun ExerciseSetGroupCard(
 @Composable
 private fun SetCircle(
     set: SessionPlannedSet,
+    exerciseName: String,
+    setIndex: Int,
+    setCount: Int,
     isCurrent: Boolean,
     isHighlighted: Boolean,
     diameter: Dp = 58.dp,
     showCaption: Boolean = true,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    focusRequester: FocusRequester,
 ) {
     val achievedReps = set.completedReps ?: 0
     val isTouched = achievedReps > 0
@@ -520,21 +601,6 @@ private fun SetCircle(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier.semantics {
-            contentDescription = buildString {
-                append("${if (set.setType == SessionSetType.WARMUP) "Warmup" else "Workout"} set ${set.setOrder + 1}")
-                append(". Target ${set.targetReps} reps")
-                set.targetWeightKg?.let { append(" at ${formatWeight(it)}") }
-                if (achievedReps > 0) {
-                    append(". Achieved $achievedReps reps")
-                }
-            }
-            stateDescription = when {
-                achievedReps <= 0 -> "Incomplete"
-                achievedReps >= set.targetReps -> "Completed"
-                else -> "Partial"
-            }
-        },
     ) {
         Box(
             modifier = Modifier
@@ -542,10 +608,31 @@ private fun SetCircle(
                 .clip(CircleShape)
                 .background(fillColor)
                 .border(width = if (isCurrent) 3.dp else 2.dp, color = borderColor, shape = CircleShape)
+                .focusRequester(focusRequester)
+                .focusable()
                 .combinedClickable(
+                    onClickLabel = buildSetToggleActionLabel(
+                        exerciseName = exerciseName,
+                        set = set,
+                        setIndex = setIndex,
+                    ),
+                    onLongClickLabel = "Open actions for ${buildSetShortDescription(exerciseName, set, setIndex, setCount)}",
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ),
+                )
+                .semantics {
+                    contentDescription = buildSetAccessibilityDescription(
+                        exerciseName = exerciseName,
+                        set = set,
+                        setIndex = setIndex,
+                        setCount = setCount,
+                        isCurrent = isCurrent,
+                    )
+                    stateDescription = buildSetAccessibilityStateDescription(
+                        set = set,
+                        isCurrent = isCurrent,
+                    )
+                },
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -561,13 +648,18 @@ private fun SetCircle(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
+                modifier = Modifier.clearAndSetSemantics { },
             )
         }
     }
 }
 
 @Composable
-private fun AddSetCircle(onClick: () -> Unit) {
+private fun AddSetCircle(
+    exerciseName: String,
+    setType: String,
+    onClick: () -> Unit,
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -579,9 +671,13 @@ private fun AddSetCircle(onClick: () -> Unit) {
                 .background(MaterialTheme.colorScheme.surface)
                 .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
                 .combinedClickable(
+                    onClickLabel = "Add extra ${sectionLabelForSetType(setType).lowercase()} set for $exerciseName",
                     onClick = onClick,
                     onLongClick = onClick,
-                ),
+                )
+                .semantics {
+                    contentDescription = "Add extra ${sectionLabelForSetType(setType).lowercase()} set for $exerciseName"
+                },
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -595,6 +691,7 @@ private fun AddSetCircle(onClick: () -> Unit) {
             text = "Add",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.clearAndSetSemantics { },
         )
     }
 }
@@ -613,7 +710,15 @@ private fun RestTimerOverlay(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .semantics {
+                    liveRegion = LiveRegionMode.Polite
+                    contentDescription = if (isRestOver) {
+                        "Rest complete. Start the next set."
+                    } else {
+                        "Rest timer. $remainingSeconds seconds remaining."
+                    }
+                },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -650,6 +755,10 @@ private fun SectionSelector(
             FilterChip(
                 selected = selectedSection == section,
                 onClick = { onSectionSelected(section) },
+                modifier = Modifier.semantics {
+                    contentDescription = "Show ${section.title.lowercase()} sets"
+                    stateDescription = if (selectedSection == section) "Selected" else "Not selected"
+                },
                 label = { Text(section.title) },
             )
         }
@@ -668,6 +777,9 @@ private fun SupportPill(
             .padding(horizontal = 10.dp, vertical = 6.dp),
     ) {
         Row(
+            modifier = Modifier.clearAndSetSemantics {
+                contentDescription = "$label $value"
+            },
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -697,7 +809,7 @@ private fun SetActionsDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(exerciseName) },
+        title = { Text("Set actions for $exerciseName") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
@@ -705,16 +817,37 @@ private fun SetActionsDialog(
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
-                ActionTextButton(text = "Set reps", onClick = onSetReps)
-                ActionTextButton(text = "Set weight", onClick = onSetWeight)
-                ActionTextButton(text = "Clear / reset set", onClick = onClearSet)
+                ActionTextButton(
+                    text = "Set reps",
+                    contentDescription = "Set reps for ${buildDialogSetDescription(exerciseName, set)}",
+                    onClick = onSetReps,
+                )
+                ActionTextButton(
+                    text = "Set weight",
+                    contentDescription = "Set weight for ${buildDialogSetDescription(exerciseName, set)}",
+                    onClick = onSetWeight,
+                )
+                ActionTextButton(
+                    text = "Clear / reset set",
+                    contentDescription = "Clear or reset ${buildDialogSetDescription(exerciseName, set)}",
+                    onClick = onClearSet,
+                )
                 if (onRemoveExtraSet != null) {
-                    ActionTextButton(text = "Remove extra set", onClick = onRemoveExtraSet)
+                    ActionTextButton(
+                        text = "Remove extra set",
+                        contentDescription = "Remove extra set for $exerciseName",
+                        onClick = onRemoveExtraSet,
+                    )
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.semantics {
+                    contentDescription = "Close set actions for $exerciseName"
+                },
+            ) {
                 Text("Close")
             }
         },
@@ -724,11 +857,16 @@ private fun SetActionsDialog(
 @Composable
 private fun ActionTextButton(
     text: String,
+    contentDescription: String,
     onClick: () -> Unit,
 ) {
     TextButton(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics {
+                this.contentDescription = contentDescription
+            },
     ) {
         Text(
             text = text,
@@ -770,12 +908,20 @@ private fun EditSetRepsDialog(
             TextButton(
                 onClick = { onSave(parsed ?: 0) },
                 enabled = canSave,
+                modifier = Modifier.semantics {
+                    contentDescription = "Save reps for $exerciseName"
+                },
             ) {
                 Text("Save")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.semantics {
+                    contentDescription = "Cancel editing reps for $exerciseName"
+                },
+            ) {
                 Text("Cancel")
             }
         },
@@ -814,12 +960,20 @@ private fun EditSetWeightDialog(
             TextButton(
                 onClick = { onSave(parsed ?: 0.0) },
                 enabled = canSave,
+                modifier = Modifier.semantics {
+                    contentDescription = "Save weight for $exerciseName"
+                },
             ) {
                 Text("Save")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.semantics {
+                    contentDescription = "Cancel editing weight for $exerciseName"
+                },
+            ) {
                 Text("Cancel")
             }
         },
@@ -879,6 +1033,79 @@ private fun buildSetDetailText(set: SessionPlannedSet): String {
     return "Target ${set.targetReps} reps${set.targetWeightKg?.let { " @ ${formatWeight(it)}" } ?: ""}$achieved$extra"
 }
 
+internal fun buildSetAccessibilityDescription(
+    exerciseName: String,
+    set: SessionPlannedSet,
+    setIndex: Int,
+    setCount: Int,
+    isCurrent: Boolean,
+): String =
+    buildString {
+        append(buildSetShortDescription(exerciseName, set, setIndex, setCount))
+        if (isCurrent) {
+            append(". Current set.")
+        } else {
+            append(".")
+        }
+        append(" Target ${set.targetReps} reps")
+        set.targetWeightKg?.let { append(" at ${formatWeight(it)}") }
+        append(". Achieved ${set.completedReps ?: 0} reps.")
+    }
+
+internal fun buildSetAccessibilityStateDescription(
+    set: SessionPlannedSet,
+    isCurrent: Boolean,
+): String {
+    val completion = when {
+        (set.completedReps ?: 0) <= 0 -> "Incomplete"
+        (set.completedReps ?: 0) >= set.targetReps -> "Completed"
+        else -> "Partial"
+    }
+    return if (isCurrent) "Current, $completion" else completion
+}
+
+internal fun buildSetToggleActionLabel(
+    exerciseName: String,
+    set: SessionPlannedSet,
+    setIndex: Int,
+): String =
+    when {
+        (set.completedReps ?: 0) <= 0 ->
+            "Complete ${sectionLabelForSetType(set.setType).lowercase()} set $setIndex for $exerciseName"
+        else ->
+            "Reduce achieved reps for ${sectionLabelForSetType(set.setType).lowercase()} set $setIndex for $exerciseName"
+    }
+
+internal fun buildSetShortDescription(
+    exerciseName: String,
+    set: SessionPlannedSet,
+    setIndex: Int,
+    setCount: Int,
+): String =
+    buildString {
+        append(exerciseName)
+        append(". ${sectionLabelForSetType(set.setType)} ")
+        if (set.isExtra) {
+            append("extra set")
+        } else {
+            append("set $setIndex of $setCount")
+        }
+    }
+
+private fun buildDialogSetDescription(
+    exerciseName: String,
+    set: SessionPlannedSet,
+): String =
+    buildString {
+        append(exerciseName)
+        append(". ${sectionLabelForSetType(set.setType)} ")
+        if (set.isExtra) {
+            append("extra set")
+        } else {
+            append("set ${set.setOrder + 1}")
+        }
+    }
+
 private fun currentSetTitle(set: SessionPlannedSet): String =
     if (set.setType == SessionSetType.WARMUP) "Current Warmup Set" else "Current Workout Set"
 
@@ -891,6 +1118,9 @@ private fun formatWeight(weightKg: Double): String =
     } else {
         "$weightKg kg"
     }
+
+private fun sectionLabelForSetType(setType: String): String =
+    if (setType == SessionSetType.WARMUP) "Warmup" else "Workout"
 
 private fun formatElapsed(seconds: Long): String {
     val total = seconds.coerceAtLeast(0L)

@@ -22,6 +22,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -57,6 +59,12 @@ fun HomeScreen(
                     icon = {},
                     onClick = onQuickStart,
                     expanded = true,
+                    modifier = Modifier.semantics {
+                        contentDescription = buildQuickStartActionDescription(
+                            nextWorkout = uiState.upcomingWorkouts.firstOrNull(),
+                            isStarting = uiState.isStartingWorkout,
+                        )
+                    },
                 )
             }
         },
@@ -81,6 +89,7 @@ fun HomeScreen(
                     InlineStateCard(
                         title = uiState.startErrorMessage,
                         actionLabel = "Try Again",
+                        actionContentDescription = "Try starting the next workout again",
                         onAction = onQuickStart,
                     )
                 }
@@ -101,6 +110,7 @@ fun HomeScreen(
                             title = uiState.errorMessage,
                             body = "Retry to rebuild the Home queue from your saved workouts.",
                             actionLabel = "Retry",
+                            actionContentDescription = "Retry loading upcoming workouts on Home",
                             onAction = onRetry,
                         )
                     }
@@ -111,6 +121,7 @@ fun HomeScreen(
                             title = "No workouts yet.",
                             body = "Create your first workout in Programs to build the upcoming queue.",
                             actionLabel = "Open Programs",
+                            actionContentDescription = "Open Programs to create your first workout",
                             onAction = onOpenPrograms,
                         )
                     }
@@ -121,6 +132,7 @@ fun HomeScreen(
                             title = "No ready-to-start workouts yet.",
                             body = "Add exercises to your saved workouts in Programs to populate the upcoming queue.",
                             actionLabel = "Open Programs",
+                            actionContentDescription = "Open Programs to add exercises to your saved workouts",
                             onAction = onOpenPrograms,
                         )
                     }
@@ -139,7 +151,13 @@ fun HomeScreen(
 private fun UpcomingWorkoutCard(
     workout: HomeUpcomingWorkoutUi,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clearAndSetSemantics {
+                contentDescription = buildUpcomingWorkoutCardDescription(workout)
+            },
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -209,3 +227,28 @@ private fun QueueBadge(
         )
     }
 }
+
+internal fun buildQuickStartActionDescription(
+    nextWorkout: HomeUpcomingWorkoutUi?,
+    isStarting: Boolean,
+): String =
+    when {
+        nextWorkout == null -> "Start workout"
+        isStarting -> "Starting ${nextWorkout.workoutName}"
+        else -> "Start workout ${nextWorkout.workoutName}"
+    }
+
+internal fun buildUpcomingWorkoutCardDescription(workout: HomeUpcomingWorkoutUi): String =
+    buildString {
+        append(workout.workoutName)
+        append(". Scheduled ${workout.scheduledLabel}.")
+        if (workout.isNextUp) {
+            append(" Next up.")
+        }
+        if (workout.exercisePreview.isNotEmpty()) {
+            append(" Upcoming lifts: ${workout.exercisePreview.joinToString()}.")
+        }
+        if (workout.additionalExerciseCount > 0) {
+            append(" Plus ${workout.additionalExerciseCount} more exercises.")
+        }
+    }
