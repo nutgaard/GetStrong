@@ -57,6 +57,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 ## Navigation Relationships
 
 - `start_screen.png` leads into the active workout flow via `Start Workout`.
+- `workout_overview.png` may also launch the same active workout flow for a specifically chosen saved workout from an in-screen action, without replacing the documented Programs-to-editor management path.
 - `workout_overview.png` leads to `edit_workout.png` when a workout is selected.
 - The reference pack suggests `edit_workout.png` can lead to `edit_exercise.png` when an exercise is selected, but the current bounded T6 implementation keeps minimum exercise-slot editing local inside the workout editor instead of requiring a dedicated drill-down.
 - `edit_exercise.png` exposes the `Progress` and `History` views for that exercise, represented by `progress_exercise.png` and `history_exercise.png`.

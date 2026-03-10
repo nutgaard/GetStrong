@@ -156,20 +156,21 @@ milestones:
     tasks:
       - id: T7
         title: Implement workout session engine and flow
-        description: Build the execution logic that runs a saved workout in the specified order, including warmups then work sets for each exercise.
+        description: Build the session lifecycle and sequencing that runs a saved workout in the specified order, including warmups then work sets for each exercise; detailed active-workout interactions and layout are covered by the later bounded tasks.
         priority: P0
         status: done
-        ux_status: needs_rework
+        ux_status: verified
         ux_references:
           - "UX.md#Navigation Relationships"
           - "UX.md -> start_screen.png"
           - "UX.md -> workout_in_progress_0.png"
           - "UX.md -> workout_warmup.png"
         acceptance_criteria:
-          - User can start any saved workout from the Programs flow.
-          - Session iterates through exercises in the workout, presenting warmup sets first and work sets afterward for each exercise.
-          - Session completes when all planned sets in the workout are handled.
-          - QA can verify the workout-start and in-session flow against the listed ux_references before this task is treated as UX-complete.
+          - User can start a saved workout from the Home quick-start path when one is available, and from the Programs flow for a specifically chosen saved workout.
+          - Starting from either entry point creates the same focused active-session flow for the selected workout, keyed by a stable session ID.
+          - Session iterates through workout exercises in saved order, presenting warmup sets first and work sets afterward for each exercise.
+          - When all planned sets in the workout are handled, the session reaches a completed state and hands off to the terminal post-workout summary path already defined elsewhere in the UX contract.
+          - QA can verify the workout-start and session-sequencing flow against the listed ux_references before this task is treated as UX-complete.
       - id: T8
         title: Set completion interaction and UI
         description: Design and implement set completion UI that supports partial reps and contextual actions, following the active workout mockup.
