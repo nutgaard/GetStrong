@@ -24,9 +24,14 @@ class RestTimerPolicyTest {
     }
 
     @Test
-    fun doesNotStartForDifferentSlotOrWorkToWork() {
+    fun startsBetweenWorkSetsForSameSlot() {
+        assertTrue(policy.shouldStartForTransition(set(1, 10, SessionSetType.WORK), set(2, 10, SessionSetType.WORK)))
+    }
+
+    @Test
+    fun doesNotStartForDifferentSlotOrWhenNextSetIsWarmup() {
         assertFalse(policy.shouldStartForTransition(set(1, 10, SessionSetType.WARMUP), set(2, 11, SessionSetType.WORK)))
-        assertFalse(policy.shouldStartForTransition(set(1, 10, SessionSetType.WORK), set(2, 10, SessionSetType.WORK)))
+        assertFalse(policy.shouldStartForTransition(set(1, 10, SessionSetType.WORK), set(2, 10, SessionSetType.WARMUP)))
     }
 
     private fun set(id: Long, slotId: Long, type: String): SessionPlannedSet =

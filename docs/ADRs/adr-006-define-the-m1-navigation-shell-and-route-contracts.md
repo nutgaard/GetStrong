@@ -42,6 +42,15 @@ For the current Programs/workout CRUD scope, only the workout-management path is
 - slot-specific editing may remain local inside `workoutEditor` for the minimum shippable T6 implementation; promote it to a child route later only if deeper slot editing or navigation needs justify it
 - unresolved secondary Programs tabs are explicitly deferred and must not block the workout CRUD implementation
 
+For the current active-workout interaction scope, only the session-execution path is committed:
+
+- `activeWorkout` remains a single focused child flow for one session and may host local `Workout` and `Warmup` sections inside that route rather than splitting them into separate destinations
+- the set-circle interaction contract applies in both sections: tapping an incomplete set marks it complete at target reps, and tapping it again decrements achieved reps by one until it reaches zero
+- completed or partially completed sets stay visible in place; the interaction updates set state rather than removing the row or moving the user to another screen
+- extra sets are added inline from the trailing `+` affordance in the current session view rather than through a separate creation route
+- per-set secondary actions such as setting reps, setting weight, clearing/resetting a set, or removing an extra set are contextual UI attached to the active-workout screen rather than separate top-level navigation
+- rest timing feedback stays as a transient bottom overlay within `activeWorkout`; it must not replace the session screen with a blocking timer destination or modal flow
+
 Navigation remains part of `ui/navigation`. Route arguments must be stable identifiers such as `workoutId` and `sessionId`. Do not pass Room entities, domain aggregates, or mutable state through routes.
 
 Back/up behavior follows standard Android rules:
