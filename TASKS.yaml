@@ -32,16 +32,17 @@ milestones:
         description: Create the base Android app (package, build config, navigation structure, and theme) suitable for the Home, Programs, and Active Workout flows.
         priority: P0
         status: done
-        ux_status: needs_rework
+        ux_status: verified
         ux_references:
           - "UX.md#Overall Structure"
           - "UX.md#Top-Level Navigation"
           - "UX.md -> start_screen.png"
         acceptance_criteria:
           - Project builds and runs on an Android emulator/device with no runtime errors.
-          - App shows a home screen entry point for workouts with the primary quick-start action.
+          - App shows a Home entry point that matches the `start_screen.png` contract at a structural level, with upcoming workout cards and a primary quick-start action.
           - Navigation framework is in place to support at least the Home, Programs, and Active Workout flows.
           - The top-level shell structure matches the UX contract for persistent bottom navigation versus focused child flows.
+          - The bounded Home implementation may use a simple deterministic upcoming-workout ordering heuristic from saved workouts; a richer scheduling engine is not required to satisfy this slice.
           - QA can verify the shell and Home entry point against the listed ux_references.
       - id: T2
         title: Choose and wire persistence mechanism

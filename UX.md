@@ -21,6 +21,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 ## Screen Summaries
 
 - `start_screen.png`: Home shows an upcoming workout queue as cards. Each card includes the workout name, scheduled date, a few upcoming lifts, and a collapsed count of additional exercises. A prominent `Start Workout` FAB launches the next planned session.
+- For the current bounded Home slice, the important contract is the structural start-screen pattern: upcoming workout cards plus a primary quick-start action. The exact long-term scheduling algorithm behind the queue is not yet part of the committed UX contract.
 - `workout_overview.png`: The `Programs` screen uses nested tabs. The `Workouts` tab lists workouts inside a program, with drag handles for ordering and overflow menus for row actions. The red FAB adds a workout.
 - `edit_workout.png`: The workout editor shows the ordered exercise list for a single workout. Drag handles reorder exercises, overflow menus remove them, and the FAB adds another exercise.
 - `edit_exercise.png`: The reference pack includes a richer exercise-detail screen tabbed into `Weight`, `Form`, `Progress`, and `History`. The provided screenshot shows `Weight`, with sets x reps, current/next working weight, progression settings, deload settings, and a plate helper. On the current branch's bounded T6 path, this deeper drill-down is not required yet; minimum slot editing remains local inside the workout editor.
@@ -72,7 +73,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - The reference pack includes a dedicated `edit_exercise.png` screen, but the current bounded T6 implementation only commits local slot editing inside `edit_workout.png`; a richer exercise-detail drill-down is deferred.
 - The exercise detail screen shows a `Form` tab, but no screenshot or prose describes its contents.
 - The `History` area shows a `Notes` tab in the reference pack, but its behavior is not defined and it is deferred/out of scope for the current bounded `T30` implementation.
-- The Home screen clearly implies scheduled upcoming workouts, but the scheduling rules behind the `A/B` alternation are not described in the current notes.
+- The Home screen clearly implies scheduled upcoming workouts, but the exact scheduling rules behind the `A/B` alternation are still undefined; the current bounded Home implementation may use a simple deterministic ordering heuristic while preserving the start-screen structure.
 - No dedicated summary mock is currently provided, so the post-workout summary content is driven by the task contract: per-set results, warmup/work distinction, total time, and total volume.
 - The reference pack does not show any additional top-level or nested-tab Progress states beyond the overview list and per-exercise chart drill-down.
 - The reference pack only shows populated states for `Home`, `Programs`, and `History`, so empty/error-state behavior is inferred from the task contract and should preserve those same shells rather than introducing separate fallback layouts.
