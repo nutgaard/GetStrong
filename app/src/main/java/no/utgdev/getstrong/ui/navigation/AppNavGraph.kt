@@ -26,6 +26,8 @@ import no.utgdev.getstrong.ui.activeWorkout.ActiveWorkoutScreen
 import no.utgdev.getstrong.ui.activeWorkout.ActiveWorkoutViewModel
 import no.utgdev.getstrong.ui.history.HistoryScreen
 import no.utgdev.getstrong.ui.history.HistoryViewModel
+import no.utgdev.getstrong.ui.history.ExerciseHistoryScreen
+import no.utgdev.getstrong.ui.history.ExerciseHistoryViewModel
 import no.utgdev.getstrong.ui.home.HomeScreen
 import no.utgdev.getstrong.ui.planning.PlanningScreen
 import no.utgdev.getstrong.ui.planning.PlanningViewModel
@@ -112,6 +114,9 @@ fun AppNavGraph(navController: NavHostController) {
                 uiState = historyUiState,
                 onRetry = { historyViewModel.load() },
                 onStartWorkoutFlow = { navController.navigate(AppDestination.Programs.route) },
+                onOpenExerciseHistory = { exerciseId ->
+                    navController.navigate(AppDestination.ExerciseHistory.route(exerciseId))
+                },
             )
         }
 
@@ -146,6 +151,19 @@ fun AppNavGraph(navController: NavHostController) {
                         }
                     }
                 },
+            )
+        }
+
+        composable(
+            route = AppDestination.ExerciseHistory.route,
+            arguments = listOf(navArgument(AppDestination.ExerciseHistory.EXERCISE_ID_ARG) { type = NavType.StringType }),
+        ) {
+            val exerciseHistoryViewModel: ExerciseHistoryViewModel = hiltViewModel()
+            val exerciseHistoryUiState by exerciseHistoryViewModel.uiState.collectAsState()
+            ExerciseHistoryScreen(
+                uiState = exerciseHistoryUiState,
+                onBack = { navController.popBackStack() },
+                onRetry = { exerciseHistoryViewModel.load() },
             )
         }
 

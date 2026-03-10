@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import no.utgdev.getstrong.domain.model.ExerciseHistoryEntry
 import no.utgdev.getstrong.domain.model.Exercise
 import no.utgdev.getstrong.domain.model.WorkoutSessionSummary
 import no.utgdev.getstrong.domain.model.WorkoutSessionSummarySet
@@ -99,6 +100,8 @@ private class FakeSessionSummaryRepository(
         if (throwOnLoad) throw IllegalStateException("summary load failed")
         return summary
     }
+
+    override suspend fun getExerciseHistory(exerciseId: Long): List<ExerciseHistoryEntry> = emptyList()
 }
 
 private class FakeExerciseRepository : ExerciseRepository {

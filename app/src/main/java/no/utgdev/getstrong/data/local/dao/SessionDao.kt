@@ -78,6 +78,26 @@ interface SessionDao {
     @Query("SELECT * FROM set_results WHERE sessionId = :sessionId ORDER BY id ASC")
     suspend fun getSetResults(sessionId: Long): List<SetResultEntity>
 
+    @Query(
+        """
+        SELECT
+            set_results.exerciseId AS exerciseId,
+            set_results.sessionId AS sessionId,
+            COALESCE(workout_summaries.workoutName, '') AS workoutName,
+            sessions.endedAtEpochMs AS completedAtEpochMs,
+            set_results.reps AS reps,
+            set_results.weightKg AS weightKg
+        FROM set_results
+        INNER JOIN sessions ON sessions.id = set_results.sessionId
+        LEFT JOIN workout_summaries ON workout_summaries.sessionId = set_results.sessionId
+        WHERE set_results.exerciseId = :exerciseId
+          AND set_results.setType != 'WARMUP'
+          AND sessions.endedAtEpochMs IS NOT NULL
+        ORDER BY sessions.endedAtEpochMs DESC, set_results.id DESC
+        """,
+    )
+    suspend fun getExerciseHistoryRows(exerciseId: Long): List<ExerciseHistoryRow>
+
     @Query("SELECT * FROM set_results WHERE sessionId = :sessionId AND plannedSetId = :plannedSetId LIMIT 1")
     suspend fun getSetResultForPlannedSet(sessionId: Long, plannedSetId: Long): SetResultEntity?
 
@@ -131,4 +151,13 @@ data class SlotProgressionRecord(
     val nextTargetReps: Int,
     val nextWorkingWeightKg: Double,
     val nextFailureStreak: Int,
+)
+
+data class ExerciseHistoryRow(
+    val exerciseId: Long,
+    val sessionId: Long,
+    val workoutName: String,
+    val completedAtEpochMs: Long,
+    val reps: Int,
+    val weightKg: Double,
 )

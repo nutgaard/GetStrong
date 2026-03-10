@@ -1,10 +1,13 @@
 package no.utgdev.getstrong.data.repository
 
 import javax.inject.Inject
+import kotlin.math.round
+import no.utgdev.getstrong.data.local.dao.ExerciseHistoryRow
 import no.utgdev.getstrong.data.local.dao.SessionDao
 import no.utgdev.getstrong.data.local.entity.SessionPlannedSetEntity
 import no.utgdev.getstrong.data.local.entity.SetResultEntity
 import no.utgdev.getstrong.data.local.entity.WorkoutSessionEntity
+import no.utgdev.getstrong.domain.model.ExerciseHistoryEntry
 import no.utgdev.getstrong.domain.model.SessionPlannedSet
 import no.utgdev.getstrong.domain.model.SetResult
 import no.utgdev.getstrong.domain.model.WorkoutSession
@@ -26,6 +29,9 @@ class SessionSummaryRepositoryImpl @Inject constructor(
             setResults = setResults,
         )
     }
+
+    override suspend fun getExerciseHistory(exerciseId: Long): List<ExerciseHistoryEntry> =
+        sessionDao.getExerciseHistoryRows(exerciseId).map { row -> row.toDomain() }
 }
 
 private fun WorkoutSessionEntity.toDomain(): WorkoutSession =
@@ -60,4 +66,15 @@ private fun SetResultEntity.toDomain(): SetResult =
         setType = setType,
         reps = reps,
         weightKg = weightKg,
+    )
+
+private fun ExerciseHistoryRow.toDomain(): ExerciseHistoryEntry =
+    ExerciseHistoryEntry(
+        exerciseId = exerciseId,
+        sessionId = sessionId,
+        workoutName = workoutName.ifBlank { "Workout $sessionId" },
+        completedAtEpochMs = completedAtEpochMs,
+        reps = reps,
+        weightKg = weightKg,
+        estimatedOneRepMaxKg = round(weightKg * (1.0 + reps / 30.0) * 10.0) / 10.0,
     )

@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.setMain
 import no.utgdev.getstrong.domain.model.ActiveSessionState
 import no.utgdev.getstrong.domain.model.AppSettings
 import no.utgdev.getstrong.domain.model.Exercise
+import no.utgdev.getstrong.domain.model.ExerciseHistoryEntry
 import no.utgdev.getstrong.domain.model.SetResult
 import no.utgdev.getstrong.domain.model.SlotProgressionUpdate
 import no.utgdev.getstrong.domain.model.Workout
@@ -315,6 +316,7 @@ private class FakeWorkoutRepository : WorkoutRepository {
 
 private class FakeSessionSummaryRepository : SessionSummaryRepository {
     override suspend fun getSessionSummary(sessionId: Long): WorkoutSessionSummary? = null
+    override suspend fun getExerciseHistory(exerciseId: Long): List<ExerciseHistoryEntry> = emptyList()
 }
 
 private class FakeWorkoutSummaryRepository : WorkoutSummaryRepository {

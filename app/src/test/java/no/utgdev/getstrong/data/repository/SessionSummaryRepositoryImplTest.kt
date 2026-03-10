@@ -3,6 +3,7 @@ package no.utgdev.getstrong.data.repository
 import kotlinx.coroutines.test.runTest
 import no.utgdev.getstrong.data.local.dao.SessionDao
 import no.utgdev.getstrong.data.local.dao.SlotProgressionRecord
+import no.utgdev.getstrong.data.local.dao.ExerciseHistoryRow
 import no.utgdev.getstrong.data.local.entity.SessionPlannedSetEntity
 import no.utgdev.getstrong.data.local.entity.SetResultEntity
 import no.utgdev.getstrong.data.local.entity.WorkoutSessionEntity
@@ -89,12 +90,38 @@ class SessionSummaryRepositoryImplTest {
         assertEquals(SessionSetType.WARMUP, summary.sets[0].setType)
         assertEquals(SessionSetType.WORK, summary.sets[1].setType)
     }
+
+    @Test
+    fun exerciseHistoryFiltersWarmupsAndCalculatesEstimatedOneRepMax() = runTest {
+        val dao = FakeSessionDaoForSummary()
+        dao.exerciseHistory[1006L] = listOf(
+            ExerciseHistoryRow(
+                exerciseId = 1006L,
+                sessionId = 7L,
+                workoutName = "A Workout",
+                completedAtEpochMs = 50_000L,
+                reps = 5,
+                weightKg = 100.0,
+            ),
+        )
+        val repository = SessionSummaryRepositoryImpl(
+            sessionDao = dao,
+            sessionSummaryCalculator = SessionSummaryCalculator(ElapsedTimeCalculator()),
+        )
+
+        val rows = repository.getExerciseHistory(1006L)
+
+        assertEquals(1, rows.size)
+        assertEquals("A Workout", rows.single().workoutName)
+        assertEquals(116.7, rows.single().estimatedOneRepMaxKg, 0.0)
+    }
 }
 
 private class FakeSessionDaoForSummary : SessionDao {
     val sessions = linkedMapOf<Long, WorkoutSessionEntity>()
     val planned = linkedMapOf<Long, MutableList<SessionPlannedSetEntity>>()
     val results = linkedMapOf<Long, MutableList<SetResultEntity>>()
+    val exerciseHistory = linkedMapOf<Long, List<ExerciseHistoryRow>>()
 
     override suspend fun upsertSession(session: WorkoutSessionEntity): Long = session.id
 
@@ -130,6 +157,9 @@ private class FakeSessionDaoForSummary : SessionDao {
     ) = Unit
 
     override suspend fun getSetResults(sessionId: Long): List<SetResultEntity> = results[sessionId].orEmpty()
+
+    override suspend fun getExerciseHistoryRows(exerciseId: Long): List<ExerciseHistoryRow> =
+        exerciseHistory[exerciseId].orEmpty()
 
     override suspend fun getSetResultForPlannedSet(sessionId: Long, plannedSetId: Long): SetResultEntity? =
         results[sessionId].orEmpty().firstOrNull { it.plannedSetId == plannedSetId }

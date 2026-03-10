@@ -3,6 +3,7 @@ package no.utgdev.getstrong.data.repository
 import kotlinx.coroutines.test.runTest
 import no.utgdev.getstrong.data.local.dao.SessionDao
 import no.utgdev.getstrong.data.local.dao.SlotProgressionRecord
+import no.utgdev.getstrong.data.local.dao.ExerciseHistoryRow
 import no.utgdev.getstrong.data.local.entity.SessionPlannedSetEntity
 import no.utgdev.getstrong.data.local.entity.SetResultEntity
 import no.utgdev.getstrong.data.local.entity.WorkoutSessionEntity
@@ -221,6 +222,8 @@ private class FakeSessionDao : SessionDao {
 
     override suspend fun getSetResults(sessionId: Long): List<SetResultEntity> =
         setResultsBySession[sessionId].orEmpty()
+
+    override suspend fun getExerciseHistoryRows(exerciseId: Long): List<ExerciseHistoryRow> = emptyList()
 
     override suspend fun getSetResultForPlannedSet(sessionId: Long, plannedSetId: Long): SetResultEntity? =
         setResultsBySession[sessionId].orEmpty().firstOrNull { it.plannedSetId == plannedSetId }
