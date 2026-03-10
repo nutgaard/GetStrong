@@ -1,27 +1,36 @@
 package no.utgdev.getstrong.ui.summary
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import no.utgdev.getstrong.domain.model.SessionSetType
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SummaryScreen(
     uiState: SummaryUiState,
@@ -29,112 +38,76 @@ fun SummaryScreen(
     onRetryLoad: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    BackHandler(onBack = onDone)
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = { Text("Workout Summary") },
+            )
+        },
         bottomBar = {
             Button(
                 onClick = onDone,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .heightIn(min = 54.dp)
-                    .semantics { contentDescription = "Return home from workout summary" },
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .heightIn(min = 52.dp)
+                    .semantics { contentDescription = "Dismiss workout summary and return to the app" },
             ) {
-                Text("Return Home")
+                Text("Return To App")
             }
         },
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .background(MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.Start,
         ) {
-            Text(
-                text = "Workout Summary",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.semantics { heading() },
-            )
             when {
                 uiState.isLoading -> {
-                    Text("Loading summary...")
+                    item {
+                        SummaryMessageCard(
+                            title = "Loading summary",
+                            body = "Pulling the final session totals and set results.",
+                        )
+                    }
                 }
                 uiState.errorMessage != null -> {
-                    Text(
-                        text = uiState.errorMessage,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                    Button(
-                        onClick = onRetryLoad,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp),
-                    ) {
-                        Text("Retry")
+                    item {
+                        SummaryMessageCard(
+                            title = "Summary unavailable",
+                            body = uiState.errorMessage,
+                            actionLabel = "Retry",
+                            onAction = onRetryLoad,
+                        )
                     }
                 }
                 uiState.sets.isEmpty() -> {
-                    Text("No summary data available for this session.")
+                    item {
+                        SummaryMessageCard(
+                            title = "No summary data",
+                            body = "This session does not have any persisted set results yet.",
+                        )
+                    }
                 }
                 else -> {
-                    Text(
-                        text = "Session ID: ${uiState.sessionId}",
-                        modifier = Modifier.semantics { contentDescription = "Session ${uiState.sessionId}" },
-                    )
-                    Text(
-                        text = "Total time: ${formatElapsed(uiState.totalDurationSeconds)}",
-                        modifier = Modifier.semantics { contentDescription = "Total time ${formatElapsed(uiState.totalDurationSeconds)}" },
-                    )
-                    Text(
-                        text = "Total volume: ${"%.1f".format(uiState.totalVolumeKg)} kg",
-                        modifier = Modifier.semantics { contentDescription = "Total volume ${"%.1f".format(uiState.totalVolumeKg)} kilograms" },
-                    )
-                    Text(
-                        text = "Volume rule: ${uiState.volumeRule}",
-                        modifier = Modifier.semantics { contentDescription = "Volume rule ${uiState.volumeRule}" },
-                    )
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f, fill = true)
-                            .fillMaxWidth()
-                            .padding(top = 8.dp)
-                            .background(MaterialTheme.colorScheme.surface)
-                            .padding(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        val scroll = rememberScrollState()
-                        Column(
-                            modifier = Modifier.verticalScroll(scroll),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            uiState.sets.forEach { row ->
-                                val tint =
-                                    if (row.setType == SessionSetType.WARMUP) {
-                                        MaterialTheme.colorScheme.tertiaryContainer
-                                    } else {
-                                        MaterialTheme.colorScheme.secondaryContainer
-                                    }
-                                val textColor =
-                                    if (row.setType == SessionSetType.WARMUP) {
-                                        MaterialTheme.colorScheme.onTertiaryContainer
-                                    } else {
-                                        MaterialTheme.colorScheme.onSecondaryContainer
-                                    }
-                                Text(
-                                    text = formatSummaryRow(row),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(tint)
-                                        .padding(8.dp)
-                                        .semantics { contentDescription = "Summary row ${formatSummaryRow(row)}" },
-                                    color = textColor,
-                                )
-                            }
-                        }
+                    item {
+                        SessionTotalsSection(uiState = uiState)
+                    }
+                    item {
+                        Text(
+                            text = "Set Results",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.semantics { heading() },
+                        )
+                    }
+                    items(uiState.sets, key = { "${it.setOrder}-${it.exerciseId}-${it.setType}" }) { row ->
+                        SummarySetCard(row = row)
                     }
                 }
             }
@@ -142,10 +115,182 @@ fun SummaryScreen(
     }
 }
 
-private fun formatSummaryRow(row: SummarySetRowUi): String {
-    val reps = row.achievedReps?.toString() ?: "-"
-    val load = row.loadKg?.let { "${"%.1f".format(it)}kg" } ?: "-"
-    return "#${row.setOrder + 1} ${row.setType} ex=${row.exerciseId} target=${row.targetReps} reps=$reps load=$load"
+@Composable
+private fun SummaryMessageCard(
+    title: String,
+    body: String,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(body, style = MaterialTheme.typography.bodyMedium)
+            if (actionLabel != null && onAction != null) {
+                TextButton(onClick = onAction) {
+                    Text(actionLabel)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SessionTotalsSection(uiState: SummaryUiState) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text("Session ${uiState.sessionId}", style = MaterialTheme.typography.labelLarge)
+                Text(
+                    text = "Final review",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.semantics { heading() },
+                )
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            SummaryMetricCard(
+                label = "Total Time",
+                value = formatElapsed(uiState.totalDurationSeconds),
+                modifier = Modifier.weight(1f),
+            )
+            SummaryMetricCard(
+                label = "Total Volume",
+                value = formatWeight(uiState.totalVolumeKg),
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SummaryMetricCard(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Card(modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(label, style = MaterialTheme.typography.labelLarge)
+            Text(value, style = MaterialTheme.typography.titleLarge)
+        }
+    }
+}
+
+@Composable
+private fun SummarySetCard(row: SummarySetRowUi) {
+    val isWarmup = row.setType == SessionSetType.WARMUP
+    val containerColor = if (isWarmup) {
+        MaterialTheme.colorScheme.tertiaryContainer
+    } else {
+        MaterialTheme.colorScheme.secondaryContainer
+    }
+    val contentColor = if (isWarmup) {
+        MaterialTheme.colorScheme.onTertiaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    }
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(containerColor)
+                .padding(16.dp)
+                .semantics {
+                    contentDescription = buildString {
+                        append("${if (isWarmup) "Warmup" else "Work"} set ${row.setOrder + 1}. ")
+                        append("${row.exerciseName}. ")
+                        append("Target ${row.targetReps} reps. ")
+                        append("Achieved ${row.achievedReps ?: 0} reps. ")
+                        append("Load ${row.loadKg?.let(::formatWeight) ?: "not recorded"}")
+                    }
+                },
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = row.exerciseName,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = contentColor,
+                    )
+                    Text(
+                        text = "Set ${row.setOrder + 1}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = contentColor,
+                    )
+                }
+                Text(
+                    text = if (isWarmup) "WARMUP" else "WORK",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor,
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                SummaryValueBlock(
+                    label = "Target",
+                    value = "${row.targetReps} reps",
+                    color = contentColor,
+                    modifier = Modifier.weight(1f),
+                )
+                SummaryValueBlock(
+                    label = "Achieved",
+                    value = "${row.achievedReps ?: 0} reps",
+                    color = contentColor,
+                    modifier = Modifier.weight(1f),
+                )
+                SummaryValueBlock(
+                    label = "Load",
+                    value = row.loadKg?.let(::formatWeight) ?: "-",
+                    color = contentColor,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SummaryValueBlock(
+    label: String,
+    value: String,
+    color: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = color)
+        Text(value, style = MaterialTheme.typography.bodyLarge, color = color)
+    }
 }
 
 private fun formatElapsed(seconds: Long): String {
@@ -159,3 +304,10 @@ private fun formatElapsed(seconds: Long): String {
         "%02d:%02d".format(minutes, secs)
     }
 }
+
+private fun formatWeight(weightKg: Double): String =
+    if (weightKg % 1.0 == 0.0) {
+        "${weightKg.toInt()} kg"
+    } else {
+        "${"%.1f".format(weightKg)} kg"
+    }

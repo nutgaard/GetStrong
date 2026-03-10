@@ -14,6 +14,7 @@ data class SummarySetRowUi(
     val setOrder: Int,
     val setType: String,
     val exerciseId: Long,
+    val exerciseName: String,
     val targetReps: Int,
     val achievedReps: Int?,
     val loadKg: Double?,

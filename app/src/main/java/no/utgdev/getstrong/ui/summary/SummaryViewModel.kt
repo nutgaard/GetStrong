@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import no.utgdev.getstrong.domain.repository.ExerciseRepository
 import no.utgdev.getstrong.domain.repository.SessionSummaryRepository
 import no.utgdev.getstrong.ui.navigation.AppDestination
 
@@ -17,6 +18,7 @@ import no.utgdev.getstrong.ui.navigation.AppDestination
 class SummaryViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val sessionSummaryRepository: SessionSummaryRepository,
+    private val exerciseRepository: ExerciseRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SummaryUiState())
     val uiState: StateFlow<SummaryUiState> = _uiState.asStateFlow()
@@ -33,6 +35,7 @@ class SummaryViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, errorMessage = null, sessionId = sessionId) }
             try {
                 val summary = sessionSummaryRepository.getSessionSummary(sessionId)
+                val exerciseNames = resolveExerciseNames(summary?.sets.orEmpty().map { it.exerciseId })
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -45,6 +48,7 @@ class SummaryViewModel @Inject constructor(
                                 setOrder = row.setOrder,
                                 setType = row.setType,
                                 exerciseId = row.exerciseId,
+                                exerciseName = exerciseNames[row.exerciseId] ?: "Exercise ${row.exerciseId}",
                                 targetReps = row.targetReps,
                                 achievedReps = row.achievedReps,
                                 loadKg = row.loadKg,
@@ -66,4 +70,11 @@ class SummaryViewModel @Inject constructor(
             }
         }
     }
+
+    private suspend fun resolveExerciseNames(exerciseIds: List<Long>): Map<Long, String> =
+        exerciseIds
+            .distinct()
+            .associateWith { exerciseId ->
+                exerciseRepository.getById(exerciseId)?.name ?: "Exercise $exerciseId"
+            }
 }
