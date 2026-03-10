@@ -30,7 +30,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - `workout_in_progress_0.png`: The active workout screen shows the `Workout` tab before significant completion. Each exercise row has circles for planned sets, a target prescription on the right, and access to additional set actions.
 - `workout_in_progress_1.png`: The same screen shows partial progress, including support for partial reps and a bottom rest timer overlay.
 - `workout_in_progress_2.png`: The same screen later in the session shows more completed sets and a rest overlay with the configured rest duration.
-- `workout_warmup.png`: The `Warmup` tab lists warmup sets for the current exercise with weight prescriptions and per-side loading guidance. It appears to be the warmup companion to the `Workout` tab inside the same active session.
+- `workout_warmup.png`: The `Warmup` tab lists warmup sets for the current exercise with weight prescriptions and per-side loading guidance. It is the warmup companion to the `Workout` tab inside the same active session, and the section focus returns to `Workout` when the current exercise's warmups are complete.
 
 ## Repeated Interaction Patterns
 
@@ -53,6 +53,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - `progress.png` also leads to `progress_exercise.png`.
 - `history_workout.png` and `history_calendar.png` are alternate views under the same `History` area.
 - `workout_in_progress_0.png`, `workout_in_progress_1.png`, `workout_in_progress_2.png`, and `workout_warmup.png` are all views of the same active workout session.
+- The active session keeps `Workout` and `Warmup` as local sections inside `activeWorkout`, and the visible section follows the current set phase as the session advances.
 
 ## Assumptions And Ambiguities
 
@@ -61,4 +62,3 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - The exercise detail screen shows a `Form` tab, but no screenshot or prose describes its contents.
 - The `History` area shows a `Notes` tab, but no screenshot or prose describes what the notes experience should contain.
 - The Home screen clearly implies scheduled upcoming workouts, but the scheduling rules behind the `A/B` alternation are not described in the current notes.
-- `workout_warmup.png` suggests the app returns to the `Workout` tab after warmups for the current exercise are complete. This is supported by the user-authored note but not by a dedicated transition screenshot.
