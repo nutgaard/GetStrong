@@ -32,6 +32,9 @@ class SessionSummaryRepositoryImpl @Inject constructor(
 
     override suspend fun getExerciseHistory(exerciseId: Long): List<ExerciseHistoryEntry> =
         sessionDao.getExerciseHistoryRows(exerciseId).map { row -> row.toDomain() }
+
+    override suspend fun getAllExerciseHistory(): List<ExerciseHistoryEntry> =
+        sessionDao.getAllExerciseHistoryRows().map { row -> row.toDomain() }
 }
 
 private fun WorkoutSessionEntity.toDomain(): WorkoutSession =

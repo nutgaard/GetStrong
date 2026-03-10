@@ -174,6 +174,9 @@ private class FakeSessionSummaryRepository(
 
     override suspend fun getExerciseHistory(exerciseId: Long): List<ExerciseHistoryEntry> =
         exerciseHistory[exerciseId].orEmpty()
+
+    override suspend fun getAllExerciseHistory(): List<ExerciseHistoryEntry> =
+        exerciseHistory.values.flatten()
 }
 
 private class FakeExerciseRepository : ExerciseRepository {

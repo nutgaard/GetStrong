@@ -22,6 +22,12 @@ sealed class AppDestination(val route: String) {
         fun route(exerciseId: Long): String = "exerciseHistory/$exerciseId"
     }
 
+    data object ExerciseProgress : AppDestination("exerciseProgress/{exerciseId}") {
+        const val EXERCISE_ID_ARG = "exerciseId"
+
+        fun route(exerciseId: Long): String = "exerciseProgress/$exerciseId"
+    }
+
     data object ActiveWorkout : AppDestination("activeWorkout/{sessionId}") {
         const val SESSION_ID_ARG = "sessionId"
 

@@ -317,6 +317,7 @@ private class FakeWorkoutRepository : WorkoutRepository {
 private class FakeSessionSummaryRepository : SessionSummaryRepository {
     override suspend fun getSessionSummary(sessionId: Long): WorkoutSessionSummary? = null
     override suspend fun getExerciseHistory(exerciseId: Long): List<ExerciseHistoryEntry> = emptyList()
+    override suspend fun getAllExerciseHistory(): List<ExerciseHistoryEntry> = emptyList()
 }
 
 private class FakeWorkoutSummaryRepository : WorkoutSummaryRepository {

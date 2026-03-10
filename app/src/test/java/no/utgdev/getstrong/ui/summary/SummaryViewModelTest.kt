@@ -102,6 +102,8 @@ private class FakeSessionSummaryRepository(
     }
 
     override suspend fun getExerciseHistory(exerciseId: Long): List<ExerciseHistoryEntry> = emptyList()
+
+    override suspend fun getAllExerciseHistory(): List<ExerciseHistoryEntry> = emptyList()
 }
 
 private class FakeExerciseRepository : ExerciseRepository {

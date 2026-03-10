@@ -31,7 +31,10 @@ import no.utgdev.getstrong.ui.history.ExerciseHistoryViewModel
 import no.utgdev.getstrong.ui.home.HomeScreen
 import no.utgdev.getstrong.ui.planning.PlanningScreen
 import no.utgdev.getstrong.ui.planning.PlanningViewModel
+import no.utgdev.getstrong.ui.progress.ExerciseProgressScreen
+import no.utgdev.getstrong.ui.progress.ExerciseProgressViewModel
 import no.utgdev.getstrong.ui.progress.ProgressScreen
+import no.utgdev.getstrong.ui.progress.ProgressViewModel
 import no.utgdev.getstrong.ui.planning.WorkoutEditorScreen
 import no.utgdev.getstrong.ui.planning.WorkoutEditorViewModel
 import no.utgdev.getstrong.ui.settings.SettingsScreen
@@ -121,7 +124,15 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         composable(route = AppDestination.Progress.route) {
-            ProgressScreen()
+            val progressViewModel: ProgressViewModel = hiltViewModel()
+            val progressUiState by progressViewModel.uiState.collectAsState()
+            ProgressScreen(
+                uiState = progressUiState,
+                onRetry = { progressViewModel.load() },
+                onOpenExerciseProgress = { exerciseId ->
+                    navController.navigate(AppDestination.ExerciseProgress.route(exerciseId))
+                },
+            )
         }
 
         composable(route = AppDestination.Programs.route) {
@@ -164,6 +175,20 @@ fun AppNavGraph(navController: NavHostController) {
                 uiState = exerciseHistoryUiState,
                 onBack = { navController.popBackStack() },
                 onRetry = { exerciseHistoryViewModel.load() },
+            )
+        }
+
+        composable(
+            route = AppDestination.ExerciseProgress.route,
+            arguments = listOf(navArgument(AppDestination.ExerciseProgress.EXERCISE_ID_ARG) { type = NavType.StringType }),
+        ) {
+            val exerciseProgressViewModel: ExerciseProgressViewModel = hiltViewModel()
+            val exerciseProgressUiState by exerciseProgressViewModel.uiState.collectAsState()
+            ExerciseProgressScreen(
+                uiState = exerciseProgressUiState,
+                onBack = { navController.popBackStack() },
+                onRangeSelected = exerciseProgressViewModel::selectRange,
+                onRetry = { exerciseProgressViewModel.load() },
             )
         }
 

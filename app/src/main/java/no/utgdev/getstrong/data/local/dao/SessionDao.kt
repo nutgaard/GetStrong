@@ -98,6 +98,25 @@ interface SessionDao {
     )
     suspend fun getExerciseHistoryRows(exerciseId: Long): List<ExerciseHistoryRow>
 
+    @Query(
+        """
+        SELECT
+            set_results.exerciseId AS exerciseId,
+            set_results.sessionId AS sessionId,
+            COALESCE(workout_summaries.workoutName, '') AS workoutName,
+            sessions.endedAtEpochMs AS completedAtEpochMs,
+            set_results.reps AS reps,
+            set_results.weightKg AS weightKg
+        FROM set_results
+        INNER JOIN sessions ON sessions.id = set_results.sessionId
+        LEFT JOIN workout_summaries ON workout_summaries.sessionId = set_results.sessionId
+        WHERE set_results.setType != 'WARMUP'
+          AND sessions.endedAtEpochMs IS NOT NULL
+        ORDER BY set_results.exerciseId ASC, sessions.endedAtEpochMs DESC, set_results.id DESC
+        """,
+    )
+    suspend fun getAllExerciseHistoryRows(): List<ExerciseHistoryRow>
+
     @Query("SELECT * FROM set_results WHERE sessionId = :sessionId AND plannedSetId = :plannedSetId LIMIT 1")
     suspend fun getSetResultForPlannedSet(sessionId: Long, plannedSetId: Long): SetResultEntity?
 

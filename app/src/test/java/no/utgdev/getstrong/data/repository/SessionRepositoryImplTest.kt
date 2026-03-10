@@ -225,6 +225,8 @@ private class FakeSessionDao : SessionDao {
 
     override suspend fun getExerciseHistoryRows(exerciseId: Long): List<ExerciseHistoryRow> = emptyList()
 
+    override suspend fun getAllExerciseHistoryRows(): List<ExerciseHistoryRow> = emptyList()
+
     override suspend fun getSetResultForPlannedSet(sessionId: Long, plannedSetId: Long): SetResultEntity? =
         setResultsBySession[sessionId].orEmpty().firstOrNull { it.plannedSetId == plannedSetId }
 

@@ -115,6 +115,39 @@ class SessionSummaryRepositoryImplTest {
         assertEquals("A Workout", rows.single().workoutName)
         assertEquals(116.7, rows.single().estimatedOneRepMaxKg, 0.0)
     }
+
+    @Test
+    fun allExerciseHistoryProjectsEveryTrackedExerciseRow() = runTest {
+        val dao = FakeSessionDaoForSummary()
+        dao.allExerciseHistory = listOf(
+            ExerciseHistoryRow(
+                exerciseId = 1006L,
+                sessionId = 7L,
+                workoutName = "A Workout",
+                completedAtEpochMs = 50_000L,
+                reps = 5,
+                weightKg = 100.0,
+            ),
+            ExerciseHistoryRow(
+                exerciseId = 1007L,
+                sessionId = 8L,
+                workoutName = "B Workout",
+                completedAtEpochMs = 60_000L,
+                reps = 8,
+                weightKg = 40.0,
+            ),
+        )
+        val repository = SessionSummaryRepositoryImpl(
+            sessionDao = dao,
+            sessionSummaryCalculator = SessionSummaryCalculator(ElapsedTimeCalculator()),
+        )
+
+        val rows = repository.getAllExerciseHistory()
+
+        assertEquals(2, rows.size)
+        assertEquals(1006L, rows.first().exerciseId)
+        assertEquals(50.7, rows.last().estimatedOneRepMaxKg, 0.0)
+    }
 }
 
 private class FakeSessionDaoForSummary : SessionDao {
@@ -122,6 +155,7 @@ private class FakeSessionDaoForSummary : SessionDao {
     val planned = linkedMapOf<Long, MutableList<SessionPlannedSetEntity>>()
     val results = linkedMapOf<Long, MutableList<SetResultEntity>>()
     val exerciseHistory = linkedMapOf<Long, List<ExerciseHistoryRow>>()
+    var allExerciseHistory: List<ExerciseHistoryRow> = emptyList()
 
     override suspend fun upsertSession(session: WorkoutSessionEntity): Long = session.id
 
@@ -160,6 +194,8 @@ private class FakeSessionDaoForSummary : SessionDao {
 
     override suspend fun getExerciseHistoryRows(exerciseId: Long): List<ExerciseHistoryRow> =
         exerciseHistory[exerciseId].orEmpty()
+
+    override suspend fun getAllExerciseHistoryRows(): List<ExerciseHistoryRow> = allExerciseHistory
 
     override suspend fun getSetResultForPlannedSet(sessionId: Long, plannedSetId: Long): SetResultEntity? =
         results[sessionId].orEmpty().firstOrNull { it.plannedSetId == plannedSetId }
