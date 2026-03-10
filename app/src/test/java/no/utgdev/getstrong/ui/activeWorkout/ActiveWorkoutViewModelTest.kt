@@ -15,10 +15,12 @@ import no.utgdev.getstrong.domain.model.ActiveSessionState
 import no.utgdev.getstrong.domain.model.AppSettings
 import no.utgdev.getstrong.domain.model.Exercise
 import no.utgdev.getstrong.domain.model.ExerciseHistoryEntry
+import no.utgdev.getstrong.domain.model.ProgressionModeCode
 import no.utgdev.getstrong.domain.model.SetResult
 import no.utgdev.getstrong.domain.model.SlotProgressionUpdate
 import no.utgdev.getstrong.domain.model.Workout
 import no.utgdev.getstrong.domain.model.WorkoutHistoryItem
+import no.utgdev.getstrong.domain.model.WorkoutExerciseSlot
 import no.utgdev.getstrong.domain.model.WorkoutSession
 import no.utgdev.getstrong.domain.model.WorkoutSummary
 import no.utgdev.getstrong.domain.model.WorkoutSessionSummary
@@ -41,6 +43,7 @@ import no.utgdev.getstrong.ui.navigation.AppDestination
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -151,9 +154,121 @@ class ActiveWorkoutViewModelTest {
         assertTrue(viewModel.uiState.value.plannedSets.none { it.isExtra })
     }
 
+    @Test
+    fun finishSessionReturnsNullUntilAllPlannedSetsAreComplete() = runTest {
+        val sessionRepository = ActiveWorkoutFakeSessionRepository(
+            activeState = activeState(
+                plannedSets = listOf(
+                    plannedSet(id = 1, workoutSlotId = 11, setOrder = 0, exerciseId = 1006, setType = SessionSetType.WORK, targetReps = 5),
+                ),
+            ),
+        )
+        val viewModel = createViewModel(sessionRepository = sessionRepository)
+
+        runCurrent()
+        val result = viewModel.finishSession()
+        runCurrent()
+
+        assertNull(result)
+        assertEquals(0, sessionRepository.completeWithProgressionCalls)
+        assertFalse(viewModel.uiState.value.isCompleted)
+    }
+
+    @Test
+    fun finishSessionCompletesAndSavesSummaryWhenAllPlannedSetsAreHandled() = runTest {
+        val sessionRepository = ActiveWorkoutFakeSessionRepository(
+            activeState = activeState(
+                plannedSets = listOf(
+                    plannedSet(
+                        id = 1,
+                        workoutSlotId = 11,
+                        setOrder = 0,
+                        exerciseId = 1006,
+                        setType = SessionSetType.WORK,
+                        targetReps = 5,
+                        targetWeightKg = 100.0,
+                        completedReps = 5,
+                        isCompleted = true,
+                    ),
+                ),
+            ),
+            setResults = listOf(
+                SetResult(
+                    id = 1,
+                    sessionId = 42L,
+                    plannedSetId = 1L,
+                    workoutSlotId = 11L,
+                    exerciseId = 1006L,
+                    setType = SessionSetType.WORK,
+                    reps = 5,
+                    weightKg = 100.0,
+                ),
+            ),
+        )
+        val workoutRepository = FakeWorkoutRepository(
+            workout = Workout(
+                id = 5L,
+                name = "Workout A",
+                slots = listOf(
+                    WorkoutExerciseSlot(
+                        id = 11L,
+                        workoutId = 5L,
+                        exerciseId = 1006L,
+                        position = 0,
+                        targetSets = 1,
+                        targetReps = 5,
+                        repRangeMin = 5,
+                        repRangeMax = 5,
+                        progressionMode = ProgressionModeCode.WEIGHT_ONLY,
+                        incrementKg = 2.5,
+                        deloadPercent = 10,
+                        currentWorkingWeightKg = 100.0,
+                        failureStreak = 0,
+                        restSecondsOverride = null,
+                    ),
+                ),
+            ),
+        )
+        val sessionSummaryRepository = FakeSessionSummaryRepository(
+            summary = WorkoutSessionSummary(
+                sessionId = 42L,
+                workoutId = 5L,
+                totalDurationSeconds = 600L,
+                totalVolumeKg = 500.0,
+                volumeRule = "sum(reps * weight)",
+                sets = emptyList(),
+            ),
+        )
+        val workoutSummaryRepository = FakeWorkoutSummaryRepository()
+        val completeSessionAndSaveSummary = CompleteSessionAndSaveSummaryUseCase(
+            completeSessionWithProgressionUseCase = CompleteSessionWithProgressionUseCase(
+                sessionRepository = sessionRepository,
+                workoutRepository = workoutRepository,
+                progressionCalculator = ProgressionCalculator(),
+            ),
+            sessionSummaryRepository = sessionSummaryRepository,
+            workoutSummaryRepository = workoutSummaryRepository,
+            workoutRepository = workoutRepository,
+        )
+        val viewModel = createViewModel(
+            sessionRepository = sessionRepository,
+            completeSessionAndSaveSummary = completeSessionAndSaveSummary,
+        )
+
+        runCurrent()
+        val result = viewModel.finishSession()
+        runCurrent()
+
+        assertEquals(42L, result)
+        assertEquals(1, sessionRepository.completeWithProgressionCalls)
+        assertTrue(viewModel.uiState.value.isCompleted)
+        assertEquals(listOf(42L), workoutSummaryRepository.savedSummaries.map { it.sessionId })
+    }
+
     private fun createViewModel(
         sessionRepository: ActiveWorkoutFakeSessionRepository,
         timeProvider: TimeProvider = MutableTimeProvider(nowMs = 1_000L),
+        completeSessionAndSaveSummary: CompleteSessionAndSaveSummaryUseCase = completeSessionUseCase(sessionRepository),
     ): ActiveWorkoutViewModel =
         ActiveWorkoutViewModel(
             savedStateHandle = SavedStateHandle(
@@ -164,7 +279,7 @@ class ActiveWorkoutViewModelTest {
                 exercises = listOf(Exercise(id = 1006, name = "Deadlift", primaryMuscleGroup = "BACK", secondaryMuscleGroups = emptyList(), equipmentType = "BARBELL")),
             ),
             settingsRepository = FakeSettingsRepository(),
-            completeSessionAndSaveSummary = completeSessionUseCase(sessionRepository),
+            completeSessionAndSaveSummary = completeSessionAndSaveSummary,
             restTimerPolicy = RestTimerPolicy(),
             restTimerCalculator = RestTimerCalculator(),
             elapsedTimeCalculator = ElapsedTimeCalculator(),
@@ -189,8 +304,10 @@ class ActiveWorkoutViewModelTest {
 
 private class ActiveWorkoutFakeSessionRepository(
     var activeState: ActiveSessionState,
+    private val setResults: List<SetResult> = emptyList(),
 ) : SessionRepository {
     private var nextSetId = (activeState.plannedSets.maxOfOrNull { it.id } ?: 0L) + 1L
+    var completeWithProgressionCalls: Int = 0
 
     override suspend fun startSession(workoutId: Long, plannedSets: List<SessionPlannedSet>): Long = activeState.session.id
 
@@ -261,13 +378,18 @@ private class ActiveWorkoutFakeSessionRepository(
 
     override suspend fun completeSession(sessionId: Long) = Unit
 
-    override suspend fun completeSessionWithProgression(sessionId: Long, updates: List<SlotProgressionUpdate>) = Unit
+    override suspend fun completeSessionWithProgression(sessionId: Long, updates: List<SlotProgressionUpdate>) {
+        completeWithProgressionCalls += 1
+        activeState = activeState.copy(
+            session = activeState.session.copy(endedAtEpochMs = 2_000L),
+        )
+    }
 
     override suspend fun saveSession(session: WorkoutSession): Long = session.id
 
     override suspend fun saveSetResult(result: SetResult): Long = result.id
 
-    override suspend fun getSetResults(sessionId: Long): List<SetResult> = emptyList()
+    override suspend fun getSetResults(sessionId: Long): List<SetResult> = setResults
 }
 
 private class FakeExerciseRepository(
@@ -302,26 +424,35 @@ private class FakeSettingsRepository : SettingsRepository {
     ) = Unit
 }
 
-private class FakeWorkoutRepository : WorkoutRepository {
+private class FakeWorkoutRepository(
+    private val workout: Workout? = null,
+) : WorkoutRepository {
     override suspend fun createWorkout(workout: Workout): Long = workout.id
 
     override suspend fun updateWorkout(workout: Workout) = Unit
 
     override suspend fun deleteWorkout(workoutId: Long) = Unit
 
-    override suspend fun getWorkout(workoutId: Long): Workout? = null
+    override suspend fun getWorkout(workoutId: Long): Workout? = workout?.takeIf { it.id == workoutId }
 
-    override suspend fun getAllWorkouts(): List<Workout> = emptyList()
+    override suspend fun getAllWorkouts(): List<Workout> = listOfNotNull(workout)
 }
 
-private class FakeSessionSummaryRepository : SessionSummaryRepository {
-    override suspend fun getSessionSummary(sessionId: Long): WorkoutSessionSummary? = null
+private class FakeSessionSummaryRepository(
+    private val summary: WorkoutSessionSummary? = null,
+) : SessionSummaryRepository {
+    override suspend fun getSessionSummary(sessionId: Long): WorkoutSessionSummary? = summary
     override suspend fun getExerciseHistory(exerciseId: Long): List<ExerciseHistoryEntry> = emptyList()
     override suspend fun getAllExerciseHistory(): List<ExerciseHistoryEntry> = emptyList()
 }
 
 private class FakeWorkoutSummaryRepository : WorkoutSummaryRepository {
-    override suspend fun saveSummary(summary: WorkoutSummary): Long = summary.sessionId
+    val savedSummaries = mutableListOf<WorkoutSummary>()
+
+    override suspend fun saveSummary(summary: WorkoutSummary): Long {
+        savedSummaries += summary
+        return summary.sessionId
+    }
 
     override suspend fun getAllSummaries(): List<WorkoutSummary> = emptyList()
 
@@ -344,13 +475,16 @@ private data class MutableTimeProvider(
     override fun nowMs(): Long = nowMs
 }
 
-private fun activeState(plannedSets: List<SessionPlannedSet>): ActiveSessionState =
+private fun activeState(
+    plannedSets: List<SessionPlannedSet>,
+    endedAtEpochMs: Long? = 1_000L,
+): ActiveSessionState =
     ActiveSessionState(
         session = WorkoutSession(
             id = 42L,
             workoutId = 5L,
             startedAtEpochMs = 1_000L,
-            endedAtEpochMs = 1_000L,
+            endedAtEpochMs = endedAtEpochMs,
         ),
         plannedSets = plannedSets,
     )

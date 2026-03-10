@@ -1,17 +1,21 @@
 package no.utgdev.getstrong.ui.planning
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import no.utgdev.getstrong.domain.model.ProgressionModeCode
 import no.utgdev.getstrong.domain.model.ActiveSessionState
 import no.utgdev.getstrong.domain.model.Exercise
 import no.utgdev.getstrong.domain.model.SetResult
 import no.utgdev.getstrong.domain.model.SlotProgressionUpdate
 import no.utgdev.getstrong.domain.model.SessionPlannedSet
 import no.utgdev.getstrong.domain.model.Workout
+import no.utgdev.getstrong.domain.model.WorkoutExerciseSlot
+import no.utgdev.getstrong.domain.model.WorkoutSession
 import no.utgdev.getstrong.domain.repository.ExerciseRepository
 import no.utgdev.getstrong.domain.repository.SessionRepository
 import no.utgdev.getstrong.domain.repository.WorkoutRepository
@@ -26,6 +30,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class PlanningViewModelTest {
     @Before
     fun setUp() {
@@ -61,11 +66,55 @@ class PlanningViewModelTest {
         assertEquals(0, state.workouts.size)
     }
 
-    private fun createViewModel(workoutRepository: WorkoutRepository): PlanningViewModel {
+    @Test
+    fun startWorkoutSessionStartsChosenWorkout() = runTest {
+        val workoutId = 7L
+        val sessionRepository = PlanningFakeSessionRepository()
+        val viewModel = createViewModel(
+            workoutRepository = PlanningFakeWorkoutRepository(
+                returned = listOf(
+                    Workout(
+                        id = workoutId,
+                        name = "Workout A",
+                        slots = listOf(
+                            WorkoutExerciseSlot(
+                                id = 11L,
+                                workoutId = workoutId,
+                                exerciseId = 1006L,
+                                position = 0,
+                                targetSets = 2,
+                                targetReps = 5,
+                                repRangeMin = 5,
+                                repRangeMax = 5,
+                                progressionMode = ProgressionModeCode.WEIGHT_ONLY,
+                                incrementKg = 2.5,
+                                deloadPercent = 10,
+                                currentWorkingWeightKg = 100.0,
+                                failureStreak = 0,
+                                restSecondsOverride = null,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            sessionRepository = sessionRepository,
+        )
+        advanceUntilIdle()
+
+        val sessionId = viewModel.startWorkoutSession(workoutId)
+
+        assertEquals(10L, sessionId)
+        assertEquals(workoutId, sessionRepository.startedWorkoutId)
+    }
+
+    private fun createViewModel(
+        workoutRepository: WorkoutRepository,
+        sessionRepository: PlanningFakeSessionRepository = PlanningFakeSessionRepository(),
+    ): PlanningViewModel {
         val useCase = StartWorkoutSessionUseCase(
             workoutRepository = workoutRepository,
             exerciseRepository = PlanningFakeExerciseRepository(),
-            sessionRepository = PlanningFakeSessionRepository(),
+            sessionRepository = sessionRepository,
             sessionEngine = WorkoutSessionEngine(WarmupGenerator()),
         )
         return PlanningViewModel(
@@ -97,7 +146,12 @@ private class PlanningFakeExerciseRepository : ExerciseRepository {
 }
 
 private class PlanningFakeSessionRepository : SessionRepository {
-    override suspend fun startSession(workoutId: Long, plannedSets: List<SessionPlannedSet>): Long = 10L
+    var startedWorkoutId: Long? = null
+
+    override suspend fun startSession(workoutId: Long, plannedSets: List<SessionPlannedSet>): Long {
+        startedWorkoutId = workoutId
+        return 10L
+    }
     override suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState? = null
     override suspend fun completePlannedSet(sessionId: Long, plannedSetId: Long, repsAchieved: Int): ActiveSessionState? = null
     override suspend fun updatePlannedSetWeight(sessionId: Long, plannedSetId: Long, weightKg: Double): ActiveSessionState? = null
@@ -105,7 +159,7 @@ private class PlanningFakeSessionRepository : SessionRepository {
     override suspend fun removeExtraSet(sessionId: Long, plannedSetId: Long): ActiveSessionState? = null
     override suspend fun completeSession(sessionId: Long) = Unit
     override suspend fun completeSessionWithProgression(sessionId: Long, updates: List<SlotProgressionUpdate>) = Unit
-    override suspend fun saveSession(session: no.utgdev.getstrong.domain.model.WorkoutSession): Long = 1L
+    override suspend fun saveSession(session: WorkoutSession): Long = 1L
     override suspend fun saveSetResult(result: SetResult): Long = 1L
     override suspend fun getSetResults(sessionId: Long): List<SetResult> = emptyList()
 }

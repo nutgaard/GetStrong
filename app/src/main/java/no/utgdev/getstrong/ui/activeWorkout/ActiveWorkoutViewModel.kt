@@ -87,7 +87,12 @@ class ActiveWorkoutViewModel @Inject constructor(
         }
     }
 
-    suspend fun finishSession(): Long {
+    suspend fun finishSession(): Long? {
+        val sessionState = sessionRepository.getActiveSessionState(sessionId) ?: return null
+        if (!sessionState.isCompleted) {
+            applySessionState(sessionState)
+            return null
+        }
         completeSessionAndSaveSummary(sessionId)
         loadSession()
         return sessionId

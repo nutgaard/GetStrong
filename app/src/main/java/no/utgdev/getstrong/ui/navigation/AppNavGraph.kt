@@ -252,9 +252,11 @@ fun AppNavGraph(navController: NavHostController) {
                 onFinishSession = {
                     coroutineScope.launch {
                         val finishedSessionId = activeWorkoutViewModel.finishSession()
-                        navController.navigate(AppDestination.Summary.route(finishedSessionId.toString())) {
-                            popUpTo(AppDestination.ActiveWorkout.route) { inclusive = true }
-                            launchSingleTop = true
+                        if (finishedSessionId != null) {
+                            navController.navigate(AppDestination.Summary.route(finishedSessionId.toString())) {
+                                popUpTo(AppDestination.ActiveWorkout.route) { inclusive = true }
+                                launchSingleTop = true
+                            }
                         }
                     }
                 },
