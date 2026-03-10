@@ -1,20 +1,18 @@
 package no.utgdev.getstrong.ui.home
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import no.utgdev.getstrong.ui.common.InlineStateCard
 
 @Composable
 fun HomeScreen(
@@ -29,6 +27,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
                 text = "GetStrong",
@@ -38,21 +37,13 @@ fun HomeScreen(
             Text(
                 text = "Home",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 4.dp),
             )
-            Text(
-                text = "Start your next workout from Programs.",
-                modifier = Modifier.padding(top = 8.dp, bottom = 16.dp),
+            InlineStateCard(
+                title = "No upcoming workout is queued here yet.",
+                body = "Open Programs to create a workout or start one from your saved workout list.",
+                actionLabel = "Open Programs",
+                onAction = onStartWorkout,
             )
-            Button(
-                onClick = onStartWorkout,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 56.dp)
-                    .semantics { contentDescription = "Start workout from programs" },
-            ) {
-                Text("Start Workout")
-            }
         }
     }
 }

@@ -10,13 +10,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +43,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import no.utgdev.getstrong.ui.common.InlineStateCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,14 +85,28 @@ fun HistoryScreen(
                 }
             }
 
+            item {
+                Text(
+                    text = if (selectedSection == HistorySection.LIST) "Completed Workouts" else "Completion Calendar",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.semantics { heading() },
+                )
+            }
+
             when {
                 uiState.isLoading -> {
-                    item { MessageCard("Loading history...", null, null) }
+                    item {
+                        InlineStateCard(
+                            title = "Loading history...",
+                            body = "Your saved workouts and calendar markers will appear here once loading finishes.",
+                        )
+                    }
                 }
                 uiState.errorMessage != null -> {
                     item {
-                        MessageCard(
-                            title = uiState.errorMessage,
+                        InlineStateCard(
+                            title = "Couldn't load your workout history.",
+                            body = "Retry to reload saved workouts for the list and calendar views.",
                             actionLabel = "Retry",
                             onAction = onRetry,
                         )
@@ -101,7 +114,7 @@ fun HistoryScreen(
                 }
                 uiState.workouts.isEmpty() -> {
                     item {
-                        MessageCard(
+                        InlineStateCard(
                             title = "No workout history yet.",
                             body = "Complete a workout to see list and calendar history here.",
                             actionLabel = "Start a Workout",
@@ -110,13 +123,6 @@ fun HistoryScreen(
                     }
                 }
                 selectedSection == HistorySection.LIST -> {
-                    item {
-                        Text(
-                            text = "Completed Workouts",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.semantics { heading() },
-                        )
-                    }
                     items(uiState.workouts, key = { it.sessionId }) { workout ->
                         HistoryWorkoutCard(
                             workout = workout,
@@ -182,12 +188,17 @@ fun ExerciseHistoryScreen(
         ) {
             when {
                 uiState.isLoading -> {
-                    item { MessageCard("Loading exercise history...", null, null) }
+                    item {
+                        InlineStateCard(
+                            title = "Loading exercise history...",
+                        )
+                    }
                 }
                 uiState.errorMessage != null -> {
                     item {
-                        MessageCard(
-                            title = uiState.errorMessage,
+                        InlineStateCard(
+                            title = "Couldn't load exercise history.",
+                            body = "Retry to load saved work sets for this exercise.",
                             actionLabel = "Retry",
                             onAction = onRetry,
                         )
@@ -195,7 +206,7 @@ fun ExerciseHistoryScreen(
                 }
                 uiState.rows.isEmpty() -> {
                     item {
-                        MessageCard(
+                        InlineStateCard(
                             title = "No work-set history yet.",
                             body = "This exercise has no completed non-warmup sets in saved session history.",
                         )
@@ -450,38 +461,6 @@ private fun CalendarDayCell(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
             )
-        }
-    }
-}
-
-@Composable
-private fun MessageCard(
-    title: String,
-    body: String? = null,
-    actionLabel: String? = null,
-    onAction: (() -> Unit)? = null,
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            if (body != null) {
-                Text(body, style = MaterialTheme.typography.bodyMedium)
-            }
-            if (actionLabel != null && onAction != null) {
-                Button(
-                    onClick = onAction,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp),
-                ) {
-                    Text(actionLabel)
-                }
-            }
         }
     }
 }

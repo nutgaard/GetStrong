@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -29,6 +27,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import no.utgdev.getstrong.domain.model.Workout
+import no.utgdev.getstrong.ui.common.InlineStateCard
 
 @Composable
 fun PlanningScreen(
@@ -60,34 +59,32 @@ fun PlanningScreen(
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.semantics { heading() },
             )
+            Text(
+                text = "Workouts",
+                style = MaterialTheme.typography.titleMedium,
+            )
             when {
                 uiState.isLoading -> {
-                    Text("Loading workouts...")
+                    InlineStateCard(
+                        title = "Loading workouts...",
+                        body = "Your saved workouts will appear here once loading finishes.",
+                    )
                 }
                 uiState.errorMessage != null -> {
-                    Text(
-                        text = uiState.errorMessage,
-                        color = MaterialTheme.colorScheme.error,
+                    InlineStateCard(
+                        title = "Couldn't load your workouts.",
+                        body = "Try again to reload your Programs workout list.",
+                        actionLabel = "Retry",
+                        onAction = onRetryLoad,
                     )
-                    Button(
-                        onClick = onRetryLoad,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp),
-                    ) {
-                        Text("Retry")
-                    }
                 }
                 uiState.workouts.isEmpty() -> {
-                    Text("No workouts yet. Add one to get started.")
-                    Button(
-                        onClick = onCreateWorkout,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp),
-                    ) {
-                        Text("Create Workout")
-                    }
+                    InlineStateCard(
+                        title = "No workouts yet.",
+                        body = "Create your first workout to start training from Programs.",
+                        actionLabel = "Create Workout",
+                        onAction = onCreateWorkout,
+                    )
                 }
                 else -> {
                     LazyColumn(
