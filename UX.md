@@ -22,7 +22,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 
 - `start_screen.png`: Home shows an upcoming workout queue as cards. Each card includes the workout name, scheduled date, a few upcoming lifts, and a collapsed count of additional exercises. A prominent `Start Workout` FAB launches the next planned session.
 - For the current bounded Home slice, the important contract is the structural start-screen pattern: upcoming workout cards plus a primary quick-start action. The exact long-term scheduling algorithm behind the queue is not yet part of the committed UX contract.
-- `workout_overview.png`: The reference pack shows the `Programs` area with `Workouts` active. On the current branch, the committed surface is the saved-workout list plus row-level start/edit/delete actions and a red add-workout FAB; broader `Program`, `Weights`, and `Sets×Reps` behavior remains deferred.
+- `workout_overview.png`: The reference pack shows the `Programs` area with `Workouts` active. On the current branch, the committed surface is the saved-workout list plus row-level start/edit/delete actions and a red add-workout FAB. `Program`, `Weights`, and `Sets×Reps` remain explicitly deferred and hidden until a later task defines their scope.
 - `edit_workout.png`: The workout editor shows the ordered exercise list for a single workout. On the current branch, reordering and removal stay local to the editor via per-row actions, minimum sets/reps editing also stays local to the editor, and the FAB opens a picker of exercises not already in the workout.
 - `edit_exercise.png`: The reference pack includes a richer exercise-detail screen tabbed into `Weight`, `Form`, `Progress`, and `History`. The provided screenshot shows `Weight`, with sets x reps, current/next working weight, progression settings, deload settings, and a plate helper. On the current branch's bounded T6 path, this deeper drill-down is not required yet; minimum slot editing remains local inside the workout editor.
 - `progress.png`: The progress overview is the top-level `Progress` surface. It lists exercises with the latest working weight and a compact sparkline-like trend, and tapping an item opens that exercise's dedicated progress drill-down.
@@ -82,7 +82,6 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 
 ## Assumptions And Ambiguities
 
-- The `Programs` area shows tabs for `Program`, `Workouts`, `Weights`, and `Sets×Reps`, but only the `Workouts` tab is documented by a dedicated screenshot. The other tabs are part of the intended shell, but their detailed behavior is not yet specified.
 - The reference pack includes a dedicated `edit_exercise.png` screen, but the current bounded T6 implementation only commits local slot editing inside `edit_workout.png`; a richer exercise-detail drill-down is deferred.
 - The exercise detail screen shows a `Form` tab, but no screenshot or prose describes its contents.
 - The `History` area shows a `Notes` tab in the reference pack, but its behavior is not defined and it is deferred/out of scope for the current bounded `T30` implementation.

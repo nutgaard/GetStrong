@@ -24,6 +24,7 @@ Users need to:
 - Workout planning:
 - Create, edit, delete multiple named workouts (for example Push/Pull/Legs).
 - Expose workout planning from the `Programs` area, with only the `Workouts` surface committed on the current branch.
+- Keep the screenshot-only `Program`, `Weights`, and `Sets×Reps` tabs hidden on the current branch until their scope is explicitly defined.
 - Add ordered exercises to each workout and manage them from the workout editor.
 - Use a picker of remaining exercises rather than listing the entire catalog inline inside the workout editor.
 - Persist workouts between sessions.
@@ -118,7 +119,7 @@ Users need to:
 - Authentication/login/cloud account.
 - Wearables integration.
 - Coach programming import/export.
-- Broader `Programs` tabs such as `Program`, `Weights`, and `Sets×Reps` until their scope is explicitly defined.
+- Broader `Programs` tabs such as `Program`, `Weights`, and `Sets×Reps` until their scope is explicitly defined; they remain hidden on the current branch.
 - Rich coaching or media content for the `Form` tab beyond basic structure/navigation.
 - History `Notes` workflows until their scope is explicitly defined.
 
@@ -137,7 +138,7 @@ Users need to:
 - Lists and collections use native Android patterns (row actions, overflow/context menus, swipe actions where appropriate) instead of oversized inline Edit/Delete buttons.
 - Home and top-level browsing screens should follow the reference pack:
   - Home shows upcoming workout cards and a prominent `Start Workout` FAB. The exact long-term scheduling logic behind the queue is still not committed beyond a simple deterministic ordering heuristic.
-  - `Programs` is the entry point for workout definitions, but the current branch commits only the `Workouts` surface. Broader `Programs` tabs remain deferred.
+  - `Programs` is the entry point for workout definitions, but the current branch commits only the `Workouts` surface. Broader `Programs` tabs remain deferred and hidden.
   - `History` uses local `List` and `Calendar` sections for the current bounded scope. `Notes` remains deferred until its behavior is explicitly defined.
   - `Progress` shows a scrollable list of exercise trend rows and supports drill-down into a single exercise.
   - `Settings` is a standard top-level form for training defaults rather than a deeper settings architecture.

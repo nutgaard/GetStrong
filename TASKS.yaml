@@ -124,15 +124,16 @@ milestones:
           - QA can verify the Programs and editor flows against the listed ux_references.
       - id: T32
         title: Resolve Programs tabs beyond Workouts before shipping them
-        description: Define the purpose and scope of the `Program`, `Weights`, and `Sets×Reps` tabs before they ship as part of the Programs area.
+        description: Resolve the screenshot-only `Program`, `Weights`, and `Sets×Reps` tabs before they ship as part of the Programs area. On the current branch, they remain explicitly deferred and hidden until a later task defines their scope.
         priority: P2
-        status: todo
-        ux_status: planned
+        status: done
+        ux_status: verified
         ux_references:
           - "UX.md -> workout_overview.png"
           - "UX.md#Assumptions And Ambiguities"
         acceptance_criteria:
-          - Each non-`Workouts` Programs tab is either documented with clear scope and owned behavior or explicitly deferred/hidden from the shipped UI.
+          - On the current branch, `Workouts` is the only shipped Programs surface; `Program`, `Weights`, and `Sets×Reps` are explicitly deferred and hidden from the shipped UI.
+          - If any non-`Workouts` Programs tab later becomes active work, it must first be documented with clear scope and owned behavior.
           - product-description.md and UX.md are updated before implementation if any of these tabs become active work.
           - QA can verify that no undocumented placeholder tabs ship in the Programs area.
       - id: T33
