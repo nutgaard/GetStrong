@@ -28,6 +28,7 @@ Focused child flows are separate destinations and do not share the persistent bo
 
 - `workoutEditor/{workoutId?}`: create/edit a workout and reorder its exercises
 - `exerciseHistory/{exerciseId}`: focused per-exercise history drill-down
+- `exerciseProgress/{exerciseId}`: focused per-exercise progress chart drill-down
 - `activeWorkout/{sessionId}`: in-session workout execution
 - `summary/{sessionId}`: terminal post-session summary and dismissal flow
 
@@ -48,6 +49,12 @@ For the current History scope, only the documented review path is committed:
 - `history` owns the top-level History surface and keeps `List` and `Calendar` as local sections inside that destination rather than promoting them to separate routes
 - `Notes` is explicitly out of scope for this cycle and must not ship as an active or placeholder History section until its behavior is defined
 - per-exercise history is a focused child drill-down keyed by `exerciseId`; it is not a third local History section and is not exposed as a top-level destination
+
+For the current Progress scope, only the documented overview-and-drill-down path is committed:
+
+- `progress` owns the top-level Progress surface and shows the overview list of tracked exercises
+- per-exercise progress charts are focused child drill-downs keyed by `exerciseId`; they are not separate top-level destinations and are not local sections inside `progress`
+- recent-range controls such as `3M` remain local state inside the per-exercise progress drill-down rather than becoming routes of their own
 
 For the current active-workout interaction scope, only the session-execution path is committed:
 

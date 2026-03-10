@@ -23,8 +23,8 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - `workout_overview.png`: The `Programs` screen uses nested tabs. The `Workouts` tab lists workouts inside a program, with drag handles for ordering and overflow menus for row actions. The red FAB adds a workout.
 - `edit_workout.png`: The workout editor shows the ordered exercise list for a single workout. Drag handles reorder exercises, overflow menus remove them, and the FAB adds another exercise.
 - `edit_exercise.png`: The reference pack includes a richer exercise-detail screen tabbed into `Weight`, `Form`, `Progress`, and `History`. The provided screenshot shows `Weight`, with sets x reps, current/next working weight, progression settings, deload settings, and a plate helper. On the current branch's bounded T6 path, this deeper drill-down is not required yet; minimum slot editing remains local inside the workout editor.
-- `progress.png`: The progress overview lists exercises with the latest working weight and a compact sparkline-like trend. Tapping an item is intended to open the detailed progress view for that exercise.
-- `progress_exercise.png`: The per-exercise progress screen shows a larger line chart for a selected exercise and a recent time-range selector (`3M` in the screenshot).
+- `progress.png`: The progress overview is the top-level `Progress` surface. It lists exercises with the latest working weight and a compact sparkline-like trend, and tapping an item opens that exercise's dedicated progress drill-down.
+- `progress_exercise.png`: The per-exercise progress screen is a focused drill-down view. It shows a larger line chart for a selected exercise and a recent time-range selector (`3M` in the screenshot).
 - `history_workout.png`: The history list shows completed workouts as cards, with date, per-exercise performed results, and total duration.
 - `history_calendar.png`: The calendar view marks workout-completion dates with red circles. It sits under the same `History` shell as the list view, as a local section rather than a separate top-level route.
 - `history_exercise.png`: The per-exercise history table lists individual non-warmup sets with date, reps, weight, and estimated 1RM. It is a focused drill-down view rather than another local `History` tab.
@@ -51,7 +51,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - `workout_overview.png` leads to `edit_workout.png` when a workout is selected.
 - The reference pack suggests `edit_workout.png` can lead to `edit_exercise.png` when an exercise is selected, but the current bounded T6 implementation keeps minimum exercise-slot editing local inside the workout editor instead of requiring a dedicated drill-down.
 - `edit_exercise.png` exposes the `Progress` and `History` views for that exercise, represented by `progress_exercise.png` and `history_exercise.png`.
-- `progress.png` also leads to `progress_exercise.png`.
+- `progress.png` leads to `progress_exercise.png` as a focused per-exercise drill-down rather than another top-level or local Progress section.
 - `history_workout.png` and `history_calendar.png` are alternate views under the same `History` area.
 - `history_workout.png` can drill down into `history_exercise.png` for a selected exercise without promoting that screen to another top-level History section.
 - `workout_in_progress_0.png`, `workout_in_progress_1.png`, `workout_in_progress_2.png`, and `workout_warmup.png` are all views of the same active workout session.
@@ -66,3 +66,4 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - The `History` area shows a `Notes` tab in the reference pack, but its behavior is not defined and it is deferred/out of scope for the current bounded `T30` implementation.
 - The Home screen clearly implies scheduled upcoming workouts, but the scheduling rules behind the `A/B` alternation are not described in the current notes.
 - No dedicated summary mock is currently provided, so the post-workout summary content is driven by the task contract: per-set results, warmup/work distinction, total time, and total volume.
+- The reference pack does not show any additional top-level or nested-tab Progress states beyond the overview list and per-exercise chart drill-down.

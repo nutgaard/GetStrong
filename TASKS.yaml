@@ -349,8 +349,8 @@ milestones:
         title: Implement progress overview and exercise chart drill-downs
         description: Use persisted workout history to power the top-level Progress screen and per-exercise progress charts described in UX.md.
         priority: P1
-        status: todo
-        ux_status: planned
+        status: done
+        ux_status: verified
         ux_references:
           - "UX.md -> progress.png"
           - "UX.md -> progress_exercise.png"
