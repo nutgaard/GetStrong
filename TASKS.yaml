@@ -429,7 +429,7 @@ milestones:
         description: Add UI to configure rest duration and preferred defaults (increment, progression mode, deload percent) used when creating new workout exercise slots.
         priority: P1
         status: done
-        ux_status: needs_rework
+        ux_status: verified
         ux_references:
           - "UX.md#Overall Structure"
           - "UX.md#Top-Level Navigation"
