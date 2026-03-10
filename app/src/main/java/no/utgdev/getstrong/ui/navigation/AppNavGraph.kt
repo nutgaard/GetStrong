@@ -261,7 +261,10 @@ fun AppNavGraph(navController: NavHostController) {
                     }
                 },
                 onExit = {
-                    navController.popBackStack()
+                    coroutineScope.launch {
+                        activeWorkoutViewModel.onExitRequested()
+                        navController.popBackStack()
+                    }
                 },
             )
         }

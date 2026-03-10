@@ -13,6 +13,9 @@ class StartWorkoutSessionUseCase @Inject constructor(
     private val sessionEngine: WorkoutSessionEngine,
 ) {
     suspend operator fun invoke(workoutId: Long): Long? {
+        sessionRepository.findUnfinishedSessionId()?.let { unfinishedSessionId ->
+            return unfinishedSessionId
+        }
         val workout = workoutRepository.getWorkout(workoutId) ?: return null
         val exercisesById = exerciseRepository.getAll().associateBy { it.id }
         val plan = sessionEngine.buildSessionPlan(workout, exercisesById)

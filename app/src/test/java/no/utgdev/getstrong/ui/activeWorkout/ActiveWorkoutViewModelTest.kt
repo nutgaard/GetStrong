@@ -265,6 +265,44 @@ class ActiveWorkoutViewModelTest {
         assertEquals(listOf(42L), workoutSummaryRepository.savedSummaries.map { it.sessionId })
     }
 
+    @Test
+    fun onExitRequestedDiscardsOnlyZeroProgressSessions() = runTest {
+        val withoutProgress = ActiveWorkoutFakeSessionRepository(
+            activeState = activeState(
+                plannedSets = listOf(
+                    plannedSet(id = 1, workoutSlotId = 11, setOrder = 0, exerciseId = 1006, setType = SessionSetType.WORK, targetReps = 5),
+                ),
+            ),
+        )
+        val withoutProgressViewModel = createViewModel(sessionRepository = withoutProgress)
+        runCurrent()
+        withoutProgressViewModel.onExitRequested()
+        runCurrent()
+        assertEquals(1, withoutProgress.discardCalls)
+
+        val withProgress = ActiveWorkoutFakeSessionRepository(
+            activeState = activeState(
+                plannedSets = listOf(
+                    plannedSet(
+                        id = 2,
+                        workoutSlotId = 11,
+                        setOrder = 0,
+                        exerciseId = 1006,
+                        setType = SessionSetType.WORK,
+                        targetReps = 5,
+                        completedReps = 5,
+                        isCompleted = true,
+                    ),
+                ),
+            ),
+        )
+        val withProgressViewModel = createViewModel(sessionRepository = withProgress)
+        runCurrent()
+        withProgressViewModel.onExitRequested()
+        runCurrent()
+        assertEquals(0, withProgress.discardCalls)
+    }
+
     private fun createViewModel(
         sessionRepository: ActiveWorkoutFakeSessionRepository,
         timeProvider: TimeProvider = MutableTimeProvider(nowMs = 1_000L),
@@ -308,10 +346,19 @@ private class ActiveWorkoutFakeSessionRepository(
 ) : SessionRepository {
     private var nextSetId = (activeState.plannedSets.maxOfOrNull { it.id } ?: 0L) + 1L
     var completeWithProgressionCalls: Int = 0
+    var discardCalls: Int = 0
 
     override suspend fun startSession(workoutId: Long, plannedSets: List<SessionPlannedSet>): Long = activeState.session.id
+    override suspend fun findUnfinishedSessionId(): Long? = activeState.session.id
 
     override suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState = activeState
+
+    override suspend fun discardSessionIfNoProgress(sessionId: Long): Boolean {
+        val hasProgress = activeState.plannedSets.any { it.isCompleted || (it.completedReps ?: 0) > 0 }
+        if (hasProgress) return false
+        discardCalls += 1
+        return true
+    }
 
     override suspend fun completePlannedSet(
         sessionId: Long,

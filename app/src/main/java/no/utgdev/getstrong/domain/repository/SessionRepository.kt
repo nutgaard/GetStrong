@@ -8,6 +8,8 @@ import no.utgdev.getstrong.domain.model.WorkoutSession
 
 interface SessionRepository {
     suspend fun startSession(workoutId: Long, plannedSets: List<SessionPlannedSet>): Long
+    suspend fun findUnfinishedSessionId(): Long?
+    suspend fun discardSessionIfNoProgress(sessionId: Long): Boolean
     suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState?
     suspend fun completePlannedSet(sessionId: Long, plannedSetId: Long, repsAchieved: Int): ActiveSessionState?
     suspend fun updatePlannedSetWeight(sessionId: Long, plannedSetId: Long, weightKg: Double): ActiveSessionState?

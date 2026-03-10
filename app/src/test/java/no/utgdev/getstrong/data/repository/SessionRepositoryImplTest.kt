@@ -17,6 +17,86 @@ import org.junit.Test
 
 class SessionRepositoryImplTest {
     @Test
+    fun findUnfinishedSessionIdReturnsLatestOpenSession() = runTest {
+        val dao = FakeSessionDao()
+        val repository = SessionRepositoryImpl(dao)
+        val firstSessionId = repository.startSession(
+            workoutId = 1L,
+            plannedSets = listOf(
+                SessionPlannedSet(
+                    sessionId = 0,
+                    workoutSlotId = 11,
+                    setOrder = 0,
+                    exerciseId = 1006,
+                    setType = SessionSetType.WORK,
+                    targetReps = 5,
+                    targetWeightKg = 100.0,
+                ),
+            ),
+        )
+        val latestSessionId = repository.startSession(
+            workoutId = 2L,
+            plannedSets = listOf(
+                SessionPlannedSet(
+                    sessionId = 0,
+                    workoutSlotId = 22,
+                    setOrder = 0,
+                    exerciseId = 1007,
+                    setType = SessionSetType.WORK,
+                    targetReps = 5,
+                    targetWeightKg = 120.0,
+                ),
+            ),
+        )
+
+        repository.completeSession(latestSessionId)
+        val unresolved = repository.findUnfinishedSessionId()
+
+        assertEquals(firstSessionId, unresolved)
+    }
+
+    @Test
+    fun discardSessionIfNoProgressRemovesOnlyEmptySession() = runTest {
+        val dao = FakeSessionDao()
+        val repository = SessionRepositoryImpl(dao)
+        val emptySessionId = repository.startSession(
+            workoutId = 1L,
+            plannedSets = listOf(
+                SessionPlannedSet(
+                    sessionId = 0,
+                    workoutSlotId = 11,
+                    setOrder = 0,
+                    exerciseId = 1006,
+                    setType = SessionSetType.WORK,
+                    targetReps = 5,
+                    targetWeightKg = 100.0,
+                ),
+            ),
+        )
+        val progressedSessionId = repository.startSession(
+            workoutId = 2L,
+            plannedSets = listOf(
+                SessionPlannedSet(
+                    sessionId = 0,
+                    workoutSlotId = 22,
+                    setOrder = 0,
+                    exerciseId = 1007,
+                    setType = SessionSetType.WORK,
+                    targetReps = 5,
+                    targetWeightKg = 120.0,
+                ),
+            ),
+        )
+        val progressedSetId = repository.getActiveSessionState(progressedSessionId)!!.plannedSets.single().id
+        repository.completePlannedSet(progressedSessionId, progressedSetId, 5)
+
+        assertTrue(repository.discardSessionIfNoProgress(emptySessionId))
+        assertNull(repository.getActiveSessionState(emptySessionId))
+        assertTrue(!repository.discardSessionIfNoProgress(progressedSessionId))
+        assertNotNull(repository.getActiveSessionState(progressedSessionId))
+    }
+
+    @Test
     fun startAndReloadSessionPreservesWarmupAndWorkSnapshotOrdering() = runTest {
         val dao = FakeSessionDao()
         val repository = SessionRepositoryImpl(dao)
@@ -180,6 +260,12 @@ private class FakeSessionDao : SessionDao {
 
     override suspend fun getSession(sessionId: Long): WorkoutSessionEntity? = sessions[sessionId]
 
+    override suspend fun getLatestUnfinishedSessionId(): Long? =
+        sessions.values
+            .filter { it.endedAtEpochMs == null }
+            .maxByOrNull { it.startedAtEpochMs }
+            ?.id
+
     override suspend fun getPlannedSets(sessionId: Long): List<SessionPlannedSetEntity> =
         plannedSetsBySession[sessionId].orEmpty().sortedBy { it.setOrder }
 
@@ -237,6 +323,14 @@ private class FakeSessionDao : SessionDao {
 
     override suspend fun deletePlannedSetsForSession(sessionId: Long) {
         plannedSetsBySession.remove(sessionId)
+    }
+
+    override suspend fun deleteSetResultsForSession(sessionId: Long) {
+        setResultsBySession.remove(sessionId)
+    }
+
+    override suspend fun deleteSession(sessionId: Long) {
+        sessions.remove(sessionId)
     }
 
     override suspend fun createSessionWithPlan(

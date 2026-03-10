@@ -13,3 +13,4 @@ Current ADR set:
 - `ADR-005`: standardized package organization and ownership inside the app module
 - `ADR-006`: M1 navigation shell and route contracts
 - `ADR-007`: Room for structured records and DataStore for local settings
+- `ADR-008`: active-workout inline session and resume contract

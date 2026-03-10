@@ -31,6 +31,20 @@ class SessionRepositoryImpl @Inject constructor(
         return sessionId
     }
 
+    override suspend fun findUnfinishedSessionId(): Long? =
+        sessionDao.getLatestUnfinishedSessionId()
+
+    override suspend fun discardSessionIfNoProgress(sessionId: Long): Boolean {
+        val session = sessionDao.getSession(sessionId) ?: return false
+        if (session.endedAtEpochMs != null) return false
+        val hasProgress = sessionDao.getPlannedSets(sessionId).any { plannedSet ->
+            plannedSet.isCompleted || (plannedSet.completedReps ?: 0) > 0
+        }
+        if (hasProgress) return false
+        sessionDao.discardSession(sessionId)
+        return true
+    }
+
     override suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState? {
         val session = sessionDao.getSession(sessionId)?.toDomain() ?: return null
         val sets = sessionDao.getPlannedSets(sessionId).map { it.toDomain() }

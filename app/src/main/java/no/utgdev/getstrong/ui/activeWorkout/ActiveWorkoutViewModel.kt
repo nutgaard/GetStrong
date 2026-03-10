@@ -127,6 +127,10 @@ class ActiveWorkoutViewModel @Inject constructor(
         }
     }
 
+    suspend fun onExitRequested() {
+        sessionRepository.discardSessionIfNoProgress(sessionId)
+    }
+
     private suspend fun applySessionState(
         sessionState: no.utgdev.getstrong.domain.model.ActiveSessionState?,
         highlightedSetId: Long? = null,

@@ -216,11 +216,16 @@ private class FakeWorkoutRepository(
 
 private class FakeSessionRepository : SessionRepository {
     var startedWorkoutId: Long? = null
+    var unfinishedSessionId: Long? = null
 
     override suspend fun startSession(workoutId: Long, plannedSets: List<SessionPlannedSet>): Long {
         startedWorkoutId = workoutId
         return 99L
     }
+
+    override suspend fun findUnfinishedSessionId(): Long? = unfinishedSessionId
+
+    override suspend fun discardSessionIfNoProgress(sessionId: Long): Boolean = false
 
     override suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState? = null
     override suspend fun completePlannedSet(sessionId: Long, plannedSetId: Long, repsAchieved: Int): ActiveSessionState? = null

@@ -377,6 +377,8 @@ private class FakeSessionRepository(
     var onCompleteWithProgression: ((Long, List<SlotProgressionUpdate>) -> Unit)? = null
 
     override suspend fun startSession(workoutId: Long, plannedSets: List<SessionPlannedSet>): Long = 0L
+    override suspend fun findUnfinishedSessionId(): Long? = null
+    override suspend fun discardSessionIfNoProgress(sessionId: Long): Boolean = false
 
     override suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState = activeState
 

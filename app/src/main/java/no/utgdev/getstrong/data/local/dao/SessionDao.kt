@@ -23,6 +23,9 @@ interface SessionDao {
     @Query("SELECT * FROM sessions WHERE id = :sessionId")
     suspend fun getSession(sessionId: Long): WorkoutSessionEntity?
 
+    @Query("SELECT id FROM sessions WHERE endedAtEpochMs IS NULL ORDER BY startedAtEpochMs DESC LIMIT 1")
+    suspend fun getLatestUnfinishedSessionId(): Long?
+
     @Query("SELECT * FROM session_planned_sets WHERE sessionId = :sessionId ORDER BY setOrder ASC")
     suspend fun getPlannedSets(sessionId: Long): List<SessionPlannedSetEntity>
 
@@ -126,6 +129,12 @@ interface SessionDao {
     @Query("DELETE FROM session_planned_sets WHERE sessionId = :sessionId")
     suspend fun deletePlannedSetsForSession(sessionId: Long)
 
+    @Query("DELETE FROM set_results WHERE sessionId = :sessionId")
+    suspend fun deleteSetResultsForSession(sessionId: Long)
+
+    @Query("DELETE FROM sessions WHERE id = :sessionId")
+    suspend fun deleteSession(sessionId: Long)
+
     @Transaction
     suspend fun createSessionWithPlan(
         session: WorkoutSessionEntity,
@@ -144,6 +153,13 @@ interface SessionDao {
     ) {
         deletePlannedSetsForSession(sessionId)
         insertPlannedSets(plannedSets.map { it.copy(sessionId = sessionId) })
+    }
+
+    @Transaction
+    suspend fun discardSession(sessionId: Long) {
+        deleteSetResultsForSession(sessionId)
+        deletePlannedSetsForSession(sessionId)
+        deleteSession(sessionId)
     }
 
     @Transaction

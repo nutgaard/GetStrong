@@ -22,6 +22,27 @@ import org.junit.Test
 
 class StartWorkoutSessionUseCaseTest {
     @Test
+    fun reusesExistingUnfinishedSessionBeforeCreatingNewOne() = runTest {
+        val workoutRepository = FakeWorkoutRepositoryForStart(
+            Workout(
+                id = 1,
+                name = "A",
+                slots = emptyList(),
+            ),
+        )
+        val useCase = StartWorkoutSessionUseCase(
+            workoutRepository = workoutRepository,
+            exerciseRepository = FakeExerciseRepository(emptyList()),
+            sessionRepository = CapturingSessionRepository(existingUnfinishedSessionId = 77L),
+            sessionEngine = WorkoutSessionEngine(WarmupGenerator()),
+        )
+
+        val sessionId = useCase(1L)
+
+        assertEquals(77L, sessionId)
+    }
+
+    @Test
     fun createsSnapshotWithWarmupsBeforeWorkAndPersistsSamePlan() = runTest {
         val workout = Workout(
             id = 1,
@@ -106,12 +127,21 @@ private class FakeExerciseRepository(
 }
 
 private class CapturingSessionRepository : SessionRepository {
+    constructor(existingUnfinishedSessionId: Long? = null) {
+        this.existingUnfinishedSessionId = existingUnfinishedSessionId
+    }
+
     var lastPlannedSets: List<SessionPlannedSet> = emptyList()
+    private var existingUnfinishedSessionId: Long? = null
 
     override suspend fun startSession(workoutId: Long, plannedSets: List<SessionPlannedSet>): Long {
         lastPlannedSets = plannedSets
         return 99L
     }
+
+    override suspend fun findUnfinishedSessionId(): Long? = existingUnfinishedSessionId
+
+    override suspend fun discardSessionIfNoProgress(sessionId: Long): Boolean = false
 
     override suspend fun getActiveSessionState(sessionId: Long) = null
     override suspend fun completePlannedSet(sessionId: Long, plannedSetId: Long, repsAchieved: Int) = null

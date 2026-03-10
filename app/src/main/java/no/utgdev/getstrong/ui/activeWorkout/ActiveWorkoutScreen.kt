@@ -1,5 +1,6 @@
 package no.utgdev.getstrong.ui.activeWorkout
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,13 +11,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -83,6 +81,7 @@ fun ActiveWorkoutScreen(
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    BackHandler(onBack = onExit)
     KeepScreenOnEffect(enabled = uiState.isSessionActive)
     val currentSet = uiState.currentSet
     var selectedSection by rememberSaveable(currentSet?.setType) {
@@ -115,25 +114,8 @@ fun ActiveWorkoutScreen(
         )
     }
     val visibleGroups = if (selectedSection == ActiveWorkoutSection.WORKOUT) workoutGroups else warmupGroups
-    val currentActionGroups = if (currentSet?.setType == SessionSetType.WARMUP) warmupGroups else workoutGroups
-    val currentActionGroup = currentSet?.let { set ->
-        currentActionGroups.firstOrNull { it.workoutSlotId == set.workoutSlotId }
-    }
-    val shouldPinCurrentGroup = currentActionGroup != null && selectedSection == sectionForSet(currentSet)
-    val listGroups = if (shouldPinCurrentGroup) {
-        visibleGroups.filterNot { it.workoutSlotId == currentActionGroup?.workoutSlotId }
-    } else {
-        visibleGroups
-    }
     val completedCount = uiState.plannedSets.count { it.isCompleted }
-    val currentExerciseName = currentSet?.let { uiState.exerciseNamesById[it.exerciseId] ?: "Exercise ${it.exerciseId}" }
-    val hasBottomDock = currentSet != null || uiState.isCompleted
-    val bottomContentPadding = when {
-        hasBottomDock && (uiState.isRestTimerActive || uiState.isRestOver) -> 300.dp
-        hasBottomDock -> 220.dp
-        uiState.isRestTimerActive || uiState.isRestOver -> 160.dp
-        else -> 120.dp
-    }
+    val bottomContentPadding = 148.dp
 
     LaunchedEffect(actionSetId, editRepsSetId, editWeightSetId, restoreFocusSetId) {
         if (actionSetId == null && editRepsSetId == null && editWeightSetId == null) {
@@ -188,7 +170,6 @@ fun ActiveWorkoutScreen(
                         totalCount = uiState.plannedSets.size,
                         selectedSection = selectedSection,
                         onSectionSelected = { selectedSection = it },
-                        showPinnedHint = currentSet != null,
                         modifier = Modifier.semantics {
                             isTraversalGroup = true
                             traversalIndex = 0f
@@ -196,12 +177,12 @@ fun ActiveWorkoutScreen(
                     )
                 }
 
-                if (listGroups.isEmpty() && currentActionGroup == null) {
+                if (visibleGroups.isEmpty()) {
                     item {
                         EmptySectionCard(selectedSection = selectedSection)
                     }
-                } else if (listGroups.isNotEmpty()) {
-                    items(listGroups, key = { it.workoutSlotId }) { group ->
+                } else {
+                    items(visibleGroups, key = { it.workoutSlotId }) { group ->
                         ExerciseSetGroupCard(
                             group = group,
                             currentSetId = currentSet?.id,
@@ -219,52 +200,26 @@ fun ActiveWorkoutScreen(
                         )
                     }
                 }
+
+                if (uiState.isCompleted) {
+                    item {
+                        CompletedSessionCard(onFinishSession = onFinishSession)
+                    }
+                }
             }
 
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                if (hasBottomDock) {
-                    CurrentActionDock(
-                        currentSet = currentSet,
-                        group = currentActionGroup,
-                        exerciseName = currentExerciseName,
-                        elapsedSeconds = uiState.elapsedSeconds,
-                        completedCount = completedCount,
-                        totalCount = uiState.plannedSets.size,
-                        isHighlighted = currentSet?.id == uiState.highlightedSetId,
-                        onToggleSet = { setId ->
-                            onToggleSet(setId)
-                            actionSetId = null
-                        },
-                        onOpenActions = { setId ->
-                            restoreFocusSetId = setId
-                            actionSetId = setId
-                        },
-                        onAddExtraSet = {
-                            val anchorSetId = currentActionGroup?.sets?.lastOrNull()?.id ?: currentSet?.id
-                            if (anchorSetId != null) {
-                                onAddExtraSet(anchorSetId)
-                            }
-                        },
-                        onFinishSession = onFinishSession,
-                        focusRequesterForSet = focusRequesterForSet,
-                        modifier = Modifier.semantics {
+            if (uiState.isRestTimerActive || uiState.isRestOver) {
+                RestTimerOverlay(
+                    remainingSeconds = uiState.restRemainingSeconds,
+                    isRestOver = uiState.isRestOver,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 16.dp, vertical = 16.dp)
+                        .semantics {
                             isTraversalGroup = true
                             traversalIndex = 1f
                         },
-                    )
-                }
-
-                if (uiState.isRestTimerActive || uiState.isRestOver) {
-                    RestTimerOverlay(
-                        remainingSeconds = uiState.restRemainingSeconds,
-                        isRestOver = uiState.isRestOver,
-                    )
-                }
+                )
             }
         }
     }
@@ -329,7 +284,6 @@ private fun SessionOverviewStrip(
     totalCount: Int,
     selectedSection: ActiveWorkoutSection,
     onSectionSelected: (ActiveWorkoutSection) -> Unit,
-    showPinnedHint: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -348,36 +302,15 @@ private fun SessionOverviewStrip(
             selectedSection = selectedSection,
             onSectionSelected = onSectionSelected,
         )
-
-        if (showPinnedHint) {
-            Text(
-                text = "Current controls stay pinned near the bottom for easy thumb reach.",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clearAndSetSemantics { },
-            )
-        }
     }
 }
 
 @Composable
-private fun CurrentActionDock(
-    currentSet: SessionPlannedSet?,
-    group: ExerciseSetGroup?,
-    exerciseName: String?,
-    elapsedSeconds: Long,
-    completedCount: Int,
-    totalCount: Int,
-    isHighlighted: Boolean,
-    onToggleSet: (Long) -> Unit,
-    onOpenActions: (Long) -> Unit,
-    onAddExtraSet: () -> Unit,
+private fun CompletedSessionCard(
     onFinishSession: () -> Unit,
-    focusRequesterForSet: (Long) -> FocusRequester,
-    modifier: Modifier = Modifier,
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
         ),
@@ -388,89 +321,26 @@ private fun CurrentActionDock(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { heading() },
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top,
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = currentSet?.let(::currentSetTitle) ?: "Workout Complete",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    Text(
-                        text = exerciseName ?: "All planned sets are complete.",
-                        style = MaterialTheme.typography.titleLarge,
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SupportPill(label = "Time", value = formatElapsed(elapsedSeconds))
-                    SupportPill(label = "Done", value = "$completedCount/$totalCount")
-                }
-            }
-
-            if (currentSet == null) {
-                Text(
-                    text = "All planned sets are complete. Finish when you're ready to review the summary.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Button(
-                    onClick = onFinishSession,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics {
-                            contentDescription = "Finish workout and open summary"
-                        },
-                ) {
-                    Text("Finish Workout")
-                }
-                return@Card
-            }
-
             Text(
-                text = buildSetDetailText(currentSet),
-                style = MaterialTheme.typography.titleMedium,
+                text = "Workout Complete",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.semantics { heading() },
             )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                val actionSets = group?.sets ?: listOf(currentSet)
-                actionSets.forEachIndexed { index, set ->
-                    SetCircle(
-                        set = set,
-                        exerciseName = exerciseName ?: "Current exercise",
-                        setIndex = index + 1,
-                        setCount = actionSets.size,
-                        isCurrent = currentSet.id == set.id,
-                        isHighlighted = isHighlighted && currentSet.id == set.id,
-                        diameter = if (currentSet.id == set.id) 74.dp else 60.dp,
-                        onClick = { onToggleSet(set.id) },
-                        onLongClick = { onOpenActions(set.id) },
-                        focusRequester = focusRequesterForSet(set.id),
-                    )
-                }
-                AddSetCircle(
-                    exerciseName = exerciseName ?: "Current exercise",
-                    setType = currentSet.setType,
-                    onClick = onAddExtraSet,
-                )
-            }
-
             Text(
-                text = "Tap the current circle to progress. Long-press any set for reps, weight, reset, or removal.",
-                style = MaterialTheme.typography.labelSmall,
+                text = "All planned sets are complete. Finish when you're ready to review the summary.",
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clearAndSetSemantics { },
             )
+            Button(
+                onClick = onFinishSession,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        contentDescription = "Finish workout and open summary"
+                    },
+            ) {
+                Text("Finish Workout")
+            }
         }
     }
 }
@@ -644,7 +514,7 @@ private fun SetCircle(
         }
         if (showCaption) {
             Text(
-                text = if (set.isExtra) "Extra" else "#${set.setOrder + 1}",
+                text = if (set.isExtra) "Extra" else "#$setIndex",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -1105,9 +975,6 @@ private fun buildDialogSetDescription(
             append("set ${set.setOrder + 1}")
         }
     }
-
-private fun currentSetTitle(set: SessionPlannedSet): String =
-    if (set.setType == SessionSetType.WARMUP) "Current Warmup Set" else "Current Workout Set"
 
 private fun sectionForSet(set: SessionPlannedSet?): ActiveWorkoutSection =
     if (set?.setType == SessionSetType.WARMUP) ActiveWorkoutSection.WARMUP else ActiveWorkoutSection.WORKOUT

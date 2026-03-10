@@ -152,6 +152,8 @@ private class PlanningFakeSessionRepository : SessionRepository {
         startedWorkoutId = workoutId
         return 10L
     }
+    override suspend fun findUnfinishedSessionId(): Long? = null
+    override suspend fun discardSessionIfNoProgress(sessionId: Long): Boolean = false
     override suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState? = null
     override suspend fun completePlannedSet(sessionId: Long, plannedSetId: Long, repsAchieved: Int): ActiveSessionState? = null
     override suspend fun updatePlannedSetWeight(sessionId: Long, plannedSetId: Long, weightKg: Double): ActiveSessionState? = null

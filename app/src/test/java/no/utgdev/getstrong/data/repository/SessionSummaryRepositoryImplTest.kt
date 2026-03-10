@@ -164,6 +164,7 @@ private class FakeSessionDaoForSummary : SessionDao {
     override suspend fun insertPlannedSets(plannedSets: List<SessionPlannedSetEntity>) = Unit
 
     override suspend fun getSession(sessionId: Long): WorkoutSessionEntity? = sessions[sessionId]
+    override suspend fun getLatestUnfinishedSessionId(): Long? = null
 
     override suspend fun getPlannedSets(sessionId: Long): List<SessionPlannedSetEntity> =
         planned[sessionId].orEmpty().sortedBy { it.setOrder }
@@ -203,6 +204,8 @@ private class FakeSessionDaoForSummary : SessionDao {
     override suspend fun deleteSetResultForPlannedSet(sessionId: Long, plannedSetId: Long) = Unit
 
     override suspend fun deletePlannedSetsForSession(sessionId: Long) = Unit
+    override suspend fun deleteSetResultsForSession(sessionId: Long) = Unit
+    override suspend fun deleteSession(sessionId: Long) = Unit
 
     override suspend fun createSessionWithPlan(
         session: WorkoutSessionEntity,
