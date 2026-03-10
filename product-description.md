@@ -37,6 +37,7 @@ Users need to:
 - Exercise detail:
 - The screenshot pack includes a richer `edit_exercise` reference with `Weight`, `Form`, `Progress`, and `History` tabs.
 - The current branch does not require a dedicated exercise-detail drill-down to ship the bounded workout-planning flow; minimum slot editing remains local inside the workout editor.
+- The screenshot-only `Form` tab remains hidden on the current branch until its scope is explicitly defined.
 
 - Workout execution:
 - A user can start a saved workout from Home quick-start or from the Programs surface for a specifically chosen workout.
@@ -120,6 +121,7 @@ Users need to:
 - Wearables integration.
 - Coach programming import/export.
 - Broader `Programs` tabs such as `Program`, `Weights`, and `Sets×Reps` until their scope is explicitly defined; they remain hidden on the current branch.
+- The screenshot-only `Form` tab until its scope is explicitly defined; it remains hidden on the current branch.
 - Rich coaching or media content for the `Form` tab beyond basic structure/navigation.
 - History `Notes` workflows until their scope is explicitly defined.
 
@@ -155,7 +157,7 @@ Users need to:
   - An Add exercise action opens a search/scroll picker of exercises not already selected.
   - Duplicate exercises within the same workout are disallowed.
   - Add/selection controls have clear spacing; avoid cramped multi-button layouts.
-- The current bounded planning flow keeps minimum slot editing local inside the workout editor; the richer `edit_exercise` reference remains future work.
+- The current bounded planning flow keeps minimum slot editing local inside the workout editor; the richer `edit_exercise` reference remains future work, and the screenshot-only `Form` tab stays deferred and hidden.
 - Core Home, Programs, Active Workout, and Summary actions should remain usable with TalkBack/keyboard via meaningful labels and stable focus order.
 - Empty and recoverable error states stay inside the normal screen shell with contextual next or retry actions rather than separate fallback pages.
 - Emphasize Android-native patterns and Material components over custom, button-heavy layouts.

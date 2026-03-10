@@ -138,15 +138,16 @@ milestones:
           - QA can verify that no undocumented placeholder tabs ship in the Programs area.
       - id: T33
         title: Resolve the Exercise Detail Form tab before shipping it
-        description: Define the purpose and scope of the `Form` tab in exercise detail before it ships as part of the tabbed editor flow.
+        description: Resolve the screenshot-only `Form` tab in exercise detail before it ships as part of the tabbed editor flow. On the current branch, it remains explicitly deferred and hidden until a later task defines its scope.
         priority: P2
-        status: todo
-        ux_status: planned
+        status: done
+        ux_status: verified
         ux_references:
           - "UX.md -> edit_exercise.png"
           - "UX.md#Assumptions And Ambiguities"
         acceptance_criteria:
-          - The `Form` tab is either documented with explicit in-scope content and behavior or explicitly deferred/hidden from the shipped UI.
+          - On the current branch, the screenshot-only `Form` tab is explicitly deferred and hidden from the shipped UI.
+          - If the `Form` tab later becomes active work, it must first be documented with explicit in-scope content and owned behavior.
           - UX.md and product-description.md are updated before implementation if the `Form` tab becomes active work.
           - QA can verify that no undocumented placeholder `Form` tab ships in exercise detail.
 

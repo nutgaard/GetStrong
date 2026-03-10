@@ -42,6 +42,7 @@ For the current Programs/workout CRUD scope, only the workout-management path is
 - `programs` exposes the workout overview/list behavior
 - `workoutEditor` owns the selected-workout draft, its ordered slot list, the add-exercise picker entry point, and the minimum slot-scoped editing needed for this flow
 - slot-specific editing may remain local inside `workoutEditor` for the minimum shippable T6 implementation; promote it to a child route later only if deeper slot editing or navigation needs justify it
+- the screenshot-only richer exercise-detail flow, including its `Form` tab, is explicitly deferred and must remain hidden until separately scoped
 - unresolved secondary Programs tabs are explicitly deferred, must remain hidden from the shipped Programs UI until separately scoped, and must not block the workout CRUD implementation
 
 For the current History scope, only the documented review path is committed:
