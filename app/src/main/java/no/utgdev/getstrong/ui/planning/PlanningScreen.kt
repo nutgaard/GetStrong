@@ -11,11 +11,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import no.utgdev.getstrong.domain.model.Workout
 import no.utgdev.getstrong.ui.common.InlineStateCard
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlanningScreen(
     uiState: PlanningUiState,
@@ -41,6 +44,11 @@ fun PlanningScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = { Text("Programs") },
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = onCreateWorkout) {
                 Text("Add")
@@ -55,13 +63,9 @@ fun PlanningScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                text = "Programs",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.semantics { heading() },
-            )
-            Text(
                 text = "Workouts",
                 style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
             )
             when {
                 uiState.isLoading -> {
