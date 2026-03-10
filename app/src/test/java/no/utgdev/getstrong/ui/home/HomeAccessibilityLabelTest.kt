@@ -10,6 +10,7 @@ class HomeAccessibilityLabelTest {
             HomeUpcomingWorkoutUi(
                 workoutId = 7L,
                 workoutName = "Workout A",
+                scheduledDateIso = "2026-03-10",
                 scheduledLabel = "Today",
                 exercisePreview = listOf("Squat", "Press"),
                 additionalExerciseCount = 1,
@@ -29,6 +30,7 @@ class HomeAccessibilityLabelTest {
             nextWorkout = HomeUpcomingWorkoutUi(
                 workoutId = 7L,
                 workoutName = "Workout A",
+                scheduledDateIso = "2026-03-10",
                 scheduledLabel = "Today",
                 exercisePreview = emptyList(),
                 additionalExerciseCount = 0,

@@ -18,6 +18,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -31,6 +33,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -58,7 +61,10 @@ fun WorkoutEditorScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         floatingActionButton = {
-            FloatingActionButton(onClick = { showExercisePicker = true }) {
+            FloatingActionButton(
+                onClick = { showExercisePicker = true },
+                modifier = Modifier.planningFabInset(),
+            ) {
                 Text("Add")
             }
         },
@@ -201,8 +207,11 @@ private fun WorkoutSlotRow(
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
-                TextButton(onClick = { showMenu = true }) {
-                    Text("More")
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(
+                        painter = painterResource(id = android.R.drawable.ic_menu_more),
+                        contentDescription = "Open exercise actions for ${slot.exerciseName}",
+                    )
                 }
                 DropdownMenu(
                     expanded = showMenu,

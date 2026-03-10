@@ -22,6 +22,7 @@ class SettingsStore @Inject constructor(
             loadIncrementKg = prefs[LOAD_INCREMENT_KG_KEY] ?: SettingsDefaults.LOAD_INCREMENT_KG,
             deloadPercent = prefs[DELOAD_PERCENT_KEY] ?: SettingsDefaults.DELOAD_PERCENT,
             defaultProgressionMode = prefs[DEFAULT_PROGRESSION_MODE_KEY] ?: SettingsDefaults.DEFAULT_PROGRESSION_MODE,
+            trainingDays = parseTrainingDays(prefs[TRAINING_DAYS_KEY]),
         )
     }
 
@@ -39,10 +40,31 @@ class SettingsStore @Inject constructor(
         }
     }
 
+    suspend fun updateTrainingDays(trainingDays: List<Int>) {
+        dataStore.edit { prefs ->
+            prefs[TRAINING_DAYS_KEY] = normalizeTrainingDays(trainingDays).joinToString(",")
+        }
+    }
+
+    private fun parseTrainingDays(raw: String?): List<Int> =
+        normalizeTrainingDays(
+            raw
+                ?.split(",")
+                ?.mapNotNull { token -> token.trim().toIntOrNull() }
+                .orEmpty(),
+        ).ifEmpty { SettingsDefaults.TRAINING_DAYS }
+
+    private fun normalizeTrainingDays(trainingDays: List<Int>): List<Int> =
+        trainingDays
+            .filter { day -> day in 1..7 }
+            .distinct()
+            .sorted()
+
     private companion object {
         val REST_DURATION_SECONDS_KEY = intPreferencesKey("rest_duration_seconds")
         val LOAD_INCREMENT_KG_KEY = doublePreferencesKey("load_increment_kg")
         val DELOAD_PERCENT_KEY = intPreferencesKey("deload_percent")
         val DEFAULT_PROGRESSION_MODE_KEY = stringPreferencesKey("default_progression_mode")
+        val TRAINING_DAYS_KEY = stringPreferencesKey("training_days")
     }
 }

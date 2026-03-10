@@ -24,4 +24,8 @@ class SettingsRepositoryImpl @Inject constructor(
             defaultProgressionMode = defaultProgressionMode,
         )
     }
+
+    override suspend fun updateTrainingDays(trainingDays: List<Int>) {
+        settingsStore.updateTrainingDays(trainingDays)
+    }
 }

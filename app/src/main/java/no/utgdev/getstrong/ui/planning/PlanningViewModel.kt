@@ -7,14 +7,17 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import no.utgdev.getstrong.domain.repository.SettingsRepository
 import no.utgdev.getstrong.domain.repository.WorkoutRepository
 import no.utgdev.getstrong.domain.usecase.StartWorkoutSessionUseCase
 
 @HiltViewModel
 class PlanningViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
+    private val settingsRepository: SettingsRepository,
     private val startWorkoutSessionUseCase: StartWorkoutSessionUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PlanningUiState())
@@ -29,11 +32,13 @@ class PlanningViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
                 val workouts = workoutRepository.getAllWorkouts()
+                val settings = settingsRepository.settings.first()
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         errorMessage = null,
                         workouts = workouts,
+                        trainingDays = settings.trainingDays,
                     )
                 }
             } catch (_: Throwable) {
@@ -42,6 +47,28 @@ class PlanningViewModel @Inject constructor(
                         isLoading = false,
                         errorMessage = "Could not load workouts. Please try again.",
                         workouts = emptyList(),
+                    )
+                }
+            }
+        }
+    }
+
+    fun toggleTrainingDay(day: Int) {
+        val previousDays = _uiState.value.trainingDays
+        val updatedDays = if (previousDays.contains(day)) {
+            previousDays - day
+        } else {
+            previousDays + day
+        }.distinct().sorted()
+        _uiState.update { it.copy(trainingDays = updatedDays, scheduleErrorMessage = null) }
+        viewModelScope.launch {
+            try {
+                settingsRepository.updateTrainingDays(updatedDays)
+            } catch (_: Throwable) {
+                _uiState.update {
+                    it.copy(
+                        trainingDays = previousDays,
+                        scheduleErrorMessage = "Could not save schedule changes. Try again.",
                     )
                 }
             }

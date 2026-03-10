@@ -506,8 +506,11 @@ milestones:
         title: Make Home upcoming workouts actionable and schedule-driven
         description: Replace the current inert Home card behavior with a schedule-backed upcoming queue and explicit schedule configuration that match the reference screenshots and the issue audit.
         priority: P0
-        status: planned
-        ux_status: planned
+        status: done
+        owner: qa
+        next_owner: none
+        bundle: M12-B2
+        ux_status: pending_review
         ux_references:
           - "UX.md -> start_screen.png"
           - "UX.md -> workout_overview.png"
@@ -542,8 +545,11 @@ milestones:
         title: Restore Programs row chrome and reusable FAB spacing
         description: Replace the current ad hoc Programs actions with the reference row/menu pattern and standardize floating-action-button spacing across workout-planning surfaces.
         priority: P1
-        status: planned
-        ux_status: planned
+        status: done
+        owner: qa
+        next_owner: none
+        bundle: M12-B2
+        ux_status: pending_review
         ux_references:
           - "UX.md -> workout_overview.png"
           - "UX.md -> edit_workout.png"
@@ -576,10 +582,10 @@ milestones:
         description: Ensure the active workout session actually surfaces the generated warmup sets and phase transitions shown in the warmup reference screenshot.
         priority: P0
         status: done
-        owner: qa
+        owner: none
         next_owner: none
         bundle: M12-B1
-        ux_status: pending_review
+        ux_status: verified
         ux_references:
           - "UX.md -> workout_warmup.png"
           - "UX.md -> workout_in_progress_0.png"
@@ -595,10 +601,10 @@ milestones:
         description: Bring the active workout screen back to the list-first reference layout so the current work set is obvious without causing overlap or jumpy layout.
         priority: P0
         status: done
-        owner: qa
+        owner: none
         next_owner: none
         bundle: M12-B1
-        ux_status: pending_review
+        ux_status: verified
         ux_references:
           - "UX.md -> workout_in_progress_0.png"
           - "UX.md -> workout_in_progress_1.png"
@@ -616,10 +622,10 @@ milestones:
         description: Preserve in-progress workout sessions until the user finishes them, so navigation away from the workout does not silently discard real progress.
         priority: P0
         status: done
-        owner: qa
+        owner: none
         next_owner: none
         bundle: M12-B1
-        ux_status: pending_review
+        ux_status: verified
         ux_references:
           - "UX.md -> start_screen.png"
           - "UX.md -> workout_in_progress_0.png"

@@ -19,6 +19,7 @@ import no.utgdev.getstrong.domain.model.WorkoutSession
 import no.utgdev.getstrong.domain.model.WorkoutSummary
 import no.utgdev.getstrong.domain.repository.ExerciseRepository
 import no.utgdev.getstrong.domain.repository.SessionRepository
+import no.utgdev.getstrong.domain.repository.SettingsRepository
 import no.utgdev.getstrong.domain.repository.WorkoutRepository
 import no.utgdev.getstrong.domain.repository.WorkoutSummaryRepository
 import no.utgdev.getstrong.domain.session.WorkoutSessionEngine
@@ -50,6 +51,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel(
             workoutRepository = workoutRepository,
             exerciseRepository = FakeExerciseRepository(emptyList()),
+            settingsRepository = FakeSettingsRepository(trainingDays = emptyList()),
             workoutSummaryRepository = FakeWorkoutSummaryRepository(emptyList()),
             sessionRepository = FakeSessionRepository(),
         )
@@ -65,7 +67,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun loadRotatesUpcomingQueueAfterLastCompletedWorkout() = runTest {
+    fun loadBuildsSevenDayScheduleDrivenQueueAfterLastCompletedWorkout() = runTest {
         val workouts = listOf(
             workout(
                 id = 1L,
@@ -103,6 +105,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel(
             workoutRepository = FakeWorkoutRepository(workouts),
             exerciseRepository = FakeExerciseRepository(exercises),
+            settingsRepository = FakeSettingsRepository(trainingDays = listOf(1, 2, 3, 4, 5, 6, 7)),
             workoutSummaryRepository = FakeWorkoutSummaryRepository(summaries),
             sessionRepository = FakeSessionRepository(),
         )
@@ -112,7 +115,8 @@ class HomeViewModelTest {
 
         val state = viewModel.uiState.value
         assertTrue(!state.isLoading)
-        assertEquals(listOf("Workout B", "Workout C", "Workout A"), state.upcomingWorkouts.map { it.workoutName })
+        assertEquals(7, state.upcomingWorkouts.size)
+        assertEquals(listOf("Workout B", "Workout C", "Workout A"), state.upcomingWorkouts.take(3).map { it.workoutName })
         assertEquals(listOf("Squat", "Overhead Press"), state.upcomingWorkouts.first().exercisePreview)
         assertTrue(state.upcomingWorkouts.first().isNextUp)
     }
@@ -133,6 +137,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel(
             workoutRepository = workoutRepository,
             exerciseRepository = exerciseRepository,
+            settingsRepository = FakeSettingsRepository(trainingDays = listOf(1, 2, 3, 4, 5, 6, 7)),
             workoutSummaryRepository = FakeWorkoutSummaryRepository(emptyList()),
             sessionRepository = sessionRepository,
         )
@@ -153,6 +158,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel(
             workoutRepository = FakeWorkoutRepository(workouts = emptyList(), throwOnGetAll = true),
             exerciseRepository = FakeExerciseRepository(emptyList()),
+            settingsRepository = FakeSettingsRepository(trainingDays = listOf(1, 3, 5)),
             workoutSummaryRepository = FakeWorkoutSummaryRepository(emptyList()),
             sessionRepository = FakeSessionRepository(),
         )
@@ -169,6 +175,7 @@ class HomeViewModelTest {
     private fun createViewModel(
         workoutRepository: WorkoutRepository,
         exerciseRepository: ExerciseRepository,
+        settingsRepository: SettingsRepository,
         workoutSummaryRepository: WorkoutSummaryRepository,
         sessionRepository: SessionRepository,
     ): HomeViewModel {
@@ -181,6 +188,8 @@ class HomeViewModelTest {
         return HomeViewModel(
             workoutRepository = workoutRepository,
             exerciseRepository = exerciseRepository,
+            settingsRepository = settingsRepository,
+            sessionRepository = sessionRepository,
             workoutSummaryRepository = workoutSummaryRepository,
             startWorkoutSessionUseCase = useCase,
         )
@@ -237,6 +246,33 @@ private class FakeSessionRepository : SessionRepository {
     override suspend fun saveSession(session: WorkoutSession): Long = 1L
     override suspend fun saveSetResult(result: SetResult): Long = 1L
     override suspend fun getSetResults(sessionId: Long): List<SetResult> = emptyList()
+}
+
+private class FakeSettingsRepository(
+    trainingDays: List<Int>,
+) : SettingsRepository {
+    private val state = kotlinx.coroutines.flow.MutableStateFlow(
+        no.utgdev.getstrong.domain.model.AppSettings(
+            restDurationSeconds = 180,
+            loadIncrementKg = 2.5,
+            deloadPercent = 10,
+            defaultProgressionMode = "WEIGHT_ONLY",
+            trainingDays = trainingDays,
+        ),
+    )
+
+    override val settings: kotlinx.coroutines.flow.Flow<no.utgdev.getstrong.domain.model.AppSettings> = state
+
+    override suspend fun updateDefaults(
+        restDurationSeconds: Int,
+        loadIncrementKg: Double,
+        deloadPercent: Int,
+        defaultProgressionMode: String,
+    ) = Unit
+
+    override suspend fun updateTrainingDays(trainingDays: List<Int>) {
+        state.value = state.value.copy(trainingDays = trainingDays)
+    }
 }
 
 private class FakeWorkoutSummaryRepository(

@@ -7,4 +7,5 @@ object SettingsDefaults {
     const val LOAD_INCREMENT_KG = 2.5
     const val DELOAD_PERCENT = 10
     const val DEFAULT_PROGRESSION_MODE = ProgressionModeCode.WEIGHT_ONLY
+    val TRAINING_DAYS = listOf(1, 3, 5)
 }

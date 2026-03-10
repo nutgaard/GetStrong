@@ -12,6 +12,7 @@ data class HomeUiState(
 data class HomeUpcomingWorkoutUi(
     val workoutId: Long,
     val workoutName: String,
+    val scheduledDateIso: String,
     val scheduledLabel: String,
     val exercisePreview: List<String>,
     val additionalExerciseCount: Int,

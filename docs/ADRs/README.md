@@ -14,3 +14,4 @@ Current ADR set:
 - `ADR-006`: M1 navigation shell and route contracts
 - `ADR-007`: Room for structured records and DataStore for local settings
 - `ADR-008`: active-workout inline session and resume contract
+- `ADR-009`: Home schedule and Programs action contract

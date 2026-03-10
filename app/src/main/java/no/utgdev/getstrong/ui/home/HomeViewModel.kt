@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,6 +14,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import no.utgdev.getstrong.domain.model.Workout
 import no.utgdev.getstrong.domain.repository.ExerciseRepository
+import no.utgdev.getstrong.domain.repository.SessionRepository
+import no.utgdev.getstrong.domain.repository.SettingsRepository
 import no.utgdev.getstrong.domain.repository.WorkoutRepository
 import no.utgdev.getstrong.domain.repository.WorkoutSummaryRepository
 import no.utgdev.getstrong.domain.usecase.StartWorkoutSessionUseCase
@@ -21,6 +24,8 @@ import no.utgdev.getstrong.domain.usecase.StartWorkoutSessionUseCase
 class HomeViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
+    private val settingsRepository: SettingsRepository,
+    private val sessionRepository: SessionRepository,
     private val workoutSummaryRepository: WorkoutSummaryRepository,
     private val startWorkoutSessionUseCase: StartWorkoutSessionUseCase,
 ) : ViewModel() {
@@ -41,10 +46,15 @@ class HomeViewModel @Inject constructor(
                 val exerciseNames = exerciseRepository.getAll().associate { exercise ->
                     exercise.id to exercise.name
                 }
+                val trainingDays = settingsRepository.settings.first().trainingDays
+                val unfinishedSessionWorkoutId = sessionRepository.findUnfinishedSessionId()
+                    ?.let { sessionId -> sessionRepository.getActiveSessionState(sessionId)?.session?.workoutId }
                 val recentSummaries = workoutSummaryRepository.getAllSummaries()
                 val actionable = buildUpcomingWorkouts(
                     workouts = workouts,
                     exerciseNamesById = exerciseNames,
+                    trainingDays = trainingDays,
+                    unfinishedWorkoutId = unfinishedSessionWorkoutId,
                     lastCompletedWorkoutId = recentSummaries.maxByOrNull { it.completedAtEpochMs }?.workoutId,
                 )
                 _uiState.update {
@@ -72,9 +82,13 @@ class HomeViewModel @Inject constructor(
 
     suspend fun startQuickWorkout(): Long? {
         val nextWorkout = _uiState.value.upcomingWorkouts.firstOrNull() ?: return null
+        return startWorkout(nextWorkout.workoutId)
+    }
+
+    suspend fun startWorkout(workoutId: Long): Long? {
         _uiState.update { it.copy(isStartingWorkout = true, startErrorMessage = null) }
         return try {
-            val sessionId = startWorkoutSessionUseCase(nextWorkout.workoutId)
+            val sessionId = startWorkoutSessionUseCase(workoutId)
             if (sessionId == null) {
                 _uiState.update {
                     it.copy(
@@ -102,31 +116,44 @@ class HomeViewModel @Inject constructor(
 private fun buildUpcomingWorkouts(
     workouts: List<Workout>,
     exerciseNamesById: Map<Long, String>,
+    trainingDays: List<Int>,
+    unfinishedWorkoutId: Long?,
     lastCompletedWorkoutId: Long?,
 ): List<HomeUpcomingWorkoutUi> {
-    val readyWorkouts = workouts
-        .filter { workout -> workout.slots.isNotEmpty() }
-        .sortedBy { workout -> workout.id }
-    if (readyWorkouts.isEmpty()) return emptyList()
+    val readyWorkouts = workouts.filter { workout -> workout.slots.isNotEmpty() }
+    if (readyWorkouts.isEmpty() || trainingDays.isEmpty()) return emptyList()
 
-    val startIndex = lastCompletedWorkoutId
-        ?.let { completedId -> readyWorkouts.indexOfFirst { workout -> workout.id == completedId } }
-        ?.takeIf { it >= 0 }
-        ?.let { index -> (index + 1) % readyWorkouts.size }
-        ?: 0
+    val startIndex = when {
+        unfinishedWorkoutId != null -> readyWorkouts.indexOfFirst { workout -> workout.id == unfinishedWorkoutId }
+            .takeIf { it >= 0 } ?: 0
+        else -> lastCompletedWorkoutId
+            ?.let { completedId -> readyWorkouts.indexOfFirst { workout -> workout.id == completedId } }
+            ?.takeIf { it >= 0 }
+            ?.let { index -> (index + 1) % readyWorkouts.size }
+            ?: 0
+    }
 
     val ordered = readyWorkouts.rotateFrom(startIndex)
-    return ordered.take(3).mapIndexed { index, workout ->
+    val trainingDaysSet = trainingDays.toSet()
+    var scheduledWorkoutIndex = 0
+    val today = LocalDate.now()
+
+    return (0L..6L).mapNotNull { dayOffset ->
+        val date = today.plusDays(dayOffset)
+        if (!trainingDaysSet.contains(date.dayOfWeek.value)) return@mapNotNull null
+        val workout = ordered[scheduledWorkoutIndex % ordered.size]
+        scheduledWorkoutIndex += 1
         val slotNames = workout.slots
             .sortedBy { slot -> slot.position }
             .map { slot -> exerciseNamesById[slot.exerciseId] ?: "Exercise ${slot.exerciseId}" }
         HomeUpcomingWorkoutUi(
             workoutId = workout.id,
             workoutName = workout.name,
-            scheduledLabel = scheduledLabel(index),
+            scheduledDateIso = date.toString(),
+            scheduledLabel = scheduledLabel(date),
             exercisePreview = slotNames.take(3),
             additionalExerciseCount = (slotNames.size - 3).coerceAtLeast(0),
-            isNextUp = index == 0,
+            isNextUp = scheduledWorkoutIndex == 1,
         )
     }
 }
@@ -138,9 +165,9 @@ private fun List<Workout>.rotateFrom(startIndex: Int): List<Workout> =
         drop(startIndex) + take(startIndex)
     }
 
-private fun scheduledLabel(index: Int): String =
-    when (index) {
-        0 -> "Today"
-        1 -> "Tomorrow"
-        else -> LocalDate.now().plusDays(index.toLong()).format(DateTimeFormatter.ofPattern("EEE d MMM"))
+private fun scheduledLabel(date: LocalDate): String =
+    when (date) {
+        LocalDate.now() -> "Today"
+        LocalDate.now().plusDays(1) -> "Tomorrow"
+        else -> date.format(DateTimeFormatter.ofPattern("EEE d MMM"))
     }

@@ -35,6 +35,7 @@ import no.utgdev.getstrong.ui.common.InlineStateCard
 fun HomeScreen(
     uiState: HomeUiState,
     onQuickStart: () -> Unit,
+    onStartWorkout: (Long) -> Unit,
     onOpenPrograms: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -130,7 +131,7 @@ fun HomeScreen(
                     item {
                         InlineStateCard(
                             title = "No ready-to-start workouts yet.",
-                            body = "Add exercises to your saved workouts in Programs to populate the upcoming queue.",
+                            body = "Set training days in Programs and make sure your workouts have exercises.",
                             actionLabel = "Open Programs",
                             actionContentDescription = "Open Programs to add exercises to your saved workouts",
                             onAction = onOpenPrograms,
@@ -138,8 +139,11 @@ fun HomeScreen(
                     }
                 }
                 else -> {
-                    items(uiState.upcomingWorkouts, key = { it.workoutId }) { workout ->
-                        UpcomingWorkoutCard(workout = workout)
+                    items(uiState.upcomingWorkouts, key = { it.scheduledDateIso }) { workout ->
+                        UpcomingWorkoutCard(
+                            workout = workout,
+                            onClick = { onStartWorkout(workout.workoutId) },
+                        )
                     }
                 }
             }
@@ -150,13 +154,16 @@ fun HomeScreen(
 @Composable
 private fun UpcomingWorkoutCard(
     workout: HomeUpcomingWorkoutUi,
+    onClick: () -> Unit,
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clearAndSetSemantics {
+            .semantics {
                 contentDescription = buildUpcomingWorkoutCardDescription(workout)
-            },
+            }
+            .clearAndSetSemantics { contentDescription = buildUpcomingWorkoutCardDescription(workout) },
+        onClick = onClick,
     ) {
         Column(
             modifier = Modifier

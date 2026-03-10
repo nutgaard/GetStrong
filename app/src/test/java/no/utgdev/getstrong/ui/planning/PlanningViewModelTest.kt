@@ -18,6 +18,7 @@ import no.utgdev.getstrong.domain.model.WorkoutExerciseSlot
 import no.utgdev.getstrong.domain.model.WorkoutSession
 import no.utgdev.getstrong.domain.repository.ExerciseRepository
 import no.utgdev.getstrong.domain.repository.SessionRepository
+import no.utgdev.getstrong.domain.repository.SettingsRepository
 import no.utgdev.getstrong.domain.repository.WorkoutRepository
 import no.utgdev.getstrong.domain.session.WorkoutSessionEngine
 import no.utgdev.getstrong.domain.usecase.StartWorkoutSessionUseCase
@@ -107,8 +108,25 @@ class PlanningViewModelTest {
         assertEquals(workoutId, sessionRepository.startedWorkoutId)
     }
 
+    @Test
+    fun toggleTrainingDayPersistsSelection() = runTest {
+        val settingsRepository = PlanningFakeSettingsRepository(trainingDays = listOf(1, 3, 5))
+        val viewModel = createViewModel(
+            workoutRepository = PlanningFakeWorkoutRepository(returned = emptyList()),
+            settingsRepository = settingsRepository,
+        )
+        advanceUntilIdle()
+
+        viewModel.toggleTrainingDay(2)
+        advanceUntilIdle()
+
+        assertEquals(listOf(1, 2, 3, 5), viewModel.uiState.value.trainingDays)
+        assertEquals(listOf(1, 2, 3, 5), settingsRepository.savedTrainingDays)
+    }
+
     private fun createViewModel(
         workoutRepository: WorkoutRepository,
+        settingsRepository: SettingsRepository = PlanningFakeSettingsRepository(trainingDays = listOf(1, 3, 5)),
         sessionRepository: PlanningFakeSessionRepository = PlanningFakeSessionRepository(),
     ): PlanningViewModel {
         val useCase = StartWorkoutSessionUseCase(
@@ -119,6 +137,7 @@ class PlanningViewModelTest {
         )
         return PlanningViewModel(
             workoutRepository = workoutRepository,
+            settingsRepository = settingsRepository,
             startWorkoutSessionUseCase = useCase,
         )
     }
@@ -164,4 +183,33 @@ private class PlanningFakeSessionRepository : SessionRepository {
     override suspend fun saveSession(session: WorkoutSession): Long = 1L
     override suspend fun saveSetResult(result: SetResult): Long = 1L
     override suspend fun getSetResults(sessionId: Long): List<SetResult> = emptyList()
+}
+
+private class PlanningFakeSettingsRepository(
+    trainingDays: List<Int>,
+) : SettingsRepository {
+    private val state = kotlinx.coroutines.flow.MutableStateFlow(
+        no.utgdev.getstrong.domain.model.AppSettings(
+            restDurationSeconds = 180,
+            loadIncrementKg = 2.5,
+            deloadPercent = 10,
+            defaultProgressionMode = "WEIGHT_ONLY",
+            trainingDays = trainingDays,
+        ),
+    )
+    var savedTrainingDays: List<Int> = trainingDays
+
+    override val settings: kotlinx.coroutines.flow.Flow<no.utgdev.getstrong.domain.model.AppSettings> = state
+
+    override suspend fun updateDefaults(
+        restDurationSeconds: Int,
+        loadIncrementKg: Double,
+        deloadPercent: Int,
+        defaultProgressionMode: String,
+    ) = Unit
+
+    override suspend fun updateTrainingDays(trainingDays: List<Int>) {
+        savedTrainingDays = trainingDays
+        state.value = state.value.copy(trainingDays = trainingDays)
+    }
 }

@@ -28,6 +28,7 @@ Use a split local persistence model inside the offline-only boundary defined by 
 - default rest duration
 - default dumbbell or machine increment
 - default deload percent
+- recurring weekly training-day selection for Home/Programs schedule planning
 - other app-wide defaults that are preferences rather than business records
 
 Repository interfaces remain in `domain`, while storage technology details stay in `data`.

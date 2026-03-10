@@ -108,6 +108,14 @@ fun AppNavGraph(navController: NavHostController) {
                         }
                     }
                 },
+                onStartWorkout = { workoutId ->
+                    coroutineScope.launch {
+                        val sessionId = homeViewModel.startWorkout(workoutId)
+                        if (sessionId != null) {
+                            navController.navigate(AppDestination.ActiveWorkout.route(sessionId))
+                        }
+                    }
+                },
                 onOpenPrograms = { navController.navigate(AppDestination.Programs.route) },
                 onRetry = { homeViewModel.load() },
             )
@@ -178,6 +186,7 @@ fun AppNavGraph(navController: NavHostController) {
                         }
                     }
                 },
+                onToggleTrainingDay = planningViewModel::toggleTrainingDay,
             )
         }
 

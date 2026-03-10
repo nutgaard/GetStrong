@@ -11,4 +11,5 @@ interface SettingsRepository {
         deloadPercent: Int,
         defaultProgressionMode: String,
     )
+    suspend fun updateTrainingDays(trainingDays: List<Int>)
 }

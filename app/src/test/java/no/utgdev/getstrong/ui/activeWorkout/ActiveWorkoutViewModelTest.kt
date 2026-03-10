@@ -469,6 +469,8 @@ private class FakeSettingsRepository : SettingsRepository {
         deloadPercent: Int,
         defaultProgressionMode: String,
     ) = Unit
+
+    override suspend fun updateTrainingDays(trainingDays: List<Int>) = Unit
 }
 
 private class FakeWorkoutRepository(

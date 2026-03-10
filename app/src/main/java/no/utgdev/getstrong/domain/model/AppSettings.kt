@@ -5,4 +5,5 @@ data class AppSettings(
     val loadIncrementKg: Double,
     val deloadPercent: Int,
     val defaultProgressionMode: String,
+    val trainingDays: List<Int> = listOf(1, 3, 5),
 )

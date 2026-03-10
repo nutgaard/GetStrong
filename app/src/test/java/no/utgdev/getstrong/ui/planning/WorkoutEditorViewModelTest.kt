@@ -174,4 +174,8 @@ private class FakeSettingsRepository(
                 defaultProgressionMode = defaultProgressionMode,
             )
     }
+
+    override suspend fun updateTrainingDays(trainingDays: List<Int>) {
+        state.value = state.value.copy(trainingDays = trainingDays)
+    }
 }
