@@ -163,6 +163,7 @@ fun AppNavGraph(navController: NavHostController) {
                 onRemoveSlot = editorViewModel::removeSlot,
                 onMoveSlotUp = editorViewModel::moveSlotUp,
                 onMoveSlotDown = editorViewModel::moveSlotDown,
+                onUpdateSlotTargets = editorViewModel::updateSlotTargets,
                 onSave = {
                     coroutineScope.launch {
                         editorViewModel.save()
@@ -170,6 +171,7 @@ fun AppNavGraph(navController: NavHostController) {
                     }
                 },
                 onBack = { navController.popBackStack() },
+                onClearMessage = editorViewModel::clearMessage,
             )
         }
 

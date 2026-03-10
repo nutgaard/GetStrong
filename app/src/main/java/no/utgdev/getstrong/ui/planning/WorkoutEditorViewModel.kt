@@ -77,12 +77,16 @@ class WorkoutEditorViewModel @Inject constructor(
     }
 
     fun setName(name: String) {
-        _uiState.update { it.copy(name = name) }
+        _uiState.update { it.copy(name = name, message = null) }
     }
 
     fun addExercise(exerciseId: Long) {
         val current = _uiState.value
         val exercise = current.availableExercises.firstOrNull { it.id == exerciseId } ?: return
+        if (current.slots.any { it.exerciseId == exerciseId }) {
+            _uiState.update { it.copy(message = "${exercise.name} is already in this workout.") }
+            return
+        }
         val nextPosition = current.slots.size
         viewModelScope.launch {
             val settings = settingsRepository.settings.first()
@@ -109,14 +113,14 @@ class WorkoutEditorViewModel @Inject constructor(
                 lastProgressionSessionId = null,
                 restSecondsOverride = null,
             )
-            _uiState.update { it.copy(slots = it.slots + newSlot) }
+            _uiState.update { it.copy(slots = it.slots + newSlot, message = null) }
         }
     }
 
     fun removeSlot(slotId: Long, position: Int) {
         _uiState.update { state ->
             val filtered = state.slots.filterNot { it.id == slotId && it.position == position }
-            state.copy(slots = filtered.reindexPositions())
+            state.copy(slots = filtered.reindexPositions(), message = null)
         }
     }
 
@@ -130,7 +134,7 @@ class WorkoutEditorViewModel @Inject constructor(
             val temp = mutable[current]
             mutable[current] = mutable[previous]
             mutable[previous] = temp
-            state.copy(slots = mutable.reindexPositions())
+            state.copy(slots = mutable.reindexPositions(), message = null)
         }
     }
 
@@ -144,8 +148,32 @@ class WorkoutEditorViewModel @Inject constructor(
             val temp = mutable[current]
             mutable[current] = mutable[next]
             mutable[next] = temp
-            state.copy(slots = mutable.reindexPositions())
+            state.copy(slots = mutable.reindexPositions(), message = null)
         }
+    }
+
+    fun updateSlotTargets(position: Int, targetSets: Int, targetReps: Int) {
+        val normalizedSets = targetSets.coerceAtLeast(1)
+        val normalizedReps = targetReps.coerceAtLeast(1)
+        _uiState.update { state ->
+            val updated = state.slots.map { slot ->
+                if (slot.position != position) {
+                    slot
+                } else {
+                    slot.copy(
+                        targetSets = normalizedSets,
+                        targetReps = normalizedReps,
+                        repRangeMin = normalizedReps,
+                        repRangeMax = normalizedReps,
+                    )
+                }
+            }
+            state.copy(slots = updated, message = null)
+        }
+    }
+
+    fun clearMessage() {
+        _uiState.update { it.copy(message = null) }
     }
 
     suspend fun save(): Long {

@@ -8,6 +8,7 @@ data class WorkoutEditorUiState(
     val availableExercises: List<Exercise> = emptyList(),
     val slots: List<WorkoutSlotDraft> = emptyList(),
     val isLoaded: Boolean = false,
+    val message: String? = null,
 )
 
 data class WorkoutSlotDraft(

@@ -20,6 +20,7 @@ import no.utgdev.getstrong.domain.repository.SettingsRepository
 import no.utgdev.getstrong.domain.repository.WorkoutRepository
 import no.utgdev.getstrong.domain.usecase.WorkoutSlotDefaultsResolver
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -63,6 +64,68 @@ class WorkoutEditorViewModelTest {
         assertEquals(ProgressionModeCode.REPS_ONLY, slot.progressionMode)
         assertEquals(1.25, slot.incrementKg, 0.0)
         assertEquals(12, slot.deloadPercent)
+    }
+
+    @Test
+    fun addExercisePreventsDuplicateExerciseInSameWorkout() = runTest {
+        val exerciseRepository = FakeExerciseRepository()
+        val workoutRepository = FakeWorkoutRepository()
+        val settingsRepository = FakeSettingsRepository(
+            AppSettings(
+                restDurationSeconds = 180,
+                loadIncrementKg = 2.5,
+                deloadPercent = 10,
+                defaultProgressionMode = ProgressionModeCode.WEIGHT_ONLY,
+            ),
+        )
+        val viewModel = WorkoutEditorViewModel(
+            savedStateHandle = SavedStateHandle(),
+            workoutRepository = workoutRepository,
+            exerciseRepository = exerciseRepository,
+            settingsRepository = settingsRepository,
+            workoutSlotDefaultsResolver = WorkoutSlotDefaultsResolver(),
+        )
+        advanceUntilIdle()
+
+        viewModel.addExercise(1001L)
+        advanceUntilIdle()
+        viewModel.addExercise(1001L)
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.value.slots.size)
+        assertNotNull(viewModel.uiState.value.message)
+    }
+
+    @Test
+    fun updateSlotTargetsUpdatesSetsAndReps() = runTest {
+        val exerciseRepository = FakeExerciseRepository()
+        val workoutRepository = FakeWorkoutRepository()
+        val settingsRepository = FakeSettingsRepository(
+            AppSettings(
+                restDurationSeconds = 180,
+                loadIncrementKg = 2.5,
+                deloadPercent = 10,
+                defaultProgressionMode = ProgressionModeCode.WEIGHT_ONLY,
+            ),
+        )
+        val viewModel = WorkoutEditorViewModel(
+            savedStateHandle = SavedStateHandle(),
+            workoutRepository = workoutRepository,
+            exerciseRepository = exerciseRepository,
+            settingsRepository = settingsRepository,
+            workoutSlotDefaultsResolver = WorkoutSlotDefaultsResolver(),
+        )
+        advanceUntilIdle()
+
+        viewModel.addExercise(1001L)
+        advanceUntilIdle()
+        viewModel.updateSlotTargets(position = 0, targetSets = 3, targetReps = 8)
+
+        val slot = viewModel.uiState.value.slots.single()
+        assertEquals(3, slot.targetSets)
+        assertEquals(8, slot.targetReps)
+        assertEquals(8, slot.repRangeMin)
+        assertEquals(8, slot.repRangeMax)
     }
 }
 

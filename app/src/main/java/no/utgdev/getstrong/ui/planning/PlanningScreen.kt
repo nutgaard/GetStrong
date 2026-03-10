@@ -1,19 +1,30 @@
 package no.utgdev.getstrong.ui.planning
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -29,68 +40,69 @@ fun PlanningScreen(
     onStartWorkout: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        Text(
-            text = "Programs",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.semantics { heading() },
-        )
-        Button(
-            onClick = onCreateWorkout,
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        floatingActionButton = {
+            FloatingActionButton(onClick = onCreateWorkout) {
+                Text("Add")
+            }
+        },
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 54.dp)
-                .semantics { contentDescription = "Create workout" },
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Create Workout")
-        }
-
-        when {
-            uiState.isLoading -> {
-                Text("Loading workouts...")
-            }
-            uiState.errorMessage != null -> {
-                Text(
-                    text = uiState.errorMessage,
-                    color = MaterialTheme.colorScheme.error,
-                )
-                Button(
-                    onClick = onRetryLoad,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp),
-                ) {
-                    Text("Retry")
+            Text(
+                text = "Programs",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+            when {
+                uiState.isLoading -> {
+                    Text("Loading workouts...")
                 }
-            }
-            uiState.workouts.isEmpty() -> {
-                Text(
-                    text = "No workouts yet. Create one to get started.",
-                    modifier = Modifier.semantics { contentDescription = "No workouts yet. Create one to get started." },
-                )
-                Button(
-                    onClick = onCreateWorkout,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp),
-                ) {
-                    Text("Create Workout")
-                }
-            }
-            else -> {
-                uiState.workouts.forEach { workout ->
-                    WorkoutRow(
-                        workout = workout,
-                        onEditWorkout = onEditWorkout,
-                        onDeleteWorkout = onDeleteWorkout,
-                        onStartWorkout = onStartWorkout,
+                uiState.errorMessage != null -> {
+                    Text(
+                        text = uiState.errorMessage,
+                        color = MaterialTheme.colorScheme.error,
                     )
+                    Button(
+                        onClick = onRetryLoad,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp),
+                    ) {
+                        Text("Retry")
+                    }
+                }
+                uiState.workouts.isEmpty() -> {
+                    Text("No workouts yet. Add one to get started.")
+                    Button(
+                        onClick = onCreateWorkout,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp),
+                    ) {
+                        Text("Create Workout")
+                    }
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(uiState.workouts, key = { it.id }) { workout ->
+                            WorkoutRow(
+                                workout = workout,
+                                onEditWorkout = onEditWorkout,
+                                onDeleteWorkout = onDeleteWorkout,
+                                onStartWorkout = onStartWorkout,
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -104,41 +116,57 @@ private fun WorkoutRow(
     onDeleteWorkout: (Long) -> Unit,
     onStartWorkout: (Long) -> Unit,
 ) {
-    Column(
+    var menuExpanded by remember { mutableStateOf(false) }
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .semantics { contentDescription = "Workout ${workout.name}. ${workout.slots.size} exercises." },
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .clickable { onEditWorkout(workout.id) },
     ) {
-        Text(text = workout.name, style = MaterialTheme.typography.titleMedium)
-        Text(text = "Exercises: ${workout.slots.size}")
-        Button(
-            onClick = { onStartWorkout(workout.id) },
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 52.dp)
-                .semantics { contentDescription = "Start workout ${workout.name}" },
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text("Start Workout")
-        }
-        Button(
-            onClick = { onEditWorkout(workout.id) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp)
-                .semantics { contentDescription = "Edit workout ${workout.name}" },
-        ) {
-            Text("Edit Workout")
-        }
-        Button(
-            onClick = { onDeleteWorkout(workout.id) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp)
-                .semantics { contentDescription = "Delete workout ${workout.name}" },
-        ) {
-            Text("Delete Workout")
+            Text(text = workout.name, style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = "${workout.slots.size} exercises",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.End,
+            ) {
+                TextButton(onClick = { menuExpanded = true }) {
+                    Text("Actions")
+                }
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Start workout") },
+                        onClick = {
+                            menuExpanded = false
+                            onStartWorkout(workout.id)
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Edit workout") },
+                        onClick = {
+                            menuExpanded = false
+                            onEditWorkout(workout.id)
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Delete workout") },
+                        onClick = {
+                            menuExpanded = false
+                            onDeleteWorkout(workout.id)
+                        },
+                    )
+                }
+            }
         }
     }
 }
