@@ -54,6 +54,17 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - Empty and error states stay inside the existing screen shell instead of replacing it with standalone fallback pages; top bars, tabs, bottom navigation, and primary screen headings remain intact where they are part of the normal flow.
 - Empty states use contextual messaging with a clear next action, while recoverable error states use user-readable copy plus a direct retry or recovery action.
 
+## Accessibility And TalkBack
+
+- Accessibility work for the current bounded pass is limited to `Home`, `Programs`, `Active Workout`, and `Summary`.
+- Screen structure should remain understandable through spoken navigation alone: top app bar first, then the primary screen heading or status, then the main content and primary action.
+- Important meaning must not rely on color alone; `warmup` versus `work`, completion state, and destructive/contextual actions need readable text or spoken labels in addition to visual styling.
+- Primary buttons, floating actions, overflow/context actions, and retry/recovery actions need explicit accessible names that describe their result rather than generic labels alone.
+- Repeated cards or rows should expose a useful spoken summary before the user activates them, so TalkBack users can identify the workout or result without opening each item.
+- For active workout specifically, the current set, section switcher, set-circle controls, extra-set affordance, contextual set actions, and finish action must all be reachable in a stable order without trapping focus in the rest overlay or transient dialogs.
+- Set controls in active workout should announce enough state to act safely without sight: exercise, warmup/work section, set order, target reps, achieved reps if any, and whether the set is complete.
+- Summary rows should announce warmup/work distinction, exercise name, target reps, achieved reps, and recorded load so the post-workout review is not dependent on card color or visual grouping.
+
 ## Navigation Relationships
 
 - `start_screen.png` leads into the active workout flow via `Start Workout`.

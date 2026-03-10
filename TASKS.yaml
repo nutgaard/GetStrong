@@ -445,14 +445,21 @@ milestones:
         description: Improve accessibility labels, focus order, and contrast on Home, Programs, Active Workout, and Summary screens.
         priority: P2
         status: done
-        ux_status: needs_rework
+        ux_status: verified
         ux_references:
-          - "UX.md#Overall Structure"
+          - "UX.md -> start_screen.png"
+          - "UX.md -> workout_overview.png"
+          - "UX.md -> workout_in_progress_0.png"
+          - "UX.md#Navigation Relationships"
+          - "UX.md#Accessibility And TalkBack"
           - "UX.md#Repeated Interaction Patterns"
         acceptance_criteria:
-          - Core controls on the four key screens have meaningful content descriptions for TalkBack.
-          - Focus order allows completing a workout via keyboard/TalkBack without getting stuck.
-          - Color and typography choices meet basic contrast/readability expectations.
+          - Home exposes meaningful spoken labels for the upcoming-workout cards, the quick-start action, and empty/error recovery actions.
+          - Programs exposes meaningful spoken labels for workout rows plus their create/start/edit/delete actions without relying on ambiguous generic action text alone.
+          - Active Workout exposes meaningful spoken labels and state for the current set, section switcher, set controls, extra-set affordance, contextual set actions, and finish action so a user can complete a session with TalkBack or keyboard navigation without getting stuck.
+          - Summary exposes meaningful spoken labels for the dismiss action, totals, and per-set result rows, including warmup versus work-set distinction without relying on color alone.
+          - Focus order across the four in-scope screens follows the visible task flow and returns predictably after transient menus or dialogs.
+          - Color and typography choices meet basic contrast/readability expectations on the referenced screens.
           - QA can evaluate accessibility on the referenced screens and interaction patterns against the listed ux_references.
       - id: T24
         title: Error and empty state UX
