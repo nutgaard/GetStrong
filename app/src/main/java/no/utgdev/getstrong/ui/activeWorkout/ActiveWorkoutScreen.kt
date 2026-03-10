@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -23,12 +24,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -50,9 +51,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.sp
 import no.utgdev.getstrong.domain.model.SessionPlannedSet
 import no.utgdev.getstrong.domain.model.SessionSetType
 
@@ -98,23 +100,23 @@ fun ActiveWorkoutScreen(
     }
     val visibleGroups = if (selectedSection == ActiveWorkoutSection.WORKOUT) workoutGroups else warmupGroups
     val completedCount = uiState.plannedSets.count { it.isCompleted }
+    val currentExerciseName = currentSet?.let { uiState.exerciseNamesById[it.exerciseId] ?: "Exercise ${it.exerciseId}" }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Active Workout") },
+                title = { Text("Workout") },
                 navigationIcon = {
                     TextButton(onClick = onExit) {
                         Text("Back")
                     }
                 },
                 actions = {
-                    TextButton(
-                        onClick = onFinishSession,
-                        enabled = uiState.isCompleted,
-                    ) {
-                        Text("Finish")
+                    if (uiState.isCompleted) {
+                        TextButton(onClick = onFinishSession) {
+                            Text("Finish")
+                        }
                     }
                 },
             )
@@ -136,17 +138,12 @@ fun ActiveWorkoutScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item {
-                    SessionStatsCard(
+                    CurrentSetCard(
+                        currentSet = currentSet,
+                        exerciseName = currentExerciseName,
                         elapsedSeconds = uiState.elapsedSeconds,
                         completedCount = completedCount,
                         totalCount = uiState.plannedSets.size,
-                    )
-                }
-
-                item {
-                    CurrentSetCard(
-                        currentSet = currentSet,
-                        exerciseName = currentSet?.let { uiState.exerciseNamesById[it.exerciseId] ?: "Exercise ${it.exerciseId}" },
                         isHighlighted = currentSet?.id == uiState.highlightedSetId,
                         onToggleSet = { setId ->
                             onToggleSet(setId)
@@ -157,22 +154,27 @@ fun ActiveWorkoutScreen(
                 }
 
                 item {
-                    PrimaryTabRow(selectedTabIndex = selectedSection.ordinal) {
-                        ActiveWorkoutSection.entries.forEach { section ->
-                            Tab(
-                                selected = selectedSection == section,
-                                onClick = { selectedSection = section },
-                                text = { Text(section.title) },
-                            )
-                        }
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SectionSelector(
+                            selectedSection = selectedSection,
+                            onSectionSelected = { selectedSection = it },
+                        )
+                        Text(
+                            text = "Long-press any set for reps, weight, reset, or extra-set actions.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
 
-                item {
-                    Text(
-                        text = "Tap a set to complete or decrement. Long-press for reps, weight, reset, and extra-set actions.",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+                if (currentExerciseName != null) {
+                    item {
+                        Text(
+                            text = currentExerciseName,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.semantics { heading() },
+                        )
+                    }
                 }
 
                 if (visibleGroups.isEmpty()) {
@@ -262,56 +264,70 @@ fun ActiveWorkoutScreen(
 }
 
 @Composable
-private fun SessionStatsCard(
-    elapsedSeconds: Long,
-    completedCount: Int,
-    totalCount: Int,
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column {
-                Text("Elapsed", style = MaterialTheme.typography.labelMedium)
-                Text(formatElapsed(elapsedSeconds), style = MaterialTheme.typography.titleLarge)
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text("Completed", style = MaterialTheme.typography.labelMedium)
-                Text("$completedCount / $totalCount", style = MaterialTheme.typography.titleLarge)
-            }
-        }
-    }
-}
-
-@Composable
 private fun CurrentSetCard(
     currentSet: SessionPlannedSet?,
     exerciseName: String?,
+    elapsedSeconds: Long,
+    completedCount: Int,
+    totalCount: Int,
     isHighlighted: Boolean,
     onToggleSet: (Long) -> Unit,
     onOpenActions: (Long) -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (currentSet == null) {
+                MaterialTheme.colorScheme.surface
+            } else {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+            },
+        ),
     ) {
-        if (currentSet == null) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text("Current Set", style = MaterialTheme.typography.labelLarge)
-                Text("All planned sets are complete.", style = MaterialTheme.typography.titleMedium)
-            }
-        } else {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .semantics { heading() },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = currentSet?.let(::currentSetTitle) ?: "Workout Complete",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = currentSet?.let { "Focus on the next circle." } ?: "All planned sets are complete.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    SupportPill(label = "Time", value = formatElapsed(elapsedSeconds))
+                    SupportPill(label = "Done", value = "$completedCount/$totalCount")
+                }
+            }
+
+            if (currentSet == null) {
+                Text(
+                    text = "Use Finish when you're ready to review the summary.",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                return@Card
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -319,22 +335,27 @@ private fun CurrentSetCard(
                     set = currentSet,
                     isCurrent = true,
                     isHighlighted = isHighlighted,
+                    diameter = 78.dp,
+                    showCaption = false,
                     onClick = { onToggleSet(currentSet.id) },
                     onLongClick = { onOpenActions(currentSet.id) },
                 )
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Text(currentSetTitle(currentSet), style = MaterialTheme.typography.labelLarge)
                     Text(
                         text = exerciseName ?: "Exercise ${currentSet.exerciseId}",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.semantics { heading() },
+                        style = MaterialTheme.typography.headlineSmall,
                     )
                     Text(
                         text = buildSetDetailText(currentSet),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = "Tap once to complete, tap again to decrement.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -361,28 +382,39 @@ private fun ExerciseSetGroupCard(
     onOpenActions: (Long) -> Unit,
     onAddExtraSet: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    val containsCurrentSet = group.sets.any { it.id == currentSetId }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (containsCurrentSet) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.18f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
+        ),
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top,
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(group.exerciseName, style = MaterialTheme.typography.titleMedium)
-                    Text(group.prescriptionSummary, style = MaterialTheme.typography.bodySmall)
-                }
-                if (group.sets.any { it.id == currentSetId }) {
                     Text(
-                        text = "Current",
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelMedium,
+                        text = group.prescriptionSummary,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+                if (containsCurrentSet) {
+                    SupportPill(label = "Current", value = "Now")
                 }
             }
 
@@ -390,7 +422,7 @@ private fun ExerciseSetGroupCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 group.sets.forEach { set ->
@@ -398,6 +430,7 @@ private fun ExerciseSetGroupCard(
                         set = set,
                         isCurrent = currentSetId == set.id,
                         isHighlighted = highlightedSetId == set.id,
+                        diameter = 62.dp,
                         onClick = { onToggleSet(set.id) },
                         onLongClick = { onOpenActions(set.id) },
                     )
@@ -414,6 +447,8 @@ private fun SetCircle(
     set: SessionPlannedSet,
     isCurrent: Boolean,
     isHighlighted: Boolean,
+    diameter: Dp = 58.dp,
+    showCaption: Boolean = true,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
@@ -436,6 +471,7 @@ private fun SetCircle(
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
     val displayedReps = if (achievedReps > 0) achievedReps else set.targetReps
+    val circleTextSize = if (diameter >= 72.dp) 28.sp else 20.sp
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -458,10 +494,10 @@ private fun SetCircle(
     ) {
         Box(
             modifier = Modifier
-                .size(58.dp)
+                .size(diameter)
                 .clip(CircleShape)
                 .background(fillColor)
-                .border(width = 2.dp, color = borderColor, shape = CircleShape)
+                .border(width = if (isCurrent) 3.dp else 2.dp, color = borderColor, shape = CircleShape)
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick,
@@ -472,14 +508,17 @@ private fun SetCircle(
                 text = displayedReps.toString(),
                 color = labelColor,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 20.sp,
+                fontSize = circleTextSize,
             )
         }
-        Text(
-            text = if (set.isExtra) "Extra" else "#${set.setOrder + 1}",
-            style = MaterialTheme.typography.labelSmall,
-            textAlign = TextAlign.Center,
-        )
+        if (showCaption) {
+            Text(
+                text = if (set.isExtra) "Extra" else "#${set.setOrder + 1}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 
@@ -491,7 +530,7 @@ private fun AddSetCircle(onClick: () -> Unit) {
     ) {
         Box(
             modifier = Modifier
-                .size(58.dp)
+                .size(54.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surface)
                 .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
@@ -508,7 +547,11 @@ private fun AddSetCircle(onClick: () -> Unit) {
                 fontSize = 24.sp,
             )
         }
-        Text("Add", style = MaterialTheme.typography.labelSmall)
+        Text(
+            text = "Add",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -518,28 +561,81 @@ private fun RestTimerOverlay(
     isRestOver: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .widthIn(max = 360.dp),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = if (isRestOver) "Rest complete" else "Rest timer",
+                    text = if (isRestOver) "Rest complete" else "Rest",
                     style = MaterialTheme.typography.labelLarge,
                 )
                 Text(
-                    text = if (isRestOver) "Start your next work set." else "Stay on this screen while the countdown runs.",
-                    style = MaterialTheme.typography.bodySmall,
+                    text = if (isRestOver) "Start the next set." else "Countdown running in-session.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
                 text = if (isRestOver) "Go" else "${remainingSeconds}s",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionSelector(
+    selectedSection: ActiveWorkoutSection,
+    onSectionSelected: (ActiveWorkoutSection) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        ActiveWorkoutSection.entries.forEach { section ->
+            FilterChip(
+                selected = selectedSection == section,
+                onClick = { onSectionSelected(section) },
+                label = { Text(section.title) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SupportPill(
+    label: String,
+    value: String,
+) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
             )
         }
     }
