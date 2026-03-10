@@ -486,7 +486,7 @@ milestones:
         title: Keep UX and architecture documentation in sync
         description: Update UX.md, product-description.md, and relevant ADRs whenever a screen contract or navigation expectation changes.
         priority: P1
-        status: todo
+        status: done
         acceptance_criteria:
           - UX.md remains the canonical UX summary for the current screenshot pack and implemented screen contracts.
           - product-description.md and any relevant ADRs are updated when UX decisions materially change navigation, screen ownership, or interaction patterns.
