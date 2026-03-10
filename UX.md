@@ -5,6 +5,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 ## Overall Structure
 
 - The top-level app shell uses a bottom navigation bar with five destinations: `Home`, `Programs`, `History`, `Progress`, and `Settings`.
+- Top-level destinations use consistent production screen chrome: a stable title/top-bar treatment paired with the shared bottom navigation shell, without dev/demo utility actions mixed into the screen content.
 - The top-level screens use nested tabs to expose sub-areas instead of opening each sub-view as a separate top-level destination.
 - The active workout flow is a focused full-screen mode and does not show the bottom navigation bar.
 - Completing an active workout leads into a focused post-workout summary flow before returning to the top-level shell.
@@ -37,6 +38,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 
 - Red is the primary action/completion color across the reference pack.
 - Top-level areas use a bottom navigation bar; nested content uses tabs near the top of the screen.
+- Top-level shell screens should feel like siblings in the same app shell rather than one-off layouts; title treatment, spacing rhythm, and entry-point chrome should stay consistent across `Home`, `Programs`, `History`, `Progress`, and `Settings`.
 - Ordering uses six-dot drag handles on the left side of list rows.
 - Row-specific destructive or contextual actions use three-dot overflow menus on the right side.
 - Creation actions use a red floating action button.

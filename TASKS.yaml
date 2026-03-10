@@ -402,8 +402,8 @@ milestones:
         title: Standardize navigation and remove dev UI
         description: Make the documented navigation shell and production-only entry points part of the core implementation baseline.
         priority: P1
-        status: todo
-        ux_status: planned
+        status: done
+        ux_status: verified
         ux_references:
           - "UX.md#Overall Structure"
           - "UX.md#Top-Level Navigation"
