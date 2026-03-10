@@ -457,7 +457,7 @@ milestones:
         description: Add clear empty and error states for workouts, exercise catalog, and history lists.
         priority: P2
         status: done
-        ux_status: needs_rework
+        ux_status: verified
         ux_references:
           - "UX.md -> start_screen.png"
           - "UX.md -> workout_overview.png"

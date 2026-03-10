@@ -48,6 +48,8 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - The reference pack does not surface history, charts, or settings content during active workouts; the session screen stays focused on execution and short supporting status only.
 - One-handed use favors keeping the current set, the next actionable set circles, and the extra-set affordance within easy thumb reach without requiring precise top-of-screen targets during normal workout progression.
 - Secondary actions may still use long-press or contextual surfaces, but primary workout progression should not depend on repeated travel to distant header controls.
+- Empty and error states stay inside the existing screen shell instead of replacing it with standalone fallback pages; top bars, tabs, bottom navigation, and primary screen headings remain intact where they are part of the normal flow.
+- Empty states use contextual messaging with a clear next action, while recoverable error states use user-readable copy plus a direct retry or recovery action.
 
 ## Navigation Relationships
 
@@ -71,3 +73,4 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - The Home screen clearly implies scheduled upcoming workouts, but the scheduling rules behind the `A/B` alternation are not described in the current notes.
 - No dedicated summary mock is currently provided, so the post-workout summary content is driven by the task contract: per-set results, warmup/work distinction, total time, and total volume.
 - The reference pack does not show any additional top-level or nested-tab Progress states beyond the overview list and per-exercise chart drill-down.
+- The reference pack only shows populated states for `Home`, `Programs`, and `History`, so empty/error-state behavior is inferred from the task contract and should preserve those same shells rather than introducing separate fallback layouts.
