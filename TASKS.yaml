@@ -174,8 +174,8 @@ milestones:
         title: Set completion interaction and UI
         description: Design and implement set completion UI that supports partial reps and contextual actions, following the active workout mockup.
         priority: P0
-        status: todo
-        ux_status: planned
+        status: done
+        ux_status: verified
         ux_references:
           - "UX.md -> workout_in_progress_0.png"
           - "UX.md -> workout_in_progress_1.png"
