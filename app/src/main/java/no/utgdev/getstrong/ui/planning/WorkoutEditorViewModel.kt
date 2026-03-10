@@ -31,8 +31,8 @@ class WorkoutEditorViewModel @Inject constructor(
     val uiState: StateFlow<WorkoutEditorUiState> = _uiState.asStateFlow()
 
     private val routeWorkoutId: Long? =
-        savedStateHandle.get<String>(AppDestination.PlanningEditor.WORKOUT_ID_ARG)
-            ?.takeUnless { it == AppDestination.PlanningEditor.NEW_WORKOUT_TOKEN }
+        savedStateHandle.get<String>(AppDestination.WorkoutEditor.WORKOUT_ID_ARG)
+            ?.takeUnless { it == AppDestination.WorkoutEditor.NEW_WORKOUT_TOKEN }
             ?.toLongOrNull()
 
     init {

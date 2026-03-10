@@ -26,7 +26,6 @@ fun SettingsScreen(
     onDeloadPercentChanged: (String) -> Unit,
     onProgressionModeChanged: (String) -> Unit,
     onSave: () -> Unit,
-    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -93,14 +92,6 @@ fun SettingsScreen(
                 .heightIn(min = 52.dp),
         ) {
             Text("Save Settings")
-        }
-        Button(
-            onClick = onBack,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 52.dp),
-        ) {
-            Text("Back")
         }
     }
 }

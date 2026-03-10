@@ -10,7 +10,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -23,7 +22,6 @@ import no.utgdev.getstrong.domain.model.Workout
 @Composable
 fun PlanningScreen(
     uiState: PlanningUiState,
-    onBack: () -> Unit,
     onCreateWorkout: () -> Unit,
     onRetryLoad: () -> Unit,
     onEditWorkout: (Long) -> Unit,
@@ -31,91 +29,68 @@ fun PlanningScreen(
     onStartWorkout: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        bottomBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Text(
+            text = "Programs",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.semantics { heading() },
+        )
+        Button(
+            onClick = onCreateWorkout,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 54.dp)
+                .semantics { contentDescription = "Create workout" },
+        ) {
+            Text("Create Workout")
+        }
+
+        when {
+            uiState.isLoading -> {
+                Text("Loading workouts...")
+            }
+            uiState.errorMessage != null -> {
+                Text(
+                    text = uiState.errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                )
+                Button(
+                    onClick = onRetryLoad,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp),
+                ) {
+                    Text("Retry")
+                }
+            }
+            uiState.workouts.isEmpty() -> {
+                Text(
+                    text = "No workouts yet. Create one to get started.",
+                    modifier = Modifier.semantics { contentDescription = "No workouts yet. Create one to get started." },
+                )
                 Button(
                     onClick = onCreateWorkout,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 54.dp)
-                        .semantics { contentDescription = "Create workout" },
+                        .heightIn(min = 48.dp),
                 ) {
                     Text("Create Workout")
                 }
-                Button(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 52.dp)
-                        .semantics { contentDescription = "Back to home" },
-                ) {
-                    Text("Back to Home")
-                }
             }
-        },
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Text(
-                text = "Workout Planning",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.semantics { heading() },
-            )
-
-            when {
-                uiState.isLoading -> {
-                    Text("Loading workouts...")
-                }
-                uiState.errorMessage != null -> {
-                    Text(
-                        text = uiState.errorMessage,
-                        color = MaterialTheme.colorScheme.error,
+            else -> {
+                uiState.workouts.forEach { workout ->
+                    WorkoutRow(
+                        workout = workout,
+                        onEditWorkout = onEditWorkout,
+                        onDeleteWorkout = onDeleteWorkout,
+                        onStartWorkout = onStartWorkout,
                     )
-                    Button(
-                        onClick = onRetryLoad,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp),
-                    ) {
-                        Text("Retry")
-                    }
-                }
-                uiState.workouts.isEmpty() -> {
-                    Text(
-                        text = "No workouts yet. Create one to get started.",
-                        modifier = Modifier.semantics { contentDescription = "No workouts yet. Create one to get started." },
-                    )
-                    Button(
-                        onClick = onCreateWorkout,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp),
-                    ) {
-                        Text("Create Workout")
-                    }
-                }
-                else -> {
-                    uiState.workouts.forEach { workout ->
-                        WorkoutRow(
-                            workout = workout,
-                            onEditWorkout = onEditWorkout,
-                            onDeleteWorkout = onDeleteWorkout,
-                            onStartWorkout = onStartWorkout,
-                        )
-                    }
                 }
             }
         }

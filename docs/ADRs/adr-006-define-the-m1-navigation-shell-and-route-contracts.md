@@ -22,6 +22,8 @@ Top-level shell destinations keep the persistent bottom navigation visible:
 - `progress`: progression overview entry point
 - `settings`: app settings and training defaults
 
+The top-level shell is production-only. Dev/demo/debug actions such as persistence demos, catalog loaders, or temporary implementation shortcuts must not appear as shell destinations or as persistent actions on `home` and other top-level screens.
+
 Focused child flows are separate destinations and do not share the persistent bottom navigation chrome:
 
 - `workoutEditor/{workoutId?}`: create/edit a workout and reorder its exercises
@@ -35,6 +37,12 @@ Screen-internal tab rows shown in the screenshot pack are presentation structure
 - promote a tab/section to its own child route only when it needs stable deep-linking, independent back-stack behavior, or materially different route arguments
 
 Navigation remains part of `ui/navigation`. Route arguments must be stable identifiers such as `workoutId`, `exerciseId`, and `sessionId`. Do not pass Room entities, domain aggregates, or mutable state through routes.
+
+Back/up behavior follows standard Android rules:
+
+- top-level shell destinations are switched by bottom navigation, not by in-content back buttons
+- moving between top-level destinations should preserve normal shell behavior rather than building ad-hoc screen-to-screen back chains
+- focused child flows provide top app bar back/up navigation that pops back to the previously visible shell destination or parent screen
 
 The `activeWorkout` flow remains intentionally full-screen. It may expose local `Workout` and `Warmup` sections, but it should not share persistent navigation chrome with the primary browse destinations.
 
