@@ -28,7 +28,7 @@ Focused child flows are separate destinations and do not share the persistent bo
 
 - `workoutEditor/{workoutId?}`: create/edit a workout and reorder its exercises
 - `activeWorkout/{sessionId}`: in-session workout execution
-- `summary/{sessionId}`: completed workout summary
+- `summary/{sessionId}`: terminal post-session summary and dismissal flow
 
 Screen-internal tab rows shown in the screenshot pack are presentation structure first, not automatically separate app routes. The current contract is:
 
@@ -51,13 +51,20 @@ For the current active-workout interaction scope, only the session-execution pat
 - per-set secondary actions such as setting reps, setting weight, clearing/resetting a set, or removing an extra set are contextual UI attached to the active-workout screen rather than separate top-level navigation
 - rest timing feedback stays as a transient bottom overlay within `activeWorkout`; it must not replace the session screen with a blocking timer destination or modal flow
 
+For the current post-workout summary scope, only the terminal review path is committed:
+
+- `summary` is entered from `activeWorkout` after a session is completed and is not exposed as a top-level destination
+- `summary` remains a focused child flow without bottom-navigation chrome
+- `summary` surfaces total time, total volume, and per-set results with warmup versus work-set distinction
+- the primary dismiss action exits to the top-level app shell rather than returning the user to a completed active-workout session
+
 Navigation remains part of `ui/navigation`. Route arguments must be stable identifiers such as `workoutId` and `sessionId`. Do not pass Room entities, domain aggregates, or mutable state through routes.
 
 Back/up behavior follows standard Android rules:
 
 - top-level shell destinations are switched by bottom navigation, not by in-content back buttons
 - moving between top-level destinations should preserve normal shell behavior rather than building ad-hoc screen-to-screen back chains
-- focused child flows provide top app bar back/up navigation that pops back to the previously visible shell destination or parent screen
+- focused child flows provide top app bar back/up navigation that pops back to the previously visible shell destination or parent screen, except for terminal flows such as `summary` whose primary dismissal returns directly to the top-level shell
 
 The `activeWorkout` flow remains intentionally full-screen. It may expose local `Workout` and `Warmup` sections, but it should not share persistent navigation chrome with the primary browse destinations.
 

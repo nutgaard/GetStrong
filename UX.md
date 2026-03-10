@@ -7,6 +7,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - The top-level app shell uses a bottom navigation bar with five destinations: `Home`, `Programs`, `History`, `Progress`, and `Settings`.
 - The top-level screens use nested tabs to expose sub-areas instead of opening each sub-view as a separate top-level destination.
 - The active workout flow is a focused full-screen mode and does not show the bottom navigation bar.
+- Completing an active workout leads into a focused post-workout summary flow before returning to the top-level shell.
 
 ## Top-Level Navigation
 
@@ -54,6 +55,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - `history_workout.png` and `history_calendar.png` are alternate views under the same `History` area.
 - `workout_in_progress_0.png`, `workout_in_progress_1.png`, `workout_in_progress_2.png`, and `workout_warmup.png` are all views of the same active workout session.
 - The active session keeps `Workout` and `Warmup` as local sections inside `activeWorkout`, and the visible section follows the current set phase as the session advances.
+- Completing the active workout leads to a focused summary screen, which then dismisses back to the main app shell. No dedicated summary screenshot is currently included in the reference pack.
 
 ## Assumptions And Ambiguities
 
@@ -62,3 +64,4 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - The exercise detail screen shows a `Form` tab, but no screenshot or prose describes its contents.
 - The `History` area shows a `Notes` tab, but no screenshot or prose describes what the notes experience should contain.
 - The Home screen clearly implies scheduled upcoming workouts, but the scheduling rules behind the `A/B` alternation are not described in the current notes.
+- No dedicated summary mock is currently provided, so the post-workout summary content is driven by the task contract: per-set results, warmup/work distinction, total time, and total volume.
