@@ -6,7 +6,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 
 - The top-level app shell uses a bottom navigation bar with five destinations: `Home`, `Programs`, `History`, `Progress`, and `Settings`.
 - Top-level destinations use consistent production screen chrome: a stable title/top-bar treatment paired with the shared bottom navigation shell, without dev/demo utility actions mixed into the screen content.
-- The top-level screens use nested tabs to expose sub-areas instead of opening each sub-view as a separate top-level destination.
+- Where a top-level destination has sub-areas, they stay as local tabs/sections instead of becoming separate top-level destinations.
 - The active workout flow is a focused full-screen mode and does not show the bottom navigation bar.
 - Completing an active workout leads into a focused post-workout summary flow before returning to the top-level shell.
 
@@ -22,11 +22,12 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 
 - `start_screen.png`: Home shows an upcoming workout queue as cards. Each card includes the workout name, scheduled date, a few upcoming lifts, and a collapsed count of additional exercises. A prominent `Start Workout` FAB launches the next planned session.
 - For the current bounded Home slice, the important contract is the structural start-screen pattern: upcoming workout cards plus a primary quick-start action. The exact long-term scheduling algorithm behind the queue is not yet part of the committed UX contract.
-- `workout_overview.png`: The `Programs` screen uses nested tabs. The `Workouts` tab lists workouts inside a program, with drag handles for ordering and overflow menus for row actions. The red FAB adds a workout.
-- `edit_workout.png`: The workout editor shows the ordered exercise list for a single workout. Drag handles reorder exercises, overflow menus remove them, and the FAB adds another exercise.
+- `workout_overview.png`: The reference pack shows the `Programs` area with `Workouts` active. On the current branch, the committed surface is the saved-workout list plus row-level start/edit/delete actions and a red add-workout FAB; broader `Program`, `Weights`, and `Sets×Reps` behavior remains deferred.
+- `edit_workout.png`: The workout editor shows the ordered exercise list for a single workout. On the current branch, reordering and removal stay local to the editor via per-row actions, minimum sets/reps editing also stays local to the editor, and the FAB opens a picker of exercises not already in the workout.
 - `edit_exercise.png`: The reference pack includes a richer exercise-detail screen tabbed into `Weight`, `Form`, `Progress`, and `History`. The provided screenshot shows `Weight`, with sets x reps, current/next working weight, progression settings, deload settings, and a plate helper. On the current branch's bounded T6 path, this deeper drill-down is not required yet; minimum slot editing remains local inside the workout editor.
 - `progress.png`: The progress overview is the top-level `Progress` surface. It lists exercises with the latest working weight and a compact sparkline-like trend, and tapping an item opens that exercise's dedicated progress drill-down.
 - `progress_exercise.png`: The per-exercise progress screen is a focused drill-down view. It shows a larger line chart for a selected exercise and a recent time-range selector (`3M` in the screenshot).
+- `Settings` (no dedicated screenshot): Settings is a top-level training-defaults form. It exposes rest duration, load increment, deload percent, and default progression mode; those values prefill new sessions and new workout slots but do not rewrite existing saved slot configuration.
 - `history_workout.png`: The history list shows completed workouts as cards, with date, per-exercise performed results, and total duration.
 - `history_calendar.png`: The calendar view marks workout-completion dates with red circles. It sits under the same `History` shell as the list view, as a local section rather than a separate top-level route.
 - `history_exercise.png`: The per-exercise history table lists individual non-warmup sets with date, reps, weight, and estimated 1RM. It is a focused drill-down view rather than another local `History` tab.
@@ -34,14 +35,15 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - `workout_in_progress_1.png`: The same screen shows partial progress, including support for partial reps and a bottom rest timer overlay.
 - `workout_in_progress_2.png`: The same screen later in the session shows more completed sets and a rest overlay with the configured rest duration.
 - `workout_warmup.png`: The `Warmup` tab lists warmup sets for the current exercise with weight prescriptions and per-side loading guidance. It is the warmup companion to the `Workout` tab inside the same active session, and the section focus returns to `Workout` when the current exercise's warmups are complete.
+- `summary` (no dedicated screenshot): The post-workout summary is a focused terminal screen that shows session totals and per-set results with warmup/work distinction, then returns the user to the main shell through a primary dismiss action.
 
 ## Repeated Interaction Patterns
 
 - Red is the primary action/completion color across the reference pack.
 - Top-level areas use a bottom navigation bar; nested content uses tabs near the top of the screen.
 - Top-level shell screens should feel like siblings in the same app shell rather than one-off layouts; title treatment, spacing rhythm, and entry-point chrome should stay consistent across `Home`, `Programs`, `History`, `Progress`, and `Settings`.
-- Ordering uses six-dot drag handles on the left side of list rows.
-- Row-specific destructive or contextual actions use three-dot overflow menus on the right side.
+- Ordering affordances stay attached to the list row. The reference pack shows drag handles, while the current bounded workout-editor flow uses explicit move actions from the row menu.
+- Row-specific destructive or contextual actions use a right-side menu affordance. The reference pack shows three-dot overflow menus; the current branch uses labeled row menus in the bounded Programs/editor flows.
 - Creation actions use a red floating action button.
 - Active workout completion uses large circular set controls instead of small inline buttons.
 - The active workout flow supports partial reps by repeated taps on the same set control.
@@ -68,8 +70,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 ## Navigation Relationships
 
 - `start_screen.png` leads into the active workout flow via `Start Workout`.
-- `workout_overview.png` may also launch the same active workout flow for a specifically chosen saved workout from an in-screen action, without replacing the documented Programs-to-editor management path.
-- `workout_overview.png` leads to `edit_workout.png` when a workout is selected.
+- On the current branch, selecting a workout row in `workout_overview.png` opens `edit_workout.png`, while starting a specifically chosen saved workout remains a row-level action from the same Programs surface.
 - The reference pack suggests `edit_workout.png` can lead to `edit_exercise.png` when an exercise is selected, but the current bounded T6 implementation keeps minimum exercise-slot editing local inside the workout editor instead of requiring a dedicated drill-down.
 - `edit_exercise.png` exposes the `Progress` and `History` views for that exercise, represented by `progress_exercise.png` and `history_exercise.png`.
 - `progress.png` leads to `progress_exercise.png` as a focused per-exercise drill-down rather than another top-level or local Progress section.

@@ -16,15 +16,16 @@ Users need to:
 
 ## MVP Scope
 - Home and navigation:
-- Show a Home screen with upcoming planned workouts as cards, including the next several scheduled sessions.
+- Show a Home screen with upcoming saved workouts as cards, including the next few queued sessions.
 - Provide a prominent `Start Workout` FAB on Home to launch the next planned workout quickly.
+- For the current bounded branch, the Home queue may use a simple deterministic ordering heuristic from saved workouts and recent completion history rather than a full scheduling engine.
 - Use a five-item bottom navigation shell for the top-level areas: `Home`, `Programs`, `History`, `Progress`, and `Settings`.
 
 - Workout planning:
 - Create, edit, delete multiple named workouts (for example Push/Pull/Legs).
-- Expose workout planning from the `Programs` area, with `Workouts` as the primary editing tab shown in the reference pack.
-- Allow reordering workouts inside the program/workout overview.
-- Add ordered exercises to each workout.
+- Expose workout planning from the `Programs` area, with only the `Workouts` surface committed on the current branch.
+- Add ordered exercises to each workout and manage them from the workout editor.
+- Use a picker of remaining exercises rather than listing the entire catalog inline inside the workout editor.
 - Persist workouts between sessions.
 
 - Exercise catalog:
@@ -33,21 +34,25 @@ Users need to:
 - Catalog is local/offline.
 
 - Exercise detail:
-- Each exercise slot opens an exercise detail screen with tabbed sub-sections for `Weight`, `Form`, `Progress`, and `History`.
-- The `Weight` section shows the working prescription, next planned weight, progression settings, deload settings, and load/plate guidance.
-- The `Progress` and `History` sections are reachable from the same exercise detail flow.
+- The screenshot pack includes a richer `edit_exercise` reference with `Weight`, `Form`, `Progress`, and `History` tabs.
+- The current branch does not require a dedicated exercise-detail drill-down to ship the bounded workout-planning flow; minimum slot editing remains local inside the workout editor.
 
 - Workout execution:
+- A user can start a saved workout from Home quick-start or from the Programs surface for a specifically chosen workout.
 - Start a planned workout and be guided in this order:
 - Warmup sets for Exercise A
 - Work sets for Exercise A
 - Warmup sets for Exercise B
 - Work sets for Exercise B
 - Continue until workout is complete.
-- The active workout flow has separate `Workout` and `Warmup` tabs for the current session.
+- The active workout flow keeps `Workout` and `Warmup` as local in-session sections inside the same focused route.
 - User may mark **any set** (warmup or work set) as completed at any time via one tap.
 - User may add extra sets inline from the workout screen.
 - Keep screen awake during active workout.
+
+- Settings:
+- Expose a top-level Settings screen for training defaults: rest duration, load increment, deload percent, and default progression mode.
+- These defaults prefill new sessions and new workout slots only; existing saved workout slots keep their stored values until edited directly.
 
 - Progression models:
 - Per exercise, support:
@@ -97,6 +102,7 @@ Users need to:
 - Reps achieved per set.
 - Total lifted volume.
 - Total workout time.
+- Dismissing the summary returns to the top-level shell rather than back into the completed workout session.
 - Persist workout summary for later analytics/charts (charts themselves are out of MVP).
 
 - History and progress views:
@@ -112,6 +118,7 @@ Users need to:
 - Authentication/login/cloud account.
 - Wearables integration.
 - Coach programming import/export.
+- Broader `Programs` tabs such as `Program`, `Weights`, and `Sets×Reps` until their scope is explicitly defined.
 - Rich coaching or media content for the `Form` tab beyond basic structure/navigation.
 - History `Notes` workflows until their scope is explicitly defined.
 
@@ -129,10 +136,11 @@ Users need to:
 - The bottom navigation bar is not shown during the focused active-workout flow or other nested detail/edit screens.
 - Lists and collections use native Android patterns (row actions, overflow/context menus, swipe actions where appropriate) instead of oversized inline Edit/Delete buttons.
 - Home and top-level browsing screens should follow the reference pack:
-  - Home shows upcoming workout cards, summary exercise rows, and a prominent `Start Workout` FAB.
-  - `Programs` is the entry point for workout definitions and uses nested tabs, with `Workouts` as the currently documented editable view.
+  - Home shows upcoming workout cards and a prominent `Start Workout` FAB. The exact long-term scheduling logic behind the queue is still not committed beyond a simple deterministic ordering heuristic.
+  - `Programs` is the entry point for workout definitions, but the current branch commits only the `Workouts` surface. Broader `Programs` tabs remain deferred.
   - `History` uses local `List` and `Calendar` sections for the current bounded scope. `Notes` remains deferred until its behavior is explicitly defined.
   - `Progress` shows a scrollable list of exercise trend rows and supports drill-down into a single exercise.
+  - `Settings` is a standard top-level form for training defaults rather than a deeper settings architecture.
 - Active workout UI should follow the interaction and layout cues in `docs/images/workout_in_progress_0.png`, `docs/images/workout_in_progress_1.png`, `docs/images/workout_in_progress_2.png`, and `docs/images/workout_warmup.png`, including:
   - A tab/switcher between `Workout` and `Warmup` for the current session.
   - Completing a set does not hide or remove its information.
@@ -140,13 +148,15 @@ Users need to:
   - Long-press on a set opens a contextual menu for per-set actions (set weight, set reps, clear set, etc.).
   - A trailing `+` action can add extra sets inline after the existing set prescription.
   - Rest countdown feedback appears as a transient bottom overlay rather than a blocking full-screen interruption.
-  - Session-level note/edit affordances stay accessible from the workout footer.
+  - The current set and set-circle controls stay visually primary; helper stats, the local section switcher, and timer/status feedback stay secondary and should preserve one-handed progression through the session.
 - Workout planning and exercise selection:
   - Planning lists show only the exercises selected for a workout, not the entire catalog inline.
   - An Add exercise action opens a search/scroll picker of exercises not already selected.
   - Duplicate exercises within the same workout are disallowed.
   - Add/selection controls have clear spacing; avoid cramped multi-button layouts.
-- Exercise detail uses tabbed navigation for `Weight`, `Form`, `Progress`, and `History`, with the `Weight` tab surfacing progression and deload controls prominently.
+- The current bounded planning flow keeps minimum slot editing local inside the workout editor; the richer `edit_exercise` reference remains future work.
+- Core Home, Programs, Active Workout, and Summary actions should remain usable with TalkBack/keyboard via meaningful labels and stable focus order.
+- Empty and recoverable error states stay inside the normal screen shell with contextual next or retry actions rather than separate fallback pages.
 - Emphasize Android-native patterns and Material components over custom, button-heavy layouts.
 
 ## User Stories
@@ -162,14 +172,17 @@ Users need to:
 - User can create at least 3 different workouts and run any of them.
 - App exposes `Home`, `Programs`, `History`, `Progress`, and `Settings` as the primary top-level navigation areas.
 - Home shows upcoming workouts and a quick-start action for the next planned session.
-- During an active workout, app presents guided exercise flow with separate `Warmup` and `Workout` views for the current session.
+- During an active workout, app presents guided exercise flow with local `Warmup` and `Workout` sections for the current session.
 - User can mark any warmup/work set complete at any time with one tap.
 - User can add extra sets during an active workout.
 - Rest timer defaults to 3 minutes, is configurable, and plays a sound when done.
 - Warmup sets are auto-generated deterministically from working weight and match the heuristic rules.
 - Progression configuration (mode, increment, deload percent) is stored per exercise slot, with sensible defaults applied only when new slots are created.
+- Settings exposes training defaults for rest duration, increment, deload percent, and progression mode, and those values prefill only new sessions or new workout slots.
 - Deload is triggered after 3 consecutive failed workouts per exercise using configured percent (default 10%).
 - Workout summary displays reps per set, total volume, and elapsed time at completion.
 - History provides list and calendar views of completed workouts.
 - Progress provides both an overview list and a per-exercise chart view.
 - Screen remains awake during active workout.
+- Core controls on Home, Programs, Active Workout, and Summary have meaningful accessibility labels and stable keyboard/TalkBack flow.
+- Empty and error states preserve the normal screen shell and provide contextual retry or next actions.
