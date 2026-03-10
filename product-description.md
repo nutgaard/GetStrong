@@ -101,7 +101,7 @@ Users need to:
 
 - History and progress views:
 - Provide a history area with at least `List` and `Calendar` views of completed workouts.
-- Provide per-exercise history from the exercise detail flow for non-warmup sets.
+- Provide per-exercise history drill-downs for non-warmup sets.
 - Provide a progress overview that lists tracked exercises with latest weight and a compact trend indicator.
 - Provide a dedicated per-exercise progress chart screen with a selectable recent time range.
 
@@ -113,7 +113,7 @@ Users need to:
 - Wearables integration.
 - Coach programming import/export.
 - Rich coaching or media content for the `Form` tab beyond basic structure/navigation.
-- Detailed `Notes` workflows beyond exposing the tab/screen shell shown in the reference pack.
+- History `Notes` workflows until their scope is explicitly defined.
 
 ## UX Direction
 - Keep UI visually and structurally close to StrongLifts-style training apps:
@@ -131,7 +131,7 @@ Users need to:
 - Home and top-level browsing screens should follow the reference pack:
   - Home shows upcoming workout cards, summary exercise rows, and a prominent `Start Workout` FAB.
   - `Programs` is the entry point for workout definitions and uses nested tabs, with `Workouts` as the currently documented editable view.
-  - `History` uses nested tabs including `List`, `Calendar`, and `Notes`.
+  - `History` uses local `List` and `Calendar` sections for the current bounded scope. `Notes` remains deferred until its behavior is explicitly defined.
   - `Progress` shows a scrollable list of exercise trend rows and supports drill-down into a single exercise.
 - Active workout UI should follow the interaction and layout cues in `docs/images/workout_in_progress_0.png`, `docs/images/workout_in_progress_1.png`, `docs/images/workout_in_progress_2.png`, and `docs/images/workout_warmup.png`, including:
   - A tab/switcher between `Workout` and `Warmup` for the current session.

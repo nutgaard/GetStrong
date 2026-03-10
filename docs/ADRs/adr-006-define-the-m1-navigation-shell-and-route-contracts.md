@@ -27,6 +27,7 @@ The top-level shell is production-only. Dev/demo/debug actions such as persisten
 Focused child flows are separate destinations and do not share the persistent bottom navigation chrome:
 
 - `workoutEditor/{workoutId?}`: create/edit a workout and reorder its exercises
+- `exerciseHistory/{exerciseId}`: focused per-exercise history drill-down
 - `activeWorkout/{sessionId}`: in-session workout execution
 - `summary/{sessionId}`: terminal post-session summary and dismissal flow
 
@@ -41,6 +42,12 @@ For the current Programs/workout CRUD scope, only the workout-management path is
 - `workoutEditor` owns the selected-workout draft, its ordered slot list, the add-exercise picker entry point, and the minimum slot-scoped editing needed for this flow
 - slot-specific editing may remain local inside `workoutEditor` for the minimum shippable T6 implementation; promote it to a child route later only if deeper slot editing or navigation needs justify it
 - unresolved secondary Programs tabs are explicitly deferred and must not block the workout CRUD implementation
+
+For the current History scope, only the documented review path is committed:
+
+- `history` owns the top-level History surface and keeps `List` and `Calendar` as local sections inside that destination rather than promoting them to separate routes
+- `Notes` is explicitly out of scope for this cycle and must not ship as an active or placeholder History section until its behavior is defined
+- per-exercise history is a focused child drill-down keyed by `exerciseId`; it is not a third local History section and is not exposed as a top-level destination
 
 For the current active-workout interaction scope, only the session-execution path is committed:
 
@@ -58,7 +65,7 @@ For the current post-workout summary scope, only the terminal review path is com
 - `summary` surfaces total time, total volume, and per-set results with warmup versus work-set distinction
 - the primary dismiss action exits to the top-level app shell rather than returning the user to a completed active-workout session
 
-Navigation remains part of `ui/navigation`. Route arguments must be stable identifiers such as `workoutId` and `sessionId`. Do not pass Room entities, domain aggregates, or mutable state through routes.
+Navigation remains part of `ui/navigation`. Route arguments must be stable identifiers such as `workoutId`, `exerciseId`, and `sessionId`. Do not pass Room entities, domain aggregates, or mutable state through routes.
 
 Back/up behavior follows standard Android rules:
 

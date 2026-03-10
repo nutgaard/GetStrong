@@ -26,8 +26,8 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - `progress.png`: The progress overview lists exercises with the latest working weight and a compact sparkline-like trend. Tapping an item is intended to open the detailed progress view for that exercise.
 - `progress_exercise.png`: The per-exercise progress screen shows a larger line chart for a selected exercise and a recent time-range selector (`3M` in the screenshot).
 - `history_workout.png`: The history list shows completed workouts as cards, with date, per-exercise performed results, and total duration.
-- `history_calendar.png`: The calendar view marks workout-completion dates with red circles. It sits under the same `History` shell as the list view.
-- `history_exercise.png`: The per-exercise history table lists individual non-warmup sets with date, reps, weight, and estimated 1RM.
+- `history_calendar.png`: The calendar view marks workout-completion dates with red circles. It sits under the same `History` shell as the list view, as a local section rather than a separate top-level route.
+- `history_exercise.png`: The per-exercise history table lists individual non-warmup sets with date, reps, weight, and estimated 1RM. It is a focused drill-down view rather than another local `History` tab.
 - `workout_in_progress_0.png`: The active workout screen shows the `Workout` tab before significant completion. Each exercise row has circles for planned sets, a target prescription on the right, and access to additional set actions.
 - `workout_in_progress_1.png`: The same screen shows partial progress, including support for partial reps and a bottom rest timer overlay.
 - `workout_in_progress_2.png`: The same screen later in the session shows more completed sets and a rest overlay with the configured rest duration.
@@ -53,6 +53,7 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - `edit_exercise.png` exposes the `Progress` and `History` views for that exercise, represented by `progress_exercise.png` and `history_exercise.png`.
 - `progress.png` also leads to `progress_exercise.png`.
 - `history_workout.png` and `history_calendar.png` are alternate views under the same `History` area.
+- `history_workout.png` can drill down into `history_exercise.png` for a selected exercise without promoting that screen to another top-level History section.
 - `workout_in_progress_0.png`, `workout_in_progress_1.png`, `workout_in_progress_2.png`, and `workout_warmup.png` are all views of the same active workout session.
 - The active session keeps `Workout` and `Warmup` as local sections inside `activeWorkout`, and the visible section follows the current set phase as the session advances.
 - Completing the active workout leads to a focused summary screen, which then dismisses back to the main app shell. No dedicated summary screenshot is currently included in the reference pack.
@@ -62,6 +63,6 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - The `Programs` area shows tabs for `Program`, `Workouts`, `Weights`, and `Sets×Reps`, but only the `Workouts` tab is documented by a dedicated screenshot. The other tabs are part of the intended shell, but their detailed behavior is not yet specified.
 - The reference pack includes a dedicated `edit_exercise.png` screen, but the current bounded T6 implementation only commits local slot editing inside `edit_workout.png`; a richer exercise-detail drill-down is deferred.
 - The exercise detail screen shows a `Form` tab, but no screenshot or prose describes its contents.
-- The `History` area shows a `Notes` tab, but no screenshot or prose describes what the notes experience should contain.
+- The `History` area shows a `Notes` tab in the reference pack, but its behavior is not defined and it is deferred/out of scope for the current bounded `T30` implementation.
 - The Home screen clearly implies scheduled upcoming workouts, but the scheduling rules behind the `A/B` alternation are not described in the current notes.
 - No dedicated summary mock is currently provided, so the post-workout summary content is driven by the task contract: per-set results, warmup/work distinction, total time, and total volume.

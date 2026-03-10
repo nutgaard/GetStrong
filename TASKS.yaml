@@ -320,8 +320,8 @@ milestones:
         title: Implement history list, calendar, and exercise history views
         description: Use persisted workout summaries to drive the History area, including list and calendar navigation plus per-exercise history drill-downs.
         priority: P1
-        status: todo
-        ux_status: planned
+        status: done
+        ux_status: verified
         ux_references:
           - "UX.md -> history_workout.png"
           - "UX.md -> history_calendar.png"
