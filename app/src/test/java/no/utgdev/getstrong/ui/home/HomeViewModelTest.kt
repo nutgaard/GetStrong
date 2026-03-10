@@ -102,6 +102,9 @@ private class FakeSessionRepository : SessionRepository {
     override suspend fun startSession(workoutId: Long, plannedSets: List<SessionPlannedSet>): Long = 1L
     override suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState? = null
     override suspend fun completePlannedSet(sessionId: Long, plannedSetId: Long, repsAchieved: Int): ActiveSessionState? = null
+    override suspend fun updatePlannedSetWeight(sessionId: Long, plannedSetId: Long, weightKg: Double): ActiveSessionState? = null
+    override suspend fun addExtraSet(sessionId: Long, anchorPlannedSetId: Long): ActiveSessionState? = null
+    override suspend fun removeExtraSet(sessionId: Long, plannedSetId: Long): ActiveSessionState? = null
     override suspend fun completeSession(sessionId: Long) = Unit
     override suspend fun completeSessionWithProgression(sessionId: Long, updates: List<SlotProgressionUpdate>) = Unit
     override suspend fun saveSession(session: WorkoutSession): Long = 1L

@@ -386,6 +386,16 @@ private class FakeSessionRepository(
         repsAchieved: Int,
     ): ActiveSessionState = activeState
 
+    override suspend fun updatePlannedSetWeight(
+        sessionId: Long,
+        plannedSetId: Long,
+        weightKg: Double,
+    ): ActiveSessionState = activeState
+
+    override suspend fun addExtraSet(sessionId: Long, anchorPlannedSetId: Long): ActiveSessionState = activeState
+
+    override suspend fun removeExtraSet(sessionId: Long, plannedSetId: Long): ActiveSessionState = activeState
+
     override suspend fun completeSession(sessionId: Long) = Unit
 
     override suspend fun completeSessionWithProgression(sessionId: Long, updates: List<SlotProgressionUpdate>) {

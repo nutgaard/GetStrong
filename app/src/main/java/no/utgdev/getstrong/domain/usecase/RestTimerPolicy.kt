@@ -10,8 +10,7 @@ class RestTimerPolicy @Inject constructor() {
         nextCurrentSet: SessionPlannedSet?,
     ): Boolean {
         if (completedSet == null || nextCurrentSet == null) return false
-        return completedSet.setType == SessionSetType.WARMUP &&
-            nextCurrentSet.setType == SessionSetType.WORK &&
-            completedSet.workoutSlotId == nextCurrentSet.workoutSlotId
+        return completedSet.workoutSlotId == nextCurrentSet.workoutSlotId &&
+            nextCurrentSet.setType == SessionSetType.WORK
     }
 }

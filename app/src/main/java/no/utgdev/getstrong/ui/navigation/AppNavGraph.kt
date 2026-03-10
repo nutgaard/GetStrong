@@ -184,12 +184,12 @@ fun AppNavGraph(navController: NavHostController) {
             val coroutineScope = rememberCoroutineScope()
             ActiveWorkoutScreen(
                 uiState = activeUiState,
-                onCompleteSet = { setId, repsAchieved ->
-                    activeWorkoutViewModel.completeSet(setId, repsAchieved)
-                },
-                onFocusSet = { setId ->
-                    activeWorkoutViewModel.focusSet(setId)
-                },
+                onToggleSet = activeWorkoutViewModel::onSetTapped,
+                onSetReps = activeWorkoutViewModel::completeSet,
+                onSetWeight = activeWorkoutViewModel::updateSetWeight,
+                onClearSet = activeWorkoutViewModel::clearSet,
+                onAddExtraSet = activeWorkoutViewModel::addExtraSet,
+                onRemoveExtraSet = activeWorkoutViewModel::removeExtraSet,
                 onFinishSession = {
                     coroutineScope.launch {
                         val finishedSessionId = activeWorkoutViewModel.finishSession()
@@ -197,9 +197,7 @@ fun AppNavGraph(navController: NavHostController) {
                     }
                 },
                 onExit = {
-                    navController.navigate(AppDestination.Home.route) {
-                        popUpTo(AppDestination.Home.route) { inclusive = true }
-                    }
+                    navController.popBackStack()
                 },
             )
         }

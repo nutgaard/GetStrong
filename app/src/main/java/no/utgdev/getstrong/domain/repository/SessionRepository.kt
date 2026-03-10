@@ -10,6 +10,9 @@ interface SessionRepository {
     suspend fun startSession(workoutId: Long, plannedSets: List<SessionPlannedSet>): Long
     suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState?
     suspend fun completePlannedSet(sessionId: Long, plannedSetId: Long, repsAchieved: Int): ActiveSessionState?
+    suspend fun updatePlannedSetWeight(sessionId: Long, plannedSetId: Long, weightKg: Double): ActiveSessionState?
+    suspend fun addExtraSet(sessionId: Long, anchorPlannedSetId: Long): ActiveSessionState?
+    suspend fun removeExtraSet(sessionId: Long, plannedSetId: Long): ActiveSessionState?
     suspend fun completeSession(sessionId: Long)
     suspend fun completeSessionWithProgression(sessionId: Long, updates: List<SlotProgressionUpdate>)
     suspend fun saveSession(session: WorkoutSession): Long

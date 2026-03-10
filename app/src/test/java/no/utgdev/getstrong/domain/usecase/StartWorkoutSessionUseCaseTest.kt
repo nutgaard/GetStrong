@@ -115,6 +115,9 @@ private class CapturingSessionRepository : SessionRepository {
 
     override suspend fun getActiveSessionState(sessionId: Long) = null
     override suspend fun completePlannedSet(sessionId: Long, plannedSetId: Long, repsAchieved: Int) = null
+    override suspend fun updatePlannedSetWeight(sessionId: Long, plannedSetId: Long, weightKg: Double) = null
+    override suspend fun addExtraSet(sessionId: Long, anchorPlannedSetId: Long) = null
+    override suspend fun removeExtraSet(sessionId: Long, plannedSetId: Long) = null
     override suspend fun completeSession(sessionId: Long) = Unit
     override suspend fun completeSessionWithProgression(sessionId: Long, updates: List<SlotProgressionUpdate>) = Unit
     override suspend fun saveSession(session: WorkoutSession): Long = session.id

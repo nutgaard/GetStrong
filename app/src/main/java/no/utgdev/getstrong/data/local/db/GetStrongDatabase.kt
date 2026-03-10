@@ -25,7 +25,7 @@ import no.utgdev.getstrong.data.local.entity.WorkoutSummaryEntity
         SessionPlannedSetEntity::class,
         WorkoutSummaryEntity::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = false,
 )
 @TypeConverters(StringListConverters::class)

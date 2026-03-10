@@ -29,6 +29,7 @@ data class SessionPlannedSet(
     val targetWeightKg: Double? = null,
     val isCompleted: Boolean = false,
     val completedReps: Int? = null,
+    val isExtra: Boolean = false,
 )
 
 data class ActiveSessionState(

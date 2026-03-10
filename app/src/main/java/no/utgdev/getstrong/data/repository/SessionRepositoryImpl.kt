@@ -45,23 +45,94 @@ class SessionRepositoryImpl @Inject constructor(
         plannedSetId: Long,
         repsAchieved: Int,
     ): ActiveSessionState? {
-        val plannedSet = sessionDao.getPlannedSets(sessionId).firstOrNull { it.id == plannedSetId } ?: return null
-        sessionDao.markPlannedSetCompleted(
+        val plannedSet = sessionDao.getPlannedSet(sessionId, plannedSetId) ?: return null
+        val normalizedReps = repsAchieved.coerceAtLeast(0)
+        val isCompleted = normalizedReps > 0
+        sessionDao.updatePlannedSetCompletion(
             sessionId = sessionId,
             plannedSetId = plannedSetId,
-            completedReps = repsAchieved,
+            isCompleted = isCompleted,
+            completedReps = normalizedReps.takeIf { isCompleted },
         )
-        sessionDao.upsertSetResult(
-            SetResultEntity(
-                sessionId = sessionId,
-                plannedSetId = plannedSetId,
-                workoutSlotId = plannedSet.workoutSlotId,
-                exerciseId = plannedSet.exerciseId,
-                setType = plannedSet.setType,
-                reps = repsAchieved,
-                weightKg = plannedSet.targetWeightKg ?: 0.0,
-            ),
-        )
+        if (isCompleted) {
+            val existingResult = sessionDao.getSetResultForPlannedSet(sessionId, plannedSetId)
+            sessionDao.upsertSetResult(
+                SetResultEntity(
+                    id = existingResult?.id ?: 0L,
+                    sessionId = sessionId,
+                    plannedSetId = plannedSetId,
+                    workoutSlotId = plannedSet.workoutSlotId,
+                    exerciseId = plannedSet.exerciseId,
+                    setType = plannedSet.setType,
+                    reps = normalizedReps,
+                    weightKg = existingResult?.weightKg ?: plannedSet.targetWeightKg ?: 0.0,
+                ),
+            )
+        } else {
+            sessionDao.deleteSetResultForPlannedSet(sessionId, plannedSetId)
+        }
+        return getActiveSessionState(sessionId)
+    }
+
+    override suspend fun updatePlannedSetWeight(
+        sessionId: Long,
+        plannedSetId: Long,
+        weightKg: Double,
+    ): ActiveSessionState? {
+        val normalizedWeight = weightKg.coerceAtLeast(0.0)
+        val plannedSet = sessionDao.getPlannedSet(sessionId, plannedSetId) ?: return null
+        sessionDao.updatePlannedSetWeight(sessionId, plannedSetId, normalizedWeight)
+        val existingResult = sessionDao.getSetResultForPlannedSet(sessionId, plannedSetId)
+        if (existingResult != null) {
+            sessionDao.upsertSetResult(existingResult.copy(weightKg = normalizedWeight))
+        } else if (plannedSet.isCompleted && (plannedSet.completedReps ?: 0) > 0) {
+            sessionDao.upsertSetResult(
+                SetResultEntity(
+                    sessionId = sessionId,
+                    plannedSetId = plannedSetId,
+                    workoutSlotId = plannedSet.workoutSlotId,
+                    exerciseId = plannedSet.exerciseId,
+                    setType = plannedSet.setType,
+                    reps = plannedSet.completedReps ?: 0,
+                    weightKg = normalizedWeight,
+                ),
+            )
+        }
+        return getActiveSessionState(sessionId)
+    }
+
+    override suspend fun addExtraSet(sessionId: Long, anchorPlannedSetId: Long): ActiveSessionState? {
+        val plannedSets = sessionDao.getPlannedSets(sessionId)
+        val anchor = plannedSets.firstOrNull { it.id == anchorPlannedSetId } ?: return null
+        val reordered = buildList {
+            plannedSets.forEach { plannedSet ->
+                add(plannedSet)
+                if (plannedSet.id == anchor.id) {
+                    add(
+                        plannedSet.copy(
+                            id = 0L,
+                            setOrder = plannedSet.setOrder + 1,
+                            isCompleted = false,
+                            completedReps = null,
+                            isExtra = true,
+                        ),
+                    )
+                }
+            }
+        }.mapIndexed { index, plannedSet -> plannedSet.copy(setOrder = index) }
+        sessionDao.replaceSessionPlan(sessionId, reordered)
+        return getActiveSessionState(sessionId)
+    }
+
+    override suspend fun removeExtraSet(sessionId: Long, plannedSetId: Long): ActiveSessionState? {
+        val plannedSets = sessionDao.getPlannedSets(sessionId)
+        val target = plannedSets.firstOrNull { it.id == plannedSetId } ?: return null
+        if (!target.isExtra) return getActiveSessionState(sessionId)
+        val reordered = plannedSets
+            .filterNot { it.id == plannedSetId }
+            .mapIndexed { index, plannedSet -> plannedSet.copy(setOrder = index) }
+        sessionDao.deleteSetResultForPlannedSet(sessionId, plannedSetId)
+        sessionDao.replaceSessionPlan(sessionId, reordered)
         return getActiveSessionState(sessionId)
     }
 
@@ -122,6 +193,7 @@ private fun SessionPlannedSet.toEntity(sessionId: Long): SessionPlannedSetEntity
         targetWeightKg = targetWeightKg,
         isCompleted = isCompleted,
         completedReps = completedReps,
+        isExtra = isExtra,
     )
 
 private fun SessionPlannedSetEntity.toDomain(): SessionPlannedSet =
@@ -136,6 +208,7 @@ private fun SessionPlannedSetEntity.toDomain(): SessionPlannedSet =
         targetWeightKg = targetWeightKg,
         isCompleted = isCompleted,
         completedReps = completedReps,
+        isExtra = isExtra,
     )
 
 private fun SetResult.toEntity(): SetResultEntity =

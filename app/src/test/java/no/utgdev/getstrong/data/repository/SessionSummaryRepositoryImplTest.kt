@@ -36,6 +36,7 @@ class SessionSummaryRepositoryImplTest {
                 targetWeightKg = 60.0,
                 isCompleted = true,
                 completedReps = 3,
+                isExtra = false,
             ),
             SessionPlannedSetEntity(
                 id = 2,
@@ -48,6 +49,7 @@ class SessionSummaryRepositoryImplTest {
                 targetWeightKg = 100.0,
                 isCompleted = true,
                 completedReps = 5,
+                isExtra = false,
             ),
         )
         dao.results[sessionId] = mutableListOf(
@@ -105,7 +107,17 @@ private class FakeSessionDaoForSummary : SessionDao {
     override suspend fun getPlannedSets(sessionId: Long): List<SessionPlannedSetEntity> =
         planned[sessionId].orEmpty().sortedBy { it.setOrder }
 
-    override suspend fun markPlannedSetCompleted(sessionId: Long, plannedSetId: Long, completedReps: Int) = Unit
+    override suspend fun getPlannedSet(sessionId: Long, plannedSetId: Long): SessionPlannedSetEntity? =
+        planned[sessionId].orEmpty().firstOrNull { it.id == plannedSetId }
+
+    override suspend fun updatePlannedSetCompletion(
+        sessionId: Long,
+        plannedSetId: Long,
+        isCompleted: Boolean,
+        completedReps: Int?,
+    ) = Unit
+
+    override suspend fun updatePlannedSetWeight(sessionId: Long, plannedSetId: Long, weightKg: Double) = Unit
 
     override suspend fun markSessionCompleted(sessionId: Long, endedAtEpochMs: Long) = Unit
 
@@ -118,6 +130,13 @@ private class FakeSessionDaoForSummary : SessionDao {
     ) = Unit
 
     override suspend fun getSetResults(sessionId: Long): List<SetResultEntity> = results[sessionId].orEmpty()
+
+    override suspend fun getSetResultForPlannedSet(sessionId: Long, plannedSetId: Long): SetResultEntity? =
+        results[sessionId].orEmpty().firstOrNull { it.plannedSetId == plannedSetId }
+
+    override suspend fun deleteSetResultForPlannedSet(sessionId: Long, plannedSetId: Long) = Unit
+
+    override suspend fun deletePlannedSetsForSession(sessionId: Long) = Unit
 
     override suspend fun createSessionWithPlan(
         session: WorkoutSessionEntity,

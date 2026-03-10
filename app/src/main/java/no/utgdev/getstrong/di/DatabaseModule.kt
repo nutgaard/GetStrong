@@ -16,6 +16,7 @@ import no.utgdev.getstrong.data.local.dao.WorkoutDao
 import no.utgdev.getstrong.data.local.dao.WorkoutSummaryDao
 import no.utgdev.getstrong.data.local.db.GetStrongDatabase
 import no.utgdev.getstrong.data.local.db.MIGRATION_1_2
+import no.utgdev.getstrong.data.local.db.MIGRATION_10_11
 import no.utgdev.getstrong.data.local.db.MIGRATION_2_3
 import no.utgdev.getstrong.data.local.db.MIGRATION_3_4
 import no.utgdev.getstrong.data.local.db.MIGRATION_4_5
@@ -46,6 +47,7 @@ object DatabaseModule {
             .addMigrations(MIGRATION_7_8)
             .addMigrations(MIGRATION_8_9)
             .addMigrations(MIGRATION_9_10)
+            .addMigrations(MIGRATION_10_11)
             .build()
         runBlocking {
             database.withTransaction {

@@ -26,8 +26,32 @@ interface SessionDao {
     @Query("SELECT * FROM session_planned_sets WHERE sessionId = :sessionId ORDER BY setOrder ASC")
     suspend fun getPlannedSets(sessionId: Long): List<SessionPlannedSetEntity>
 
-    @Query("UPDATE session_planned_sets SET isCompleted = 1, completedReps = :completedReps WHERE id = :plannedSetId AND sessionId = :sessionId")
-    suspend fun markPlannedSetCompleted(sessionId: Long, plannedSetId: Long, completedReps: Int)
+    @Query("SELECT * FROM session_planned_sets WHERE id = :plannedSetId AND sessionId = :sessionId LIMIT 1")
+    suspend fun getPlannedSet(sessionId: Long, plannedSetId: Long): SessionPlannedSetEntity?
+
+    @Query(
+        """
+        UPDATE session_planned_sets
+        SET isCompleted = :isCompleted,
+            completedReps = :completedReps
+        WHERE id = :plannedSetId AND sessionId = :sessionId
+        """,
+    )
+    suspend fun updatePlannedSetCompletion(
+        sessionId: Long,
+        plannedSetId: Long,
+        isCompleted: Boolean,
+        completedReps: Int?,
+    )
+
+    @Query(
+        """
+        UPDATE session_planned_sets
+        SET targetWeightKg = :weightKg
+        WHERE id = :plannedSetId AND sessionId = :sessionId
+        """,
+    )
+    suspend fun updatePlannedSetWeight(sessionId: Long, plannedSetId: Long, weightKg: Double)
 
     @Query("UPDATE sessions SET endedAtEpochMs = :endedAtEpochMs WHERE id = :sessionId")
     suspend fun markSessionCompleted(sessionId: Long, endedAtEpochMs: Long)
@@ -54,6 +78,15 @@ interface SessionDao {
     @Query("SELECT * FROM set_results WHERE sessionId = :sessionId ORDER BY id ASC")
     suspend fun getSetResults(sessionId: Long): List<SetResultEntity>
 
+    @Query("SELECT * FROM set_results WHERE sessionId = :sessionId AND plannedSetId = :plannedSetId LIMIT 1")
+    suspend fun getSetResultForPlannedSet(sessionId: Long, plannedSetId: Long): SetResultEntity?
+
+    @Query("DELETE FROM set_results WHERE sessionId = :sessionId AND plannedSetId = :plannedSetId")
+    suspend fun deleteSetResultForPlannedSet(sessionId: Long, plannedSetId: Long)
+
+    @Query("DELETE FROM session_planned_sets WHERE sessionId = :sessionId")
+    suspend fun deletePlannedSetsForSession(sessionId: Long)
+
     @Transaction
     suspend fun createSessionWithPlan(
         session: WorkoutSessionEntity,
@@ -63,6 +96,15 @@ interface SessionDao {
         val mapped = plannedSets.map { it.copy(sessionId = sessionId) }
         insertPlannedSets(mapped)
         return sessionId
+    }
+
+    @Transaction
+    suspend fun replaceSessionPlan(
+        sessionId: Long,
+        plannedSets: List<SessionPlannedSetEntity>,
+    ) {
+        deletePlannedSetsForSession(sessionId)
+        insertPlannedSets(plannedSets.map { it.copy(sessionId = sessionId) })
     }
 
     @Transaction

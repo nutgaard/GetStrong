@@ -34,4 +34,5 @@ data class SessionPlannedSetEntity(
     val targetWeightKg: Double?,
     val isCompleted: Boolean,
     val completedReps: Int?,
+    val isExtra: Boolean,
 )

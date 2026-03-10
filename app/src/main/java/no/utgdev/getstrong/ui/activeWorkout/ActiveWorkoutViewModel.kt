@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import no.utgdev.getstrong.domain.model.SessionPlannedSet
+import no.utgdev.getstrong.domain.repository.ExerciseRepository
 import no.utgdev.getstrong.domain.repository.SessionRepository
 import no.utgdev.getstrong.domain.repository.SettingsRepository
 import no.utgdev.getstrong.domain.time.TimeProvider
@@ -27,6 +28,7 @@ import no.utgdev.getstrong.ui.navigation.AppDestination
 class ActiveWorkoutViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val sessionRepository: SessionRepository,
+    private val exerciseRepository: ExerciseRepository,
     private val settingsRepository: SettingsRepository,
     private val completeSessionAndSaveSummary: CompleteSessionAndSaveSummaryUseCase,
     private val restTimerPolicy: RestTimerPolicy,
@@ -58,23 +60,29 @@ class ActiveWorkoutViewModel @Inject constructor(
         }
     }
 
-    fun completeCurrentSet() {
-        val current = _uiState.value.currentSet ?: return
-        completeSet(current.id, current.targetReps)
+    fun onSetTapped(plannedSetId: Long) {
+        val set = _uiState.value.plannedSets.firstOrNull { it.id == plannedSetId } ?: return
+        val nextReps = when {
+            (set.completedReps ?: 0) <= 0 -> set.targetReps
+            else -> (set.completedReps ?: 0) - 1
+        }
+        completeSet(plannedSetId, nextReps)
     }
 
     fun completeSet(plannedSetId: Long, repsAchieved: Int) {
         viewModelScope.launch {
-            val completedSet = _uiState.value.plannedSets.firstOrNull { it.id == plannedSetId }
+            val previousSet = _uiState.value.plannedSets.firstOrNull { it.id == plannedSetId } ?: return@launch
             val sessionState = sessionRepository.completePlannedSet(
                 sessionId = sessionId,
                 plannedSetId = plannedSetId,
                 repsAchieved = repsAchieved,
             )
-            maybeStartRestTimer(
-                completedSet = completedSet,
-                nextCurrentSet = sessionState?.currentSet,
-            )
+            if (!previousSet.isCompleted && repsAchieved > 0) {
+                maybeStartRestTimer(
+                    completedSet = previousSet.copy(isCompleted = true, completedReps = repsAchieved),
+                    nextCurrentSet = sessionState?.currentSet,
+                )
+            }
             applySessionState(sessionState, highlightedSetId = plannedSetId)
         }
     }
@@ -85,15 +93,42 @@ class ActiveWorkoutViewModel @Inject constructor(
         return sessionId
     }
 
-    fun focusSet(plannedSetId: Long) {
-        _uiState.update { it.copy(highlightedSetId = plannedSetId) }
+    fun updateSetWeight(plannedSetId: Long, weightKg: Double) {
+        viewModelScope.launch {
+            val sessionState = sessionRepository.updatePlannedSetWeight(
+                sessionId = sessionId,
+                plannedSetId = plannedSetId,
+                weightKg = weightKg,
+            )
+            applySessionState(sessionState, highlightedSetId = plannedSetId)
+        }
     }
 
-    private fun applySessionState(
+    fun clearSet(plannedSetId: Long) {
+        completeSet(plannedSetId, 0)
+    }
+
+    fun addExtraSet(anchorPlannedSetId: Long) {
+        viewModelScope.launch {
+            val sessionState = sessionRepository.addExtraSet(sessionId, anchorPlannedSetId)
+            applySessionState(sessionState, highlightedSetId = anchorPlannedSetId)
+        }
+    }
+
+    fun removeExtraSet(plannedSetId: Long) {
+        viewModelScope.launch {
+            val sessionState = sessionRepository.removeExtraSet(sessionId, plannedSetId)
+            applySessionState(sessionState)
+        }
+    }
+
+    private suspend fun applySessionState(
         sessionState: no.utgdev.getstrong.domain.model.ActiveSessionState?,
         highlightedSetId: Long? = null,
     ) {
         val session = sessionState?.session
+        val plannedSets = sessionState?.plannedSets.orEmpty()
+        val exerciseNames = resolveExerciseNames(plannedSets)
         updateElapsedTimer(
             startedAtEpochMs = session?.startedAtEpochMs,
             endedAtEpochMs = session?.endedAtEpochMs,
@@ -103,7 +138,8 @@ class ActiveWorkoutViewModel @Inject constructor(
                 sessionId = sessionId,
                 isLoaded = true,
                 isSessionActive = sessionState?.session?.endedAtEpochMs == null,
-                plannedSets = sessionState?.plannedSets.orEmpty(),
+                plannedSets = plannedSets,
+                exerciseNamesById = exerciseNames,
                 currentSet = sessionState?.currentSet,
                 isCompleted = sessionState?.isCompleted == true,
                 highlightedSetId = highlightedSetId ?: sessionState?.currentSet?.id,
@@ -182,7 +218,7 @@ class ActiveWorkoutViewModel @Inject constructor(
         val endAtMs = savedStateHandle.get<Long>(restTimerEndAtKey) ?: return
         val remaining = restTimerCalculator.remainingSeconds(timeProvider.nowMs(), endAtMs)
         if (remaining <= 0) {
-            _uiState.update { it.copy(restRemainingSeconds = 0, isRestTimerActive = false, isRestOver = true) }
+            _uiState.update { it.copy(restRemainingSeconds = 0, isRestTimerActive = false, isRestOver = false) }
             return
         }
         _uiState.update { it.copy(restRemainingSeconds = remaining, isRestTimerActive = true, isRestOver = false) }
@@ -205,10 +241,27 @@ class ActiveWorkoutViewModel @Inject constructor(
                     restSignalPlayer.playRestOverSignal()
                     savedStateHandle.remove<Long>(restTimerEndAtKey)
                     savedStateHandle.remove<Long>(restTimerTargetSetIdKey)
+                    delay(1500L)
+                    _uiState.update { it.copy(isRestOver = false) }
                     break
                 }
                 delay(1000L)
             }
         }
+    }
+
+    private suspend fun resolveExerciseNames(plannedSets: List<SessionPlannedSet>): Map<Long, String> {
+        val existing = _uiState.value.exerciseNamesById
+        val missingIds = plannedSets
+            .map { it.exerciseId }
+            .distinct()
+            .filterNot(existing::containsKey)
+
+        if (missingIds.isEmpty()) return existing
+
+        val loaded = missingIds.associateWith { exerciseId ->
+            exerciseRepository.getById(exerciseId)?.name ?: "Exercise $exerciseId"
+        }
+        return existing + loaded
     }
 }

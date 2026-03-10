@@ -10,6 +10,8 @@ import no.utgdev.getstrong.domain.model.SessionPlannedSet
 import no.utgdev.getstrong.domain.model.SessionSetType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SessionRepositoryImplTest {
@@ -26,6 +28,7 @@ class SessionRepositoryImplTest {
                 setType = SessionSetType.WARMUP,
                 targetReps = 3,
                 targetWeightKg = 60.0,
+                isExtra = false,
             ),
             SessionPlannedSet(
                 sessionId = 0,
@@ -35,6 +38,7 @@ class SessionRepositoryImplTest {
                 setType = SessionSetType.WARMUP,
                 targetReps = 3,
                 targetWeightKg = 80.0,
+                isExtra = false,
             ),
             SessionPlannedSet(
                 sessionId = 0,
@@ -44,6 +48,7 @@ class SessionRepositoryImplTest {
                 setType = SessionSetType.WORK,
                 targetReps = 5,
                 targetWeightKg = 140.0,
+                isExtra = false,
             ),
         )
 
@@ -54,6 +59,84 @@ class SessionRepositoryImplTest {
         assertEquals(listOf(0, 1, 2), loaded!!.plannedSets.map { it.setOrder })
         assertEquals(listOf(SessionSetType.WARMUP, SessionSetType.WARMUP, SessionSetType.WORK), loaded.plannedSets.map { it.setType })
         assertEquals(listOf(60.0, 80.0, 140.0), loaded.plannedSets.map { it.targetWeightKg })
+    }
+
+    @Test
+    fun completeSetCanBeClearedBackToZeroAndRemovesStoredResult() = runTest {
+        val dao = FakeSessionDao()
+        val repository = SessionRepositoryImpl(dao)
+        val sessionId = repository.startSession(
+            workoutId = 1L,
+            plannedSets = listOf(
+                SessionPlannedSet(
+                    sessionId = 0,
+                    workoutSlotId = 11,
+                    setOrder = 0,
+                    exerciseId = 1006,
+                    setType = SessionSetType.WORK,
+                    targetReps = 5,
+                    targetWeightKg = 100.0,
+                ),
+            ),
+        )
+        val plannedSetId = repository.getActiveSessionState(sessionId)!!.plannedSets.single().id
+
+        repository.completePlannedSet(sessionId, plannedSetId, 5)
+        repository.completePlannedSet(sessionId, plannedSetId, 0)
+
+        val reloaded = repository.getActiveSessionState(sessionId)!!.plannedSets.single()
+        assertTrue(!reloaded.isCompleted)
+        assertNull(reloaded.completedReps)
+        assertTrue(repository.getSetResults(sessionId).isEmpty())
+    }
+
+    @Test
+    fun addAndRemoveExtraSetReordersSessionPlan() = runTest {
+        val dao = FakeSessionDao()
+        val repository = SessionRepositoryImpl(dao)
+        val sessionId = repository.startSession(
+            workoutId = 1L,
+            plannedSets = listOf(
+                SessionPlannedSet(
+                    sessionId = 0,
+                    workoutSlotId = 11,
+                    setOrder = 0,
+                    exerciseId = 1006,
+                    setType = SessionSetType.WORK,
+                    targetReps = 5,
+                    targetWeightKg = 100.0,
+                ),
+                SessionPlannedSet(
+                    sessionId = 0,
+                    workoutSlotId = 11,
+                    setOrder = 1,
+                    exerciseId = 1006,
+                    setType = SessionSetType.WORK,
+                    targetReps = 5,
+                    targetWeightKg = 100.0,
+                ),
+                SessionPlannedSet(
+                    sessionId = 0,
+                    workoutSlotId = 12,
+                    setOrder = 2,
+                    exerciseId = 1007,
+                    setType = SessionSetType.WORK,
+                    targetReps = 8,
+                    targetWeightKg = 40.0,
+                ),
+            ),
+        )
+        val original = repository.getActiveSessionState(sessionId)!!.plannedSets
+
+        val withExtra = repository.addExtraSet(sessionId, original.first().id)!!.plannedSets
+        assertEquals(listOf(0, 1, 2, 3), withExtra.map { it.setOrder })
+        assertTrue(withExtra[1].isExtra)
+        assertEquals(original.first().workoutSlotId, withExtra[1].workoutSlotId)
+        assertEquals(original.first().setType, withExtra[1].setType)
+
+        val withoutExtra = repository.removeExtraSet(sessionId, withExtra[1].id)!!.plannedSets
+        assertEquals(listOf(0, 1, 2), withoutExtra.map { it.setOrder })
+        assertTrue(withoutExtra.none { it.isExtra })
     }
 }
 
@@ -99,11 +182,27 @@ private class FakeSessionDao : SessionDao {
     override suspend fun getPlannedSets(sessionId: Long): List<SessionPlannedSetEntity> =
         plannedSetsBySession[sessionId].orEmpty().sortedBy { it.setOrder }
 
-    override suspend fun markPlannedSetCompleted(sessionId: Long, plannedSetId: Long, completedReps: Int) {
+    override suspend fun getPlannedSet(sessionId: Long, plannedSetId: Long): SessionPlannedSetEntity? =
+        plannedSetsBySession[sessionId].orEmpty().firstOrNull { it.id == plannedSetId }
+
+    override suspend fun updatePlannedSetCompletion(
+        sessionId: Long,
+        plannedSetId: Long,
+        isCompleted: Boolean,
+        completedReps: Int?,
+    ) {
         val current = plannedSetsBySession[sessionId] ?: return
         val idx = current.indexOfFirst { it.id == plannedSetId }
         if (idx >= 0) {
-            current[idx] = current[idx].copy(isCompleted = true, completedReps = completedReps)
+            current[idx] = current[idx].copy(isCompleted = isCompleted, completedReps = completedReps)
+        }
+    }
+
+    override suspend fun updatePlannedSetWeight(sessionId: Long, plannedSetId: Long, weightKg: Double) {
+        val current = plannedSetsBySession[sessionId] ?: return
+        val idx = current.indexOfFirst { it.id == plannedSetId }
+        if (idx >= 0) {
+            current[idx] = current[idx].copy(targetWeightKg = weightKg)
         }
     }
 
@@ -122,6 +221,18 @@ private class FakeSessionDao : SessionDao {
 
     override suspend fun getSetResults(sessionId: Long): List<SetResultEntity> =
         setResultsBySession[sessionId].orEmpty()
+
+    override suspend fun getSetResultForPlannedSet(sessionId: Long, plannedSetId: Long): SetResultEntity? =
+        setResultsBySession[sessionId].orEmpty().firstOrNull { it.plannedSetId == plannedSetId }
+
+    override suspend fun deleteSetResultForPlannedSet(sessionId: Long, plannedSetId: Long) {
+        val current = setResultsBySession[sessionId] ?: return
+        current.removeAll { it.plannedSetId == plannedSetId }
+    }
+
+    override suspend fun deletePlannedSetsForSession(sessionId: Long) {
+        plannedSetsBySession.remove(sessionId)
+    }
 
     override suspend fun createSessionWithPlan(
         session: WorkoutSessionEntity,
