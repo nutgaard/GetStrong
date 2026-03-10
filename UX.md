@@ -46,6 +46,8 @@ This file is an AI-authored synthesis of the screenshots in `docs/images` plus t
 - Rest timing feedback appears as a transient bottom overlay rather than a full-screen interruption.
 - Active workout hierarchy prioritizes the current set and set-circle interaction area; timers, counts, tabs, and helper copy stay visually secondary.
 - The reference pack does not surface history, charts, or settings content during active workouts; the session screen stays focused on execution and short supporting status only.
+- One-handed use favors keeping the current set, the next actionable set circles, and the extra-set affordance within easy thumb reach without requiring precise top-of-screen targets during normal workout progression.
+- Secondary actions may still use long-press or contextual surfaces, but primary workout progression should not depend on repeated travel to distant header controls.
 
 ## Navigation Relationships
 

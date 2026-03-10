@@ -371,7 +371,7 @@ milestones:
         description: Keep one-handed operation as a standing constraint for every workout-facing screen and interaction.
         priority: P1
         status: done
-        ux_status: needs_rework
+        ux_status: verified
         ux_references:
           - "UX.md#Repeated Interaction Patterns"
           - "UX.md -> workout_in_progress_0.png"
