@@ -190,7 +190,7 @@ milestones:
           - Tapping the gray set circle on an incomplete set marks it complete and sets achieved reps to the target.
           - Tapping the set circle again decrements the achieved reps by one, supporting partial reps (e.g., 4 of 5) down to 0.
           - Long-pressing a set opens a contextual menu for actions such as setting weight, setting reps, and clearing the set.
-          - Behavior applies to both warmup and work sets and aligns with the interaction patterns shown in docs/images/workout_in_progress_0.png.
+          - Behavior applies to both warmup and work sets and aligns with the interaction patterns shown in docs/issues/workout_in_progress_0.png.
           - The active workout flow exposes the documented Workout/Warmup session structure without showing the top-level bottom navigation.
           - Users can add extra sets inline with the trailing plus affordance shown in the UX references.
           - Rest countdown feedback appears as a transient bottom overlay rather than a blocking full-screen interruption.
@@ -496,3 +496,127 @@ milestones:
           - Documentation uses the current screenshot filenames consistently, and QA can verify that no active documentation still references removed or renamed UI image assets.
           - This task is treated as documentation maintenance only; feature tasks remain responsible for shipping their own UX behavior through `ux_references` and UX acceptance criteria.
           - Any task that materially changes user-visible UX must update the relevant documentation in the same change or explicitly pair with this task before the work is considered complete.
+
+  - id: M12
+    name: Screenshot Audit Remediation
+    description: Resolve the concrete UX and behavior gaps documented in `issues/issues.md` by bringing the shipped app back in line with the reference screenshots in `docs/images`.
+    priority: P0
+    tasks:
+      - id: T35
+        title: Make Home upcoming workouts actionable and schedule-driven
+        description: Replace the current inert Home card behavior with a schedule-backed upcoming queue and explicit schedule configuration that match the reference screenshots and the issue audit.
+        priority: P0
+        status: planned
+        ux_status: planned
+        ux_references:
+          - "UX.md -> start_screen.png"
+          - "UX.md -> workout_overview.png"
+          - "UX.md#Navigation Relationships"
+        acceptance_criteria:
+          - Users can configure which weekdays are training days for workout rotation, and that schedule persists across app restarts.
+          - The app exposes the configured training schedule in a user-visible surface consistent with the planning flow, so users can understand and adjust the next planned workout dates.
+          - Home shows a next-7-days upcoming workout queue derived from a persisted weekly training schedule rather than a single static next-up card.
+          - Saved workouts rotate through the configured training days in a stable deterministic order, so the next planned dates remain understandable across app restarts.
+          - Tapping an upcoming workout card starts that workout when there is no active session to resume.
+          - The primary Home FAB starts the first planned workout in the same queue shown on Home.
+          - QA can verify the Home queue and launch behavior against `issues/issues.md`, `issues/home_not_clickable.png`, and the listed ux_references.
+
+      - id: T36
+        title: Bring History calendar layout and drill-down behavior to spec
+        description: Align the History calendar with the reference screenshot and the written audit for week layout, marker density, and day selection behavior.
+        priority: P0
+        status: planned
+        ux_status: planned
+        ux_references:
+          - "UX.md -> history_calendar.png"
+          - "UX.md -> history_workout.png"
+          - "UX.md#Navigation Relationships"
+        acceptance_criteria:
+          - Calendar weeks start on Monday instead of Sunday.
+          - A date with one or more completed workouts keeps a stable day-cell layout and uses a single consistent visual marker instead of expanding or changing the grid when multiple workouts exist on the same date.
+          - Tapping a day with exactly one workout opens that workout's completed summary or equivalent workout-detail view.
+          - Tapping a day with multiple workouts opens a selection surface before drill-down.
+          - QA can verify the calendar behavior against `issues/calendar.png` and the listed ux_references.
+
+      - id: T37
+        title: Restore Programs row chrome and reusable FAB spacing
+        description: Replace the current ad hoc Programs actions with the reference row/menu pattern and standardize floating-action-button spacing across workout-planning surfaces.
+        priority: P1
+        status: planned
+        ux_status: planned
+        ux_references:
+          - "UX.md -> workout_overview.png"
+          - "UX.md -> edit_workout.png"
+          - "UX.md#Repeated Interaction Patterns"
+        acceptance_criteria:
+          - Workout rows and exercise rows use a right-side three-dot overflow menu for contextual actions instead of the current `Workout Actions` affordance.
+          - The add-workout and add-exercise floating buttons use the same reusable padding/inset treatment so they align consistently across planning screens.
+          - Tapping a workout row still opens the workout editor, while contextual actions such as delete remain discoverable from the overflow menu.
+          - QA can verify the row actions and FAB spacing against `issues/new_workout_padding.png` and the listed ux_references.
+
+      - id: T38
+        title: Ship exercise-detail controls for weight and progression settings
+        description: Replace the current limited exercise editing flow with the weight/progression controls shown in the reference exercise-detail screen.
+        priority: P0
+        status: planned
+        ux_status: planned
+        ux_references:
+          - "UX.md -> edit_exercise.png"
+          - "UX.md -> progress_exercise.png"
+          - "UX.md -> history_exercise.png"
+          - "UX.md#Navigation Relationships"
+        acceptance_criteria:
+          - From workout editing, the user can open an exercise-detail surface that exposes sets x reps, working weight, progression mode, increment, deload, and plate guidance.
+          - The user can change the next workout weight and progression configuration without relying on hidden debug flows or incomplete dialogs.
+          - Exercise detail provides the documented navigation paths into per-exercise Progress and History drill-downs.
+          - QA can verify the editor capability against `issues/edit_exercise_missing_functionality.png` and the listed ux_references.
+
+      - id: T39
+        title: Restore warmup content inside the active workout flow
+        description: Ensure the active workout session actually surfaces the generated warmup sets and phase transitions shown in the warmup reference screenshot.
+        priority: P0
+        status: planned
+        ux_status: planned
+        ux_references:
+          - "UX.md -> workout_warmup.png"
+          - "UX.md -> workout_in_progress_0.png"
+          - "UX.md#Navigation Relationships"
+        acceptance_criteria:
+          - The Warmup section shows generated warmup rows for eligible exercises instead of an empty placeholder state.
+          - Warmup rows include the planned reps/load information and the same completion interaction model used by work sets.
+          - Completing all warmup sets for the current exercise returns focus to the Workout section for that same exercise.
+          - QA can verify warmup visibility and transition behavior against `issues/no_warmup_added.png` and the listed ux_references.
+
+      - id: T40
+        title: Realign active workout ordering, layout stability, and timer overlay behavior
+        description: Bring the active workout screen back to the list-first reference layout so the current work set is obvious without causing overlap or jumpy layout.
+        priority: P0
+        status: planned
+        ux_status: planned
+        ux_references:
+          - "UX.md -> workout_in_progress_0.png"
+          - "UX.md -> workout_in_progress_1.png"
+          - "UX.md -> workout_in_progress_2.png"
+          - "UX.md#Repeated Interaction Patterns"
+        acceptance_criteria:
+          - Exercises render in their saved workout order with the current actionable set inline in the list, rather than pinning the current work set to the bottom in a way that makes progression counter-intuitive.
+          - Marking sets complete does not cause headers, cards, or set controls to overlap or collapse into each other.
+          - The rest timer remains a transient bottom overlay that does not cover or push the active set controls into an unusable layout.
+          - Inline add-set and set-context actions remain available after the layout changes.
+          - QA can verify the active-workout behavior against `issues/workout_in_progress_ui_0.png`, `issues/workout_in_progress_ui_1.png`, and the listed ux_references.
+
+      - id: T41
+        title: Persist active workout state when navigating away
+        description: Preserve in-progress workout sessions until the user finishes them, so navigation away from the workout does not silently discard real progress.
+        priority: P0
+        status: planned
+        ux_status: planned
+        ux_references:
+          - "UX.md -> start_screen.png"
+          - "UX.md -> workout_in_progress_0.png"
+          - "UX.md#Navigation Relationships"
+        acceptance_criteria:
+          - Leaving an active workout after completing at least one set preserves the session state and allows the user to resume it later.
+          - Resuming from Home or other relevant entry points returns the user to the same in-progress session instead of starting a duplicate session.
+          - A newly started workout with zero completed sets may still be discarded when the user backs out, matching the explicit exception in `issues/issues.md`.
+          - QA can verify session persistence and resume behavior against the issue notes and the listed ux_references.
