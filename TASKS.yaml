@@ -301,24 +301,25 @@ milestones:
         title: Implement workout summary screen
         description: Display per-set results, total volume, and total time when a workout completes.
         priority: P0
-        status: done
-        ux_status: verified
+        status: pending
+        ux_status: needs_rework
         ux_references:
           - "UX.md#Overall Structure"
           - "UX.md#Navigation Relationships"
         acceptance_criteria:
           - At workout completion, user sees reps achieved per set, total lifted volume, and total workout time.
           - Summary clearly distinguishes warmup vs work sets.
-          - User can dismiss the summary and return to the main app without losing data.
-          - QA can verify the post-workout summary flow against the listed ux_references until a dedicated summary mock is added.
+          - The summary exit affordance uses concise Android-native wording or iconography rather than a generic `Return to app` button label, and returning to the shell does not lose the recorded workout.
+          - QA can verify the post-workout summary flow against the listed ux_references and the current `issues/issues.md` audit until a dedicated summary mock is added.
       - id: T18
         title: Persist workout summaries for history
         description: Store workout summaries locally for future analytics and charting.
         priority: P0
-        status: done
+        status: pending
         acceptance_criteria:
-          - Workout summaries are saved via the persistence layer at session completion.
+          - Workout summaries are saved via the persistence layer exactly once at session completion.
           - Summaries remain available across app restarts.
+          - A completed workout appears in History from the persisted summary data without requiring manual recovery or a second completion pass.
           - A simple history list view can display past workouts and basic details from their summaries.
       - id: T30
         title: Implement history list, calendar, and exercise history views
@@ -407,8 +408,8 @@ milestones:
         title: Standardize navigation and remove dev UI
         description: Make the documented navigation shell and production-only entry points part of the core implementation baseline.
         priority: P1
-        status: done
-        ux_status: verified
+        status: pending
+        ux_status: needs_rework
         ux_references:
           - "UX.md#Overall Structure"
           - "UX.md#Top-Level Navigation"
@@ -419,10 +420,12 @@ milestones:
         acceptance_criteria:
           - The app uses top app bars with standard back/up behavior where appropriate.
           - A bottom navigation bar with icons exposes the core areas `Home`, `Programs`, `History`, `Progress`, and `Settings`.
+          - Selecting `Home` from the bottom navigation always activates the Home destination, including immediately after creating or editing a workout and after returning from nested child flows.
+          - The selected bottom-navigation item and the rendered top-level destination stay in sync across all top-level screens.
           - Focused edit/detail flows and active workouts intentionally drop the bottom-navigation chrome and use back/up navigation instead.
           - Persistence demo and catalog debug actions are not visible in production UX on the frontpage or primary flows.
           - Lists and collections use standard Android list patterns (e.g., row actions, overflow menus, or swipe actions) instead of oversized inline Edit/Delete buttons.
-          - QA can verify the production navigation shell against the listed ux_references.
+          - QA can verify the production navigation shell against the listed ux_references and the current `issues/issues.md` audit.
 
   - id: M10
     name: Settings & Accessibility Polish
@@ -433,8 +436,8 @@ milestones:
         title: Expose training settings UI
         description: Add UI to configure rest duration and preferred defaults (increment, progression mode, deload percent) used when creating new workout exercise slots.
         priority: P1
-        status: done
-        ux_status: verified
+        status: pending
+        ux_status: needs_rework
         ux_references:
           - "UX.md#Overall Structure"
           - "UX.md#Top-Level Navigation"
@@ -442,7 +445,9 @@ milestones:
           - User can change default rest duration and see it reflected in new sessions.
           - User can adjust default weight increment and deload percent, and newly created workout exercise slots use the updated values as their initial configuration (existing slots are unchanged unless edited).
           - User can choose a default progression mode used to prefill new exercises/workouts; actual progression behavior always reads the stored configuration on each exercise slot, not a global setting.
-          - QA can verify the Settings entry point and settings-scope expectations against the listed ux_references.
+          - Settings persist through an auto-save or equivalently low-friction interaction pattern, so a prominent `Save Training Default` button is not required for ordinary edits.
+          - Settings feedback, if shown, is non-blocking and does not shift the form layout or push controls while the user is editing.
+          - QA can verify the Settings entry point and settings-scope expectations against the listed ux_references and `issues/settings.png`.
       - id: T23
         title: Accessibility and TalkBack pass
         description: Improve accessibility labels, focus order, and contrast on Home, Programs, Active Workout, and Summary screens.
@@ -496,6 +501,15 @@ milestones:
           - Documentation uses the current screenshot filenames consistently, and QA can verify that no active documentation still references removed or renamed UI image assets.
           - This task is treated as documentation maintenance only; feature tasks remain responsible for shipping their own UX behavior through `ux_references` and UX acceptance criteria.
           - Any task that materially changes user-visible UX must update the relevant documentation in the same change or explicitly pair with this task before the work is considered complete.
+      - id: T42
+        title: Resolve the warmup reference conflict before changing the algorithm
+        description: The current issue audit points to `issues/warmup_reference.png` as the desired warmup pattern for a 95 kg squat, but that example conflicts with the percentage-band heuristic currently committed in `product-description.md` and T13. Decide the canonical warmup contract before implementation changes the generation algorithm.
+        priority: P0
+        status: pending
+        acceptance_criteria:
+          - The team explicitly decides whether warmup generation remains the current percentage-band heuristic or changes to the ramp model implied by `issues/warmup_reference.png`.
+          - If the warmup contract changes, `product-description.md`, `UX.md`, and any relevant ADRs/tasks are updated in the same planning slice before implementation starts.
+          - `TASKS.yaml` and QA references point to one consistent warmup contract, with no conflicting numeric examples for the same working weight.
 
   - id: M12
     name: Screenshot Audit Remediation
@@ -565,13 +579,13 @@ milestones:
 
       - id: T38
         title: Ship exercise-detail controls for weight and progression settings
-        description: Replace the current limited exercise editing flow with the weight/progression controls shown in the reference exercise-detail screen.
+        description: Replace the current limited exercise editing flow with the weight/progression controls shown in the reference exercise-detail screen, with slot-draft behavior and top-level tab chrome that stay aligned to ADR-010.
         priority: P0
-        status: done
+        status: pending
         owner: none
         next_owner: none
         bundle: M12-B3
-        ux_status: verified
+        ux_status: needs_rework
         ux_references:
           - "UX.md -> edit_exercise.png"
           - "UX.md -> progress_exercise.png"
@@ -579,38 +593,42 @@ milestones:
           - "UX.md#Navigation Relationships"
         acceptance_criteria:
           - From workout editing, the user can open an exercise-detail surface that exposes sets x reps, working weight, progression mode, increment, deload, and plate guidance.
+          - Changing progression mode immediately updates the visible configuration fields to match the selected mode, hiding irrelevant inputs and exposing any additional fields needed by the chosen mode.
+          - The exercise-detail top bar uses standard Android back/up behavior without a redundant manual back control.
+          - The tab or top-menu chrome remains visible across Weight, Progress, and History, and the highlighted tab stays in sync with the displayed content after back/up navigation.
+          - Exercise-detail edits update the in-memory workout draft directly and do not require a separate `Apply slot settings` step; saving still happens at the workout-editor flow boundary per ADR-010.
           - The user can change the next workout weight and progression configuration without relying on hidden debug flows or incomplete dialogs.
           - Exercise detail provides the documented navigation paths into per-exercise Progress and History drill-downs.
-          - QA can verify the editor capability against `issues/edit_exercise_missing_functionality.png` and the listed ux_references.
+          - QA can verify the editor capability against `issues/edit_exercise_progression_bug.png` and the listed ux_references.
 
       - id: T39
         title: Restore warmup content inside the active workout flow
-        description: Ensure the active workout session actually surfaces the generated warmup sets and phase transitions shown in the warmup reference screenshot.
+        description: Ensure the active workout session surfaces generated warmup sets as readable per-set rows and preserves the documented phase transitions inside the workout flow.
         priority: P0
-        status: done
+        status: pending
         owner: none
         next_owner: none
         bundle: M12-B1
-        ux_status: verified
+        ux_status: needs_rework
         ux_references:
           - "UX.md -> workout_warmup.png"
           - "UX.md -> workout_in_progress_0.png"
           - "UX.md#Navigation Relationships"
         acceptance_criteria:
-          - The Warmup section shows generated warmup rows for eligible exercises instead of an empty placeholder state.
-          - Warmup rows include the planned reps/load information and the same completion interaction model used by work sets.
+          - The Warmup section shows generated warmup rows for eligible exercises instead of an empty placeholder state or a single aggregate summary string.
+          - Each warmup set renders as its own row with explicit reps and load information drawn from the currently accepted warmup-generation contract, and uses the same completion interaction model as work sets.
           - Completing all warmup sets for the current exercise returns focus to the Workout section for that same exercise.
-          - QA can verify warmup visibility and transition behavior against `issues/no_warmup_added.png` and the listed ux_references.
+          - QA can verify warmup visibility and transition behavior against `issues/workout_in_progress.png`, the listed ux_references, and the final contract chosen through T42 if the warmup algorithm changes.
 
       - id: T40
         title: Realign active workout ordering, layout stability, and timer overlay behavior
         description: Bring the active workout screen back to the list-first reference layout so the current work set is obvious without causing overlap or jumpy layout.
         priority: P0
-        status: done
+        status: pending
         owner: none
         next_owner: none
         bundle: M12-B1
-        ux_status: verified
+        ux_status: needs_rework
         ux_references:
           - "UX.md -> workout_in_progress_0.png"
           - "UX.md -> workout_in_progress_1.png"
@@ -618,20 +636,22 @@ milestones:
           - "UX.md#Repeated Interaction Patterns"
         acceptance_criteria:
           - Exercises render in their saved workout order with the current actionable set inline in the list, rather than pinning the current work set to the bottom in a way that makes progression counter-intuitive.
+          - Incomplete sets use a lightweight outlined treatment, while completed or partially completed sets use a filled treatment that remains readable without relying on heavy accent colors alone.
+          - The next actionable set is emphasized with a subtle non-blocking highlight or motion cue that helps scanability without obscuring content or introducing layout instability.
           - Marking sets complete does not cause headers, cards, or set controls to overlap or collapse into each other.
           - The rest timer remains a transient bottom overlay that does not cover or push the active set controls into an unusable layout.
           - Inline add-set and set-context actions remain available after the layout changes.
-          - QA can verify the active-workout behavior against `issues/workout_in_progress_ui_0.png`, `issues/workout_in_progress_ui_1.png`, and the listed ux_references.
+          - QA can verify the active-workout behavior against `issues/workout_in_progress.png` and the listed ux_references.
 
       - id: T41
         title: Persist active workout state when navigating away
         description: Preserve in-progress workout sessions until the user finishes them, so navigation away from the workout does not silently discard real progress.
         priority: P0
-        status: done
+        status: pending
         owner: none
         next_owner: none
         bundle: M12-B1
-        ux_status: verified
+        ux_status: needs_rework
         ux_references:
           - "UX.md -> start_screen.png"
           - "UX.md -> workout_in_progress_0.png"
@@ -639,5 +659,6 @@ milestones:
         acceptance_criteria:
           - Leaving an active workout after completing at least one set preserves the session state and allows the user to resume it later.
           - Resuming from Home or other relevant entry points returns the user to the same in-progress session instead of starting a duplicate session.
+          - When an unfinished session exists, Home and other resume-capable entry points present resume-specific copy such as `Continue workout` instead of implying that a brand-new workout will be started.
           - A newly started workout with zero completed sets may still be discarded when the user backs out, matching the explicit exception in `issues/issues.md`.
           - QA can verify session persistence and resume behavior against the issue notes and the listed ux_references.
