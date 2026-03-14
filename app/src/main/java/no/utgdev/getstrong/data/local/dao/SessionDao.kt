@@ -132,8 +132,37 @@ interface SessionDao {
     @Query("DELETE FROM set_results WHERE sessionId = :sessionId")
     suspend fun deleteSetResultsForSession(sessionId: Long)
 
+    @Query("DELETE FROM workout_summaries WHERE sessionId = :sessionId")
+    suspend fun deleteWorkoutSummaryForSession(sessionId: Long)
+
     @Query("DELETE FROM sessions WHERE id = :sessionId")
     suspend fun deleteSession(sessionId: Long)
+
+    @Query(
+        """
+        INSERT INTO workout_summaries (
+            workoutId,
+            sessionId,
+            workoutName,
+            totalVolumeKg,
+            totalDurationSeconds,
+            completedAtEpochMs
+        )
+        SELECT
+            sessions.workoutId,
+            sessions.id,
+            workouts.name,
+            COALESCE(SUM(CASE WHEN set_results.setType = 'WORK' THEN set_results.reps * set_results.weightKg ELSE 0 END), 0),
+            MAX((sessions.endedAtEpochMs - sessions.startedAtEpochMs) / 1000, 0),
+            sessions.endedAtEpochMs
+        FROM sessions
+        INNER JOIN workouts ON workouts.id = sessions.workoutId
+        LEFT JOIN set_results ON set_results.sessionId = sessions.id
+        WHERE sessions.id = :sessionId
+        GROUP BY sessions.id, sessions.workoutId, workouts.name, sessions.startedAtEpochMs, sessions.endedAtEpochMs
+        """,
+    )
+    suspend fun insertWorkoutSummaryProjectionForSession(sessionId: Long): Long
 
     @Transaction
     suspend fun createSessionWithPlan(
@@ -178,6 +207,26 @@ interface SessionDao {
             )
         }
         markSessionCompleted(sessionId, endedAtEpochMs)
+    }
+
+    @Transaction
+    suspend fun completeSessionWithProgressionAndPersistSummary(
+        sessionId: Long,
+        endedAtEpochMs: Long,
+        updates: List<SlotProgressionRecord>,
+    ) {
+        updates.forEach { update ->
+            applySlotProgressionForSession(
+                sessionId = sessionId,
+                slotId = update.slotId,
+                nextTargetReps = update.nextTargetReps,
+                nextWorkingWeightKg = update.nextWorkingWeightKg,
+                nextFailureStreak = update.nextFailureStreak,
+            )
+        }
+        markSessionCompleted(sessionId, endedAtEpochMs)
+        deleteWorkoutSummaryForSession(sessionId)
+        insertWorkoutSummaryProjectionForSession(sessionId)
     }
 }
 

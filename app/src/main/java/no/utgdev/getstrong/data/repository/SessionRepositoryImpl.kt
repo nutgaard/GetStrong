@@ -172,6 +172,25 @@ class SessionRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun completeSessionWithProgressionAndPersistSummary(
+        sessionId: Long,
+        updates: List<SlotProgressionUpdate>,
+    ): Boolean {
+        sessionDao.completeSessionWithProgressionAndPersistSummary(
+            sessionId = sessionId,
+            endedAtEpochMs = System.currentTimeMillis(),
+            updates = updates.map {
+                SlotProgressionRecord(
+                    slotId = it.slotId,
+                    nextTargetReps = it.nextTargetReps,
+                    nextWorkingWeightKg = it.nextWorkingWeightKg,
+                    nextFailureStreak = it.nextFailureStreak,
+                )
+            },
+        )
+        return true
+    }
+
     override suspend fun saveSetResult(result: SetResult): Long =
         sessionDao.upsertSetResult(result.toEntity())
 

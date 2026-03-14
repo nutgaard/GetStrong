@@ -17,6 +17,13 @@ interface SessionRepository {
     suspend fun removeExtraSet(sessionId: Long, plannedSetId: Long): ActiveSessionState?
     suspend fun completeSession(sessionId: Long)
     suspend fun completeSessionWithProgression(sessionId: Long, updates: List<SlotProgressionUpdate>)
+    suspend fun completeSessionWithProgressionAndPersistSummary(
+        sessionId: Long,
+        updates: List<SlotProgressionUpdate>,
+    ): Boolean {
+        completeSessionWithProgression(sessionId, updates)
+        return false
+    }
     suspend fun saveSession(session: WorkoutSession): Long
     suspend fun saveSetResult(result: SetResult): Long
     suspend fun getSetResults(sessionId: Long): List<SetResult>

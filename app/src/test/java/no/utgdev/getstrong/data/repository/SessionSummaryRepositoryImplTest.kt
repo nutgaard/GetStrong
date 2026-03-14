@@ -205,7 +205,9 @@ private class FakeSessionDaoForSummary : SessionDao {
 
     override suspend fun deletePlannedSetsForSession(sessionId: Long) = Unit
     override suspend fun deleteSetResultsForSession(sessionId: Long) = Unit
+    override suspend fun deleteWorkoutSummaryForSession(sessionId: Long) = Unit
     override suspend fun deleteSession(sessionId: Long) = Unit
+    override suspend fun insertWorkoutSummaryProjectionForSession(sessionId: Long): Long = 0L
 
     override suspend fun createSessionWithPlan(
         session: WorkoutSessionEntity,

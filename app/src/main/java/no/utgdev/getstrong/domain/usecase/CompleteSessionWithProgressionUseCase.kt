@@ -13,11 +13,19 @@ class CompleteSessionWithProgressionUseCase @Inject constructor(
     private val progressionCalculator: ProgressionCalculator,
 ) {
     suspend operator fun invoke(sessionId: Long) {
-        val sessionState = sessionRepository.getActiveSessionState(sessionId) ?: return
-        val workout = workoutRepository.getWorkout(sessionState.session.workoutId) ?: return
+        val updates = calculateUpdates(sessionId) ?: return
+        sessionRepository.completeSessionWithProgression(
+            sessionId = sessionId,
+            updates = updates,
+        )
+    }
+
+    suspend fun calculateUpdates(sessionId: Long): List<SlotProgressionUpdate>? {
+        val sessionState = sessionRepository.getActiveSessionState(sessionId) ?: return null
+        val workout = workoutRepository.getWorkout(sessionState.session.workoutId) ?: return null
         val setResults = sessionRepository.getSetResults(sessionId)
 
-        val updates = workout.slots.mapNotNull { slot ->
+        return workout.slots.mapNotNull { slot ->
             if (slot.lastProgressionSessionId == sessionId) {
                 return@mapNotNull null
             }
@@ -67,10 +75,5 @@ class CompleteSessionWithProgressionUseCase @Inject constructor(
                 nextFailureStreak = nextFailureStreak,
             )
         }
-
-        sessionRepository.completeSessionWithProgression(
-            sessionId = sessionId,
-            updates = updates,
-        )
     }
 }

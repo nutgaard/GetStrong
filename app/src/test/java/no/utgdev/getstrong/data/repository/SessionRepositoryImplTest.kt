@@ -17,6 +17,35 @@ import org.junit.Test
 
 class SessionRepositoryImplTest {
     @Test
+    fun completeSessionWithProgressionAndPersistSummaryWritesSingleHistoryProjection() = runTest {
+        val dao = FakeSessionDao()
+        val repository = SessionRepositoryImpl(dao)
+        val sessionId = repository.startSession(
+            workoutId = 1L,
+            plannedSets = listOf(
+                SessionPlannedSet(
+                    sessionId = 0,
+                    workoutSlotId = 11,
+                    setOrder = 0,
+                    exerciseId = 1006,
+                    setType = SessionSetType.WORK,
+                    targetReps = 5,
+                    targetWeightKg = 100.0,
+                ),
+            ),
+        )
+        val plannedSetId = repository.getActiveSessionState(sessionId)!!.plannedSets.single().id
+        repository.completePlannedSet(sessionId, plannedSetId, 5)
+
+        val first = repository.completeSessionWithProgressionAndPersistSummary(sessionId, updates = emptyList())
+        val second = repository.completeSessionWithProgressionAndPersistSummary(sessionId, updates = emptyList())
+
+        assertTrue(first)
+        assertTrue(second)
+        assertEquals(1, dao.getWorkoutSummaryCountForSession(sessionId))
+    }
+
+    @Test
     fun findUnfinishedSessionIdReturnsLatestOpenSession() = runTest {
         val dao = FakeSessionDao()
         val repository = SessionRepositoryImpl(dao)
@@ -228,6 +257,7 @@ private class FakeSessionDao : SessionDao {
     private val sessions = linkedMapOf<Long, WorkoutSessionEntity>()
     private val plannedSetsBySession = linkedMapOf<Long, MutableList<SessionPlannedSetEntity>>()
     private val setResultsBySession = linkedMapOf<Long, MutableList<SetResultEntity>>()
+    private val workoutSummarySessionIds = linkedSetOf<Long>()
 
     override suspend fun upsertSession(session: WorkoutSessionEntity): Long {
         val id = if (session.id == 0L) nextSessionId++ else session.id
@@ -329,8 +359,17 @@ private class FakeSessionDao : SessionDao {
         setResultsBySession.remove(sessionId)
     }
 
+    override suspend fun deleteWorkoutSummaryForSession(sessionId: Long) {
+        workoutSummarySessionIds.remove(sessionId)
+    }
+
     override suspend fun deleteSession(sessionId: Long) {
         sessions.remove(sessionId)
+    }
+
+    override suspend fun insertWorkoutSummaryProjectionForSession(sessionId: Long): Long {
+        workoutSummarySessionIds += sessionId
+        return sessionId
     }
 
     override suspend fun createSessionWithPlan(
@@ -349,4 +388,7 @@ private class FakeSessionDao : SessionDao {
     ) {
         markSessionCompleted(sessionId, endedAtEpochMs)
     }
+
+    fun getWorkoutSummaryCountForSession(sessionId: Long): Int =
+        workoutSummarySessionIds.count { it == sessionId }
 }
