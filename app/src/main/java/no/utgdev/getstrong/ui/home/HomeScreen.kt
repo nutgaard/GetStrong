@@ -54,7 +54,11 @@ fun HomeScreen(
                 ExtendedFloatingActionButton(
                     text = {
                         Text(
-                            text = if (uiState.isStartingWorkout) "Starting..." else "Start Workout",
+                            text = when {
+                                uiState.isStartingWorkout -> "Starting..."
+                                uiState.unfinishedSessionId != null -> "Continue workout"
+                                else -> "Start Workout"
+                            },
                         )
                     },
                     icon = {},
@@ -63,6 +67,7 @@ fun HomeScreen(
                     modifier = Modifier.semantics {
                         contentDescription = buildQuickStartActionDescription(
                             nextWorkout = uiState.upcomingWorkouts.firstOrNull(),
+                            hasUnfinishedSession = uiState.unfinishedSessionId != null,
                             isStarting = uiState.isStartingWorkout,
                         )
                     },
@@ -192,7 +197,7 @@ private fun UpcomingWorkoutCard(
                     )
                 }
                 if (workout.isNextUp) {
-                    QueueBadge(text = "Next up")
+                    QueueBadge(text = if (workout.isResumeCandidate) "In progress" else "Next up")
                 }
             }
 
@@ -237,11 +242,14 @@ private fun QueueBadge(
 
 internal fun buildQuickStartActionDescription(
     nextWorkout: HomeUpcomingWorkoutUi?,
+    hasUnfinishedSession: Boolean,
     isStarting: Boolean,
 ): String =
     when {
         nextWorkout == null -> "Start workout"
+        isStarting && hasUnfinishedSession -> "Continuing ${nextWorkout.workoutName}"
         isStarting -> "Starting ${nextWorkout.workoutName}"
+        hasUnfinishedSession -> "Continue workout ${nextWorkout.workoutName}"
         else -> "Start workout ${nextWorkout.workoutName}"
     }
 

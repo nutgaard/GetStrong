@@ -36,9 +36,29 @@ class HomeAccessibilityLabelTest {
                 additionalExerciseCount = 0,
                 isNextUp = true,
             ),
+            hasUnfinishedSession = false,
             isStarting = false,
         )
 
         assertEquals("Start workout Workout A", description)
+    }
+
+    @Test
+    fun buildsContinueDescriptionWhenSessionIsUnfinished() {
+        val description = buildQuickStartActionDescription(
+            nextWorkout = HomeUpcomingWorkoutUi(
+                workoutId = 7L,
+                workoutName = "Workout A",
+                scheduledDateIso = "2026-03-10",
+                scheduledLabel = "Today",
+                exercisePreview = emptyList(),
+                additionalExerciseCount = 0,
+                isNextUp = true,
+            ),
+            hasUnfinishedSession = true,
+            isStarting = false,
+        )
+
+        assertEquals("Continue workout Workout A", description)
     }
 }

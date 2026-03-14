@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import no.utgdev.getstrong.domain.model.ActiveSessionState
+import no.utgdev.getstrong.domain.model.SessionSetType
 import no.utgdev.getstrong.domain.model.Exercise
 import no.utgdev.getstrong.domain.model.SetResult
 import no.utgdev.getstrong.domain.model.SlotProgressionUpdate
@@ -154,6 +155,107 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun loadExposesResumeStateAndContinueCandidateWhenSessionIsUnfinished() = runTest {
+        val sessionRepository = FakeSessionRepository().apply {
+            unfinishedSessionId = 42L
+            activeSessions[42L] = ActiveSessionState(
+                session = WorkoutSession(
+                    id = 42L,
+                    workoutId = 2L,
+                    startedAtEpochMs = 1_000L,
+                    endedAtEpochMs = null,
+                ),
+                plannedSets = listOf(
+                    SessionPlannedSet(
+                        id = 1L,
+                        sessionId = 42L,
+                        workoutSlotId = 11L,
+                        setOrder = 0,
+                        exerciseId = 1003L,
+                        setType = SessionSetType.WORK,
+                        targetReps = 5,
+                        targetWeightKg = 100.0,
+                        isCompleted = true,
+                        completedReps = 5,
+                    ),
+                ),
+            )
+        }
+        val viewModel = createViewModel(
+            workoutRepository = FakeWorkoutRepository(
+                workouts = listOf(
+                    workout(id = 1L, name = "Workout A", slots = listOf(slot(exerciseId = 1001L, position = 0))),
+                    workout(id = 2L, name = "Workout B", slots = listOf(slot(exerciseId = 1003L, position = 0))),
+                ),
+            ),
+            exerciseRepository = FakeExerciseRepository(listOf(exercise(1001L, "Bench"), exercise(1003L, "Squat"))),
+            settingsRepository = FakeSettingsRepository(trainingDays = listOf(1, 2, 3, 4, 5, 6, 7)),
+            workoutSummaryRepository = FakeWorkoutSummaryRepository(emptyList()),
+            sessionRepository = sessionRepository,
+        )
+
+        viewModel.load()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(42L, state.unfinishedSessionId)
+        assertEquals("Workout B", state.upcomingWorkouts.first().workoutName)
+        assertTrue(state.upcomingWorkouts.first().isResumeCandidate)
+    }
+
+    @Test
+    fun startQuickWorkoutReturnsExistingUnfinishedSessionId() = runTest {
+        val sessionRepository = FakeSessionRepository().apply {
+            unfinishedSessionId = 42L
+            activeSessions[42L] = ActiveSessionState(
+                session = WorkoutSession(
+                    id = 42L,
+                    workoutId = 7L,
+                    startedAtEpochMs = 1_000L,
+                    endedAtEpochMs = null,
+                ),
+                plannedSets = listOf(
+                    SessionPlannedSet(
+                        id = 1L,
+                        sessionId = 42L,
+                        workoutSlotId = 11L,
+                        setOrder = 0,
+                        exerciseId = 1001L,
+                        setType = SessionSetType.WORK,
+                        targetReps = 5,
+                        targetWeightKg = 100.0,
+                        isCompleted = true,
+                        completedReps = 5,
+                    ),
+                ),
+            )
+        }
+        val viewModel = createViewModel(
+            workoutRepository = FakeWorkoutRepository(
+                workouts = listOf(
+                    workout(
+                        id = 7L,
+                        name = "Workout A",
+                        slots = listOf(slot(exerciseId = 1001L, position = 0)),
+                    ),
+                ),
+            ),
+            exerciseRepository = FakeExerciseRepository(listOf(exercise(1001L, "Bench Press"))),
+            settingsRepository = FakeSettingsRepository(trainingDays = listOf(1, 2, 3, 4, 5, 6, 7)),
+            workoutSummaryRepository = FakeWorkoutSummaryRepository(emptyList()),
+            sessionRepository = sessionRepository,
+        )
+
+        viewModel.load()
+        advanceUntilIdle()
+        val sessionId = viewModel.startQuickWorkout()
+        advanceUntilIdle()
+
+        assertEquals(42L, sessionId)
+        assertEquals(null, sessionRepository.startedWorkoutId)
+    }
+
+    @Test
     fun loadShowsErrorStateWhenWorkoutLoadFails() = runTest {
         val viewModel = createViewModel(
             workoutRepository = FakeWorkoutRepository(workouts = emptyList(), throwOnGetAll = true),
@@ -226,6 +328,7 @@ private class FakeWorkoutRepository(
 private class FakeSessionRepository : SessionRepository {
     var startedWorkoutId: Long? = null
     var unfinishedSessionId: Long? = null
+    val activeSessions: MutableMap<Long, ActiveSessionState> = linkedMapOf()
 
     override suspend fun startSession(workoutId: Long, plannedSets: List<SessionPlannedSet>): Long {
         startedWorkoutId = workoutId
@@ -236,7 +339,7 @@ private class FakeSessionRepository : SessionRepository {
 
     override suspend fun discardSessionIfNoProgress(sessionId: Long): Boolean = false
 
-    override suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState? = null
+    override suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState? = activeSessions[sessionId]
     override suspend fun completePlannedSet(sessionId: Long, plannedSetId: Long, repsAchieved: Int): ActiveSessionState? = null
     override suspend fun updatePlannedSetWeight(sessionId: Long, plannedSetId: Long, weightKg: Double): ActiveSessionState? = null
     override suspend fun addExtraSet(sessionId: Long, anchorPlannedSetId: Long): ActiveSessionState? = null

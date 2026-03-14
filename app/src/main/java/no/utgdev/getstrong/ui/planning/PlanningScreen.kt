@@ -122,6 +122,8 @@ fun PlanningScreen(
                                 onEditWorkout = onEditWorkout,
                                 onDeleteWorkout = onDeleteWorkout,
                                 onStartWorkout = onStartWorkout,
+                                hasUnfinishedSession = uiState.unfinishedSessionId != null,
+                                unfinishedSessionWorkoutId = uiState.unfinishedSessionWorkoutId,
                             )
                         }
                     }
@@ -151,6 +153,8 @@ private fun WorkoutRow(
     onEditWorkout: (Long) -> Unit,
     onDeleteWorkout: (Long) -> Unit,
     onStartWorkout: (Long) -> Unit,
+    hasUnfinishedSession: Boolean,
+    unfinishedSessionWorkoutId: Long?,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     var shouldRestoreActionFocus by remember { mutableStateOf(false) }
@@ -210,9 +214,9 @@ private fun WorkoutRow(
                     },
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Start workout") },
+                        text = { Text(startWorkoutActionLabel(hasUnfinishedSession, unfinishedSessionWorkoutId == workout.id)) },
                         modifier = Modifier.semantics {
-                            contentDescription = "Start workout ${workout.name}"
+                            contentDescription = "${startWorkoutActionLabel(hasUnfinishedSession, unfinishedSessionWorkoutId == workout.id)} ${workout.name}"
                         },
                         onClick = {
                             menuExpanded = false
@@ -257,6 +261,16 @@ internal fun buildWorkoutRowContentDescription(workout: Workout): String {
     }
     return "${workout.name}. $exerciseSummary"
 }
+
+internal fun startWorkoutActionLabel(
+    hasUnfinishedSession: Boolean,
+    isSameWorkoutAsUnfinished: Boolean,
+): String =
+    when {
+        hasUnfinishedSession && isSameWorkoutAsUnfinished -> "Continue workout"
+        hasUnfinishedSession -> "Resume in-progress workout"
+        else -> "Start workout"
+    }
 
 @Composable
 private fun WeeklyScheduleEditor(

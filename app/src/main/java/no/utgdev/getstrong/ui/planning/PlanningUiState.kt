@@ -8,4 +8,6 @@ data class PlanningUiState(
     val workouts: List<Workout> = emptyList(),
     val trainingDays: List<Int> = emptyList(),
     val scheduleErrorMessage: String? = null,
+    val unfinishedSessionId: Long? = null,
+    val unfinishedSessionWorkoutId: Long? = null,
 )

@@ -126,6 +126,33 @@ class SessionRepositoryImplTest {
     }
 
     @Test
+    fun progressedSessionRemainsResumableAfterExitDiscardCheck() = runTest {
+        val dao = FakeSessionDao()
+        val repository = SessionRepositoryImpl(dao)
+        val progressedSessionId = repository.startSession(
+            workoutId = 2L,
+            plannedSets = listOf(
+                SessionPlannedSet(
+                    sessionId = 0,
+                    workoutSlotId = 22,
+                    setOrder = 0,
+                    exerciseId = 1007,
+                    setType = SessionSetType.WORK,
+                    targetReps = 5,
+                    targetWeightKg = 120.0,
+                ),
+            ),
+        )
+        val progressedSetId = repository.getActiveSessionState(progressedSessionId)!!.plannedSets.single().id
+        repository.completePlannedSet(progressedSessionId, progressedSetId, 5)
+
+        val discarded = repository.discardSessionIfNoProgress(progressedSessionId)
+
+        assertTrue(!discarded)
+        assertEquals(progressedSessionId, repository.findUnfinishedSessionId())
+    }
+
+    @Test
     fun startAndReloadSessionPreservesWarmupAndWorkSnapshotOrdering() = runTest {
         val dao = FakeSessionDao()
         val repository = SessionRepositoryImpl(dao)

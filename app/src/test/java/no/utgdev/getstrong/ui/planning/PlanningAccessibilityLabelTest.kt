@@ -32,4 +32,11 @@ class PlanningAccessibilityLabelTest {
 
         assertEquals("Push Day. 3 exercises.", description)
     }
+
+    @Test
+    fun startActionLabelUsesResumeCopyWhenUnfinishedSessionExists() {
+        assertEquals("Continue workout", startWorkoutActionLabel(hasUnfinishedSession = true, isSameWorkoutAsUnfinished = true))
+        assertEquals("Resume in-progress workout", startWorkoutActionLabel(hasUnfinishedSession = true, isSameWorkoutAsUnfinished = false))
+        assertEquals("Start workout", startWorkoutActionLabel(hasUnfinishedSession = false, isSameWorkoutAsUnfinished = false))
+    }
 }

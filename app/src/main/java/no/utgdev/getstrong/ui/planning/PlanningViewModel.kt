@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import no.utgdev.getstrong.domain.repository.SessionRepository
 import no.utgdev.getstrong.domain.repository.SettingsRepository
 import no.utgdev.getstrong.domain.repository.WorkoutRepository
 import no.utgdev.getstrong.domain.usecase.StartWorkoutSessionUseCase
@@ -18,6 +19,7 @@ import no.utgdev.getstrong.domain.usecase.StartWorkoutSessionUseCase
 class PlanningViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val settingsRepository: SettingsRepository,
+    private val sessionRepository: SessionRepository,
     private val startWorkoutSessionUseCase: StartWorkoutSessionUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PlanningUiState())
@@ -33,12 +35,17 @@ class PlanningViewModel @Inject constructor(
             try {
                 val workouts = workoutRepository.getAllWorkouts()
                 val settings = settingsRepository.settings.first()
+                val unfinishedSessionId = sessionRepository.findUnfinishedSessionId()
+                val unfinishedSessionWorkoutId = unfinishedSessionId
+                    ?.let { sessionId -> sessionRepository.getActiveSessionState(sessionId)?.session?.workoutId }
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         errorMessage = null,
                         workouts = workouts,
                         trainingDays = settings.trainingDays,
+                        unfinishedSessionId = unfinishedSessionId,
+                        unfinishedSessionWorkoutId = unfinishedSessionWorkoutId,
                     )
                 }
             } catch (_: Throwable) {
@@ -47,6 +54,8 @@ class PlanningViewModel @Inject constructor(
                         isLoading = false,
                         errorMessage = "Could not load workouts. Please try again.",
                         workouts = emptyList(),
+                        unfinishedSessionId = null,
+                        unfinishedSessionWorkoutId = null,
                     )
                 }
             }

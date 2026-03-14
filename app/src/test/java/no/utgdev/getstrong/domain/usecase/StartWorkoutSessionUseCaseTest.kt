@@ -23,6 +23,7 @@ import org.junit.Test
 class StartWorkoutSessionUseCaseTest {
     @Test
     fun reusesExistingUnfinishedSessionBeforeCreatingNewOne() = runTest {
+        val sessionRepository = CapturingSessionRepository(existingUnfinishedSessionId = 77L)
         val workoutRepository = FakeWorkoutRepositoryForStart(
             Workout(
                 id = 1,
@@ -33,13 +34,14 @@ class StartWorkoutSessionUseCaseTest {
         val useCase = StartWorkoutSessionUseCase(
             workoutRepository = workoutRepository,
             exerciseRepository = FakeExerciseRepository(emptyList()),
-            sessionRepository = CapturingSessionRepository(existingUnfinishedSessionId = 77L),
+            sessionRepository = sessionRepository,
             sessionEngine = WorkoutSessionEngine(WarmupGenerator()),
         )
 
         val sessionId = useCase(1L)
 
         assertEquals(77L, sessionId)
+        assertEquals(null, sessionRepository.startedWorkoutId)
     }
 
     @Test
@@ -132,9 +134,11 @@ private class CapturingSessionRepository : SessionRepository {
     }
 
     var lastPlannedSets: List<SessionPlannedSet> = emptyList()
+    var startedWorkoutId: Long? = null
     private var existingUnfinishedSessionId: Long? = null
 
     override suspend fun startSession(workoutId: Long, plannedSets: List<SessionPlannedSet>): Long {
+        startedWorkoutId = workoutId
         lastPlannedSets = plannedSets
         return 99L
     }

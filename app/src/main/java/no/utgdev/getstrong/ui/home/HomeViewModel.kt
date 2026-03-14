@@ -47,7 +47,8 @@ class HomeViewModel @Inject constructor(
                     exercise.id to exercise.name
                 }
                 val trainingDays = settingsRepository.settings.first().trainingDays
-                val unfinishedSessionWorkoutId = sessionRepository.findUnfinishedSessionId()
+                val unfinishedSessionId = sessionRepository.findUnfinishedSessionId()
+                val unfinishedSessionWorkoutId = unfinishedSessionId
                     ?.let { sessionId -> sessionRepository.getActiveSessionState(sessionId)?.session?.workoutId }
                 val recentSummaries = workoutSummaryRepository.getAllSummaries()
                 val actionable = buildUpcomingWorkouts(
@@ -63,6 +64,7 @@ class HomeViewModel @Inject constructor(
                         errorMessage = null,
                         startErrorMessage = null,
                         hasSavedWorkouts = workouts.isNotEmpty(),
+                        unfinishedSessionId = unfinishedSessionId,
                         upcomingWorkouts = actionable,
                     )
                 }
@@ -73,6 +75,7 @@ class HomeViewModel @Inject constructor(
                         errorMessage = "Couldn't load your upcoming workouts.",
                         startErrorMessage = null,
                         hasSavedWorkouts = false,
+                        unfinishedSessionId = null,
                         upcomingWorkouts = emptyList(),
                     )
                 }
@@ -154,6 +157,7 @@ private fun buildUpcomingWorkouts(
             exercisePreview = slotNames.take(3),
             additionalExerciseCount = (slotNames.size - 3).coerceAtLeast(0),
             isNextUp = scheduledWorkoutIndex == 1,
+            isResumeCandidate = unfinishedWorkoutId == workout.id && scheduledWorkoutIndex == 1,
         )
     }
 }

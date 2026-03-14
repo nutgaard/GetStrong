@@ -2,15 +2,20 @@ package no.utgdev.getstrong.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Modifier
 import androidx.annotation.DrawableRes
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -100,6 +105,7 @@ fun AppNavGraph(navController: NavHostController) {
             LaunchedEffect(Unit) {
                 homeViewModel.load()
             }
+            RefreshOnResume(onResume = homeViewModel::load)
             HomeScreen(
                 uiState = homeUiState,
                 onQuickStart = {
@@ -168,6 +174,7 @@ fun AppNavGraph(navController: NavHostController) {
             LaunchedEffect(Unit) {
                 planningViewModel.refresh()
             }
+            RefreshOnResume(onResume = planningViewModel::refresh)
             PlanningScreen(
                 uiState = planningUiState,
                 onCreateWorkout = {
@@ -350,3 +357,22 @@ private data class TopLevelDestination(
     val label: String,
     @DrawableRes val iconRes: Int,
 )
+
+@Composable
+private fun RefreshOnResume(
+    onResume: () -> Unit,
+) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val latestOnResume = rememberUpdatedState(onResume)
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                latestOnResume.value()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+}

@@ -109,6 +109,60 @@ class PlanningViewModelTest {
     }
 
     @Test
+    fun startWorkoutSessionReusesExistingUnfinishedSession() = runTest {
+        val workoutId = 7L
+        val sessionRepository = PlanningFakeSessionRepository().apply {
+            unfinishedSessionId = 55L
+            activeSessions[55L] = ActiveSessionState(
+                session = WorkoutSession(
+                    id = 55L,
+                    workoutId = workoutId,
+                    startedAtEpochMs = 1_000L,
+                    endedAtEpochMs = null,
+                ),
+                plannedSets = emptyList(),
+            )
+        }
+        val viewModel = createViewModel(
+            workoutRepository = PlanningFakeWorkoutRepository(
+                returned = listOf(
+                    Workout(
+                        id = workoutId,
+                        name = "Workout A",
+                        slots = listOf(
+                            WorkoutExerciseSlot(
+                                id = 11L,
+                                workoutId = workoutId,
+                                exerciseId = 1006L,
+                                position = 0,
+                                targetSets = 2,
+                                targetReps = 5,
+                                repRangeMin = 5,
+                                repRangeMax = 5,
+                                progressionMode = ProgressionModeCode.WEIGHT_ONLY,
+                                incrementKg = 2.5,
+                                deloadPercent = 10,
+                                currentWorkingWeightKg = 100.0,
+                                failureStreak = 0,
+                                restSecondsOverride = null,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            sessionRepository = sessionRepository,
+        )
+        advanceUntilIdle()
+
+        val sessionId = viewModel.startWorkoutSession(workoutId)
+
+        assertEquals(55L, sessionId)
+        assertEquals(null, sessionRepository.startedWorkoutId)
+        assertEquals(55L, viewModel.uiState.value.unfinishedSessionId)
+        assertEquals(workoutId, viewModel.uiState.value.unfinishedSessionWorkoutId)
+    }
+
+    @Test
     fun toggleTrainingDayPersistsSelection() = runTest {
         val settingsRepository = PlanningFakeSettingsRepository(trainingDays = listOf(1, 3, 5))
         val viewModel = createViewModel(
@@ -138,6 +192,7 @@ class PlanningViewModelTest {
         return PlanningViewModel(
             workoutRepository = workoutRepository,
             settingsRepository = settingsRepository,
+            sessionRepository = sessionRepository,
             startWorkoutSessionUseCase = useCase,
         )
     }
@@ -166,14 +221,16 @@ private class PlanningFakeExerciseRepository : ExerciseRepository {
 
 private class PlanningFakeSessionRepository : SessionRepository {
     var startedWorkoutId: Long? = null
+    var unfinishedSessionId: Long? = null
+    val activeSessions: MutableMap<Long, ActiveSessionState> = linkedMapOf()
 
     override suspend fun startSession(workoutId: Long, plannedSets: List<SessionPlannedSet>): Long {
         startedWorkoutId = workoutId
         return 10L
     }
-    override suspend fun findUnfinishedSessionId(): Long? = null
+    override suspend fun findUnfinishedSessionId(): Long? = unfinishedSessionId
     override suspend fun discardSessionIfNoProgress(sessionId: Long): Boolean = false
-    override suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState? = null
+    override suspend fun getActiveSessionState(sessionId: Long): ActiveSessionState? = activeSessions[sessionId]
     override suspend fun completePlannedSet(sessionId: Long, plannedSetId: Long, repsAchieved: Int): ActiveSessionState? = null
     override suspend fun updatePlannedSetWeight(sessionId: Long, plannedSetId: Long, weightKg: Double): ActiveSessionState? = null
     override suspend fun addExtraSet(sessionId: Long, anchorPlannedSetId: Long): ActiveSessionState? = null
